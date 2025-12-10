@@ -1,4 +1,8 @@
-﻿# Build Folders
+﻿# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# Build Folders
 bin/
 obj/
 
