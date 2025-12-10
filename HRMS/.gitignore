@@ -1,0 +1,41 @@
+﻿# Build Folders
+bin/
+obj/
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# Visual Studio stuff
+.vs/
+*.user
+*.userosscache
+*.suo
+*.cache
+*.vsp
+
+# Logs
+*.log
+logs/
+
+# Publish
+**/publish/
+**/PublishProfiles/
+
+# Environment Files
+*.env
+
+# ASP.NET Data Protection Keys
+**/keys/
+
+# Node modules (if you later add frontend libs)
+node_modules/
+
+# wwwroot auto-generated files
+wwwroot/lib/
+wwwroot/node_modules/
+
+# Temporary
+*.tmp
+*.temp
+*.pid
