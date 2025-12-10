@@ -1,5 +1,7 @@
 ﻿# Rider / JetBrains
 .idea/
+.idea/.idea.HRMS/
+.idea/.idea.HRMS/.idea/
 *.sln.iml
 
 # Build Folders
