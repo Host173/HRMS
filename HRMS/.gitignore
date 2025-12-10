@@ -6,10 +6,6 @@
 bin/
 obj/
 
-# Rider / JetBrains
-.idea/
-*.sln.iml
-
 # Visual Studio stuff
 .vs/
 *.user
