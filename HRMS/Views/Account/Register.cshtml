@@ -1,0 +1,130 @@
+@model HRMS.Models.RegisterViewModel
+@{
+    ViewData["Title"] = "Create Account";
+    ViewData["HideLayout"] = true; // Use full page split layout
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="split-layout">
+    <!-- Left Panel: Brand & Motion -->
+    <div class="split-left bg-premium-dark">
+        <canvas id="particleCanvas"></canvas>
+        <div style="position: relative; z-index: 2; text-align: center;">
+            <div class="logo-container" style="margin-bottom: 2rem; width: 140px; height: 140px;">
+                <svg class="neon-logo" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <filter id="softStrokeGlowRegister" x="-30%" y="-30%" width="160%" height="160%">
+                            <feGaussianBlur stdDeviation="3" result="blur" />
+                            <feMerge>
+                                <feMergeNode in="blur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    <g filter="url(#softStrokeGlowRegister)" stroke="#FFFFFF" stroke-width="18" fill="none">
+                        <path d="M531.8 385v483.3h0.1V385h-0.1z"/>
+                        <path d="M670.9 497.1h86v16h-86z"/>
+                        <path d="M670.9 625.1h86v16h-86z"/>
+                        <path d="M233.9 241.1h86v16h-86z"/>
+                        <path d="M384 241.1h86v16h-86z"/>
+                        <path d="M233.9 369h86v16h-86z"/>
+                        <path d="M384 369h86v16h-86z"/>
+                        <path d="M234 497.5h86v16h-86z"/>
+                        <path d="M384 497.2h86v16h-86z"/>
+                        <path d="M398.3 704.4c-11.9-11.9-28.4-19.3-46.5-19.3-36.2 0-65.8 29.6-65.8 65.8v117.4h20V750.9c0-12.2 4.8-23.6 13.5-32.3 8.7-8.7 20.2-13.5 32.3-13.5 12.2 0 23.6 4.8 32.3 13.5 8.7 8.7 13.5 20.2 13.5 32.3v117.4h20V750.9c0-18.1-7.4-34.5-19.3-46.5z"/>
+                        <path d="M575.8 429v437.9h0.1V429h-0.1zM286.2 868.3h131.6-131.6z"/>
+                        <path d="M896 868.3V385H575.9V111.6H128v756.7H64v44h896v-44h-64z 
+                                 m-364.1 0H172V155.6h359.9v712.7z 
+                                 m320.1-1.5H575.8V429H852v437.8z"/>
+                    </g>
+                </svg>
+            </div>
+            
+            <h1 style="font-size: 3rem; margin-bottom: 1rem; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Join HRMS</h1>
+            <p style="font-size: 1.15rem; color: #94A3B8; max-width: 400px; margin: 0 auto; line-height: 1.6;">
+                Start managing your organization with our premium suite of HR tools.
+            </p>
+            
+            <div style="margin-top: 3rem; display: flex; gap: 1rem; justify-content: center;">
+                <div style="text-align: center;">
+                    <div style="font-size: 1.5rem; font-weight: 700; color: white;">15k+</div>
+                    <div style="font-size: 0.8rem; color: #64748B;">Employees</div>
+                </div>
+                <div style="width: 1px; background: rgba(255,255,255,0.1);"></div>
+                <div style="text-align: center;">
+                    <div style="font-size: 1.5rem; font-weight: 700; color: white;">99%</div>
+                    <div style="font-size: 0.8rem; color: #64748B;">Uptime</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Panel: Register Form -->
+    <div class="split-right">
+        <div class="premium-card animate-fade-in" style="max-width: 520px;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Create Account</h2>
+                <p class="text-muted">Fill in your details to get started.</p>
+            </div>
+
+            <form asp-action="Register" asp-controller="Account" method="post">
+                <div asp-validation-summary="ModelOnly" style="color: var(--color-danger); margin-bottom: 1rem; font-size: 0.9rem;"></div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label asp-for="FirstName" class="form-label">First Name</label>
+                        <input asp-for="FirstName" class="form-control" placeholder="John" autocomplete="given-name" />
+                        <span asp-validation-for="FirstName" style="color: var(--color-danger); font-size: 0.8rem; display: block; margin-top: 0.25rem;"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="LastName" class="form-label">Last Name</label>
+                        <input asp-for="LastName" class="form-control" placeholder="Doe" autocomplete="family-name" />
+                        <span asp-validation-for="LastName" style="color: var(--color-danger); font-size: 0.8rem; display: block; margin-top: 0.25rem;"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Email" class="form-label">Email Address</label>
+                    <input asp-for="Email" class="form-control" type="email" placeholder="name@company.com" autocomplete="email" />
+                    <span asp-validation-for="Email" style="color: var(--color-danger); font-size: 0.8rem; display: block; margin-top: 0.25rem;"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Phone" class="form-label">Phone Number</label>
+                    <input asp-for="Phone" class="form-control" type="tel" placeholder="+1 (555) 000-0000" autocomplete="tel" />
+                    <span asp-validation-for="Phone" style="color: var(--color-danger); font-size: 0.8rem; display: block; margin-top: 0.25rem;"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Password" class="form-label">Password</label>
+                    <input asp-for="Password" class="form-control" type="password" placeholder="Create a strong password" autocomplete="new-password" />
+                    <span asp-validation-for="Password" style="color: var(--color-danger); font-size: 0.8rem; display: block; margin-top: 0.25rem;"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+                    <input asp-for="ConfirmPassword" class="form-control" type="password" placeholder="Repeat your password" autocomplete="new-password" />
+                    <span asp-validation-for="ConfirmPassword" style="color: var(--color-danger); font-size: 0.8rem; display: block; margin-top: 0.25rem;"></span>
+                </div>
+
+                <button type="submit" class="btn-premium btn-primary w-100" style="margin-top: 0.5rem;">
+                    Create Account
+                </button>
+            </form>
+
+            <div class="divider"></div>
+
+            <div class="text-center">
+                <p class="text-muted" style="font-size: 0.9rem;">
+                    Already have an account? 
+                    <a asp-action="Login" asp-controller="Account" style="font-weight: 600;">Sign In</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

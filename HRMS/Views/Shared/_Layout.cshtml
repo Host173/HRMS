@@ -1,50 +1,129 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>@ViewData["Title"] - HRMS</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
-    <link rel="stylesheet" href="~/HRMS.styles.css" asp-append-version="true"/>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - HRMS Enterprise</title>
+    
+    <!-- Premium Design System -->
+    <link rel="stylesheet" href="~/css/premium-theme.css" asp-append-version="true" />
+    
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-<header>
-    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-        <div class="container-fluid">
-            <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">HRMS</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                    aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                <ul class="navbar-nav flex-grow-1">
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-</header>
-<div class="container">
-    <main role="main" class="pb-3">
+    @if (ViewData["HideLayout"] as bool? == true)
+    {
         @RenderBody()
-    </main>
-</div>
+        
+        <script src="~/lib/jquery/dist/jquery.min.js"></script>
+        <script src="~/js/theme-toggle.js" asp-append-version="true"></script>
+        <script src="~/js/particles.js" asp-append-version="true"></script>
+        @await RenderSectionAsync("Scripts", required: false)
+    }
+    else
+    {
+        <!-- Main Application Layout -->
+        <header class="premium-navbar">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <!-- Animated Mini Logo -->
+                <div class="logo-container" style="width: 40px; height: 40px;">
+                    <svg class="static-logo" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                        <g stroke-width="60" fill="none">
+                            <path d="M531.8 385v483.3h0.1V385h-0.1z"/>
+                            <path d="M670.9 497.1h86v16h-86z"/>
+                            <path d="M670.9 625.1h86v16h-86z"/>
+                            <path d="M233.9 241.1h86v16h-86z"/>
+                            <path d="M384 241.1h86v16h-86z"/>
+                            <path d="M233.9 369h86v16h-86z"/>
+                            <path d="M384 369h86v16h-86z"/>
+                            <path d="M234 497.5h86v16h-86z"/>
+                            <path d="M384 497.2h86v16h-86z"/>
+                            <path d="M398.3 704.4c-11.9-11.9-28.4-19.3-46.5-19.3-36.2 0-65.8 29.6-65.8 65.8v117.4h20V750.9c0-12.2 4.8-23.6 13.5-32.3 8.7-8.7 20.2-13.5 32.3-13.5 12.2 0 23.6 4.8 32.3 13.5 8.7 8.7 13.5 20.2 13.5 32.3v117.4h20V750.9c0-18.1-7.4-34.5-19.3-46.5z"/>
+                            <path d="M575.8 429v437.9h0.1V429h-0.1zM286.2 868.3h131.6-131.6z"/>
+                            <path d="M896 868.3V385H575.9V111.6H128v756.7H64v44h896v-44h-64z 
+                                     m-364.1 0H172V155.6h359.9v712.7z 
+                                     m320.1-1.5H575.8V429H852v437.8z"/>
+                        </g>
+                    </svg>
+                </div>
+                <a asp-controller="Home" asp-action="Index" style="font-weight: 700; font-size: 1.25rem; color: var(--color-text-primary);">
+                    HRMS <span style="color: var(--color-primary); font-weight: 400;">Enterprise</span>
+                </a>
+            </div>
 
-<footer class="border-top footer text-muted">
-    <div class="container">
-        &copy; 2025 - HRMS - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-    </div>
-</footer>
-<script src="~/lib/jquery/dist/jquery.min.js"></script>
-<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-<script src="~/js/site.js" asp-append-version="true"></script>
-@await RenderSectionAsync("Scripts", required: false)
+            <nav style="display: flex; gap: 0.5rem; align-items: center;">
+                <!-- Theme Toggle Button -->
+                <button id="theme-toggle-btn" class="theme-toggle" title="Toggle Dark Mode">
+                    <!-- Sun Icon (for dark mode) -->
+                    <svg id="icon-sun" style="display: none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <!-- Moon Icon (for light mode) -->
+                    <svg id="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a asp-controller="Home" asp-action="Index" class="nav-link">Dashboard</a>
+                    <div style="width: 1px; height: 24px; background: var(--color-border); margin: 0 0.5rem;"></div>
+                    <span style="display: flex; align-items: center; gap: 0.5rem; margin-right: 1rem;">
+                        <div style="width: 32px; height: 32px; background: var(--color-primary-light); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem;">
+                            @(User.Identity.Name?.Substring(0, 1).ToUpper() ?? "U")
+                        </div>
+                        <span style="font-size: 0.9rem; font-weight: 500;">@User.Identity.Name</span>
+                    </span>
+                    <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline;">
+                        <button type="submit" class="btn-premium btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Sign Out</button>
+                    </form>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Login" class="nav-link">Sign In</a>
+                    <a asp-controller="Account" asp-action="Register" class="btn-premium btn-primary" style="padding: 0.4rem 1rem; font-size: 0.9rem;">Get Started</a>
+                }
+            </nav>
+        </header>
+
+        <main style="padding: 2rem; max-width: 1200px; margin: 0 auto; min-height: calc(100vh - 140px);">
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid var(--color-success); color: #15803d; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem;" role="alert">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M22 4L12 14.01l-3-3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    @TempData["SuccessMessage"]
+                </div>
+            }
+            @RenderBody()
+        </main>
+
+        <footer class="premium-footer">
+            <div style="max-width: 1200px; margin: 0 auto;">
+                <p>&copy; 2025 HRMS Enterprise. All rights reserved.</p>
+                <div style="margin-top: 1rem; display: flex; gap: 1.5rem; justify-content: center; opacity: 0.7;">
+                    <a href="#" style="color: inherit;">Privacy</a>
+                    <a href="#" style="color: inherit;">Terms</a>
+                    <a href="#" style="color: inherit;">Support</a>
+                </div>
+            </div>
+        </footer>
+        
+        <script src="~/lib/jquery/dist/jquery.min.js"></script>
+        <script src="~/js/theme-toggle.js" asp-append-version="true"></script>
+        <script src="~/js/particles.js" asp-append-version="true"></script>
+        @await RenderSectionAsync("Scripts", required: false)
+    }
 </body>
 </html>
