@@ -2,7 +2,7 @@ using HRMS.Models;
 
 namespace HRMS.Services;
 
-public interface IUserAuthenticationService
+public interface IAccountService
 {
     Task<bool> ValidateUserAsync(string username, string password);
     Task<User?> GetUserByUsernameAsync(string username);

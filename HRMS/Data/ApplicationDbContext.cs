@@ -1,3 +1,7 @@
+#if false
+
+
+
 using Microsoft.EntityFrameworkCore;
 using HRMS.Models;
 
@@ -69,4 +73,4 @@ public class ApplicationDbContext : DbContext
         });
     }
 }
-
+#endif

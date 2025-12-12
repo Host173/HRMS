@@ -14,8 +14,9 @@ if (string.IsNullOrEmpty(connectionString))
     throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 }
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContext<HrmsDbContext>(options =>
     options.UseSqlServer(connectionString));
+
 
 // Add authentication services
 builder.Services.AddAuthentication("CookieAuth")
@@ -32,7 +33,16 @@ builder.Services.AddAuthentication("CookieAuth")
 builder.Services.AddAuthorization();
 
 // Register authentication service - using database implementation
-builder.Services.AddScoped<IUserAuthenticationService, DatabaseAuthenticationService>();
+builder.Services.AddScoped<IAccountService, DatabaseAuthenticationService>();
+
+// Register domain services
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+builder.Services.AddScoped<IContractService, ContractService>();
+builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+builder.Services.AddScoped<IShiftService, ShiftService>();
+builder.Services.AddScoped<ILeaveService, LeaveService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IMissionService, MissionService>();
 
 var app = builder.Build();
 

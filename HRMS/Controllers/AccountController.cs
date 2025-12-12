@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using HRMS.Data;
 using HRMS.Models;
 using HRMS.Services;
 
@@ -13,17 +11,17 @@ namespace HRMS.Controllers;
 [AllowAnonymous]
 public class AccountController : Controller
 {
-    private readonly IUserAuthenticationService _authService;
-    private readonly ApplicationDbContext _context;
+    private readonly IAccountService _authService;
+    private readonly IEmployeeService _employeeService;
     private readonly ILogger<AccountController> _logger;
 
     public AccountController(
-        IUserAuthenticationService authService, 
-        ApplicationDbContext context,
+        IAccountService authService, 
+        IEmployeeService employeeService,
         ILogger<AccountController> logger)
     {
         _authService = authService;
-        _context = context;
+        _employeeService = employeeService;
         _logger = logger;
     }
 
@@ -132,8 +130,7 @@ public class AccountController : Controller
         }
 
         // Check if email already exists
-        var emailExists = await _context.Employees
-            .AnyAsync(e => e.Email != null && e.Email.ToLower() == model.Email.ToLower());
+        var emailExists = await _employeeService.EmailExistsAsync(model.Email);
 
         if (emailExists)
         {
@@ -144,20 +141,19 @@ public class AccountController : Controller
         // Create new employee
         var employee = new Employee
         {
-            FirstName = model.FirstName,
-            LastName = model.LastName,
-            FullName = $"{model.FirstName} {model.LastName}".Trim(),
-            Email = model.Email,
-            Phone = model.Phone,
-            PasswordHash = DatabaseAuthenticationService.HashPassword(model.Password),
-            IsActive = true,
-            AccountStatus = "Active"
+            first_name = model.FirstName,
+            last_name = model.LastName,
+            full_name = $"{model.FirstName} {model.LastName}".Trim(),
+            email = model.Email,
+            phone = model.Phone,
+            password_hash = DatabaseAuthenticationService.HashPassword(model.Password),
+            is_active = true,
+            account_status = "Active"
         };
 
         try
         {
-            _context.Employees.Add(employee);
-            await _context.SaveChangesAsync();
+            await _employeeService.CreateAsync(employee);
 
             _logger.LogInformation("New user registered: {Email}", model.Email);
 
@@ -197,7 +193,7 @@ public class AccountController : Controller
                 return RedirectToAction("Index", "Home");
             }
         }
-        catch (Exception ex)
+        catch (System.Exception ex)
         {
             _logger.LogError(ex, "Error registering user: {Email}", model.Email);
             ModelState.AddModelError(string.Empty, "An error occurred during registration. Please try again.");
