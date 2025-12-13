@@ -1,0 +1,39 @@
+@model HRMS.Models.LeaveTypeViewModel
+@{
+    ViewData["Title"] = "Create Leave Type";
+}
+
+<div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Create New Leave Type</h1>
+    <p class="text-muted">Add a new leave type to the system</p>
+</div>
+
+<form asp-action="Create" method="post" class="premium-card">
+    <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom: 1rem;"></div>
+
+    <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label asp-for="LeaveType" class="form-label"></label>
+        <input asp-for="LeaveType" class="form-control" placeholder="e.g., Vacation Leave, Sick Leave" />
+        <span asp-validation-for="LeaveType" class="text-danger"></span>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label asp-for="LeaveDescription" class="form-label"></label>
+        <textarea asp-for="LeaveDescription" class="form-control" rows="3" placeholder="Describe the purpose and usage of this leave type..."></textarea>
+        <span asp-validation-for="LeaveDescription" class="text-danger"></span>
+    </div>
+
+    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+        <button type="submit" class="btn-premium btn-primary">Create Leave Type</button>
+        <a asp-action="Index" class="btn-premium btn-secondary">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+
+
+
+
+

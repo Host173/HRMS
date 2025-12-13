@@ -1,0 +1,125 @@
+@model HRMS.Models.LeavePolicyViewModel
+@{
+    ViewData["Title"] = "Edit Leave Policy";
+    var leaveTypes = ViewBag.LeaveTypes as List<HRMS.Models.Leave> ?? new List<HRMS.Models.Leave>();
+}
+
+<div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Edit Leave Policy</h1>
+    <p class="text-muted">Update policy rules and requirements</p>
+</div>
+
+<form asp-action="Edit" method="post" class="premium-card">
+    <input type="hidden" asp-for="PolicyId" />
+    <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom: 1rem;"></div>
+
+    <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label asp-for="LeaveTypeId" class="form-label"></label>
+        <select asp-for="LeaveTypeId" asp-items="@(new SelectList(leaveTypes, "leave_id", "leave_type"))" class="form-control">
+            <option value="">-- Select Leave Type --</option>
+        </select>
+        <span asp-validation-for="LeaveTypeId" class="text-danger"></span>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label asp-for="Purpose" class="form-label"></label>
+        <textarea asp-for="Purpose" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="Purpose" class="text-danger"></span>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label asp-for="EligibilityRules" class="form-label"></label>
+        <textarea asp-for="EligibilityRules" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="EligibilityRules" class="text-danger"></span>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label asp-for="DocumentationRequirements" class="form-label"></label>
+        <textarea asp-for="DocumentationRequirements" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="DocumentationRequirements" class="text-danger"></span>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label asp-for="ApprovalWorkflow" class="form-label"></label>
+        <textarea asp-for="ApprovalWorkflow" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="ApprovalWorkflow" class="text-danger"></span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="form-group">
+            <label asp-for="NoticePeriod" class="form-label"></label>
+            <input asp-for="NoticePeriod" type="number" min="0" class="form-control" />
+            <span asp-validation-for="NoticePeriod" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="MinDaysPerRequest" class="form-label"></label>
+            <input asp-for="MinDaysPerRequest" type="number" min="1" class="form-control" />
+            <span asp-validation-for="MinDaysPerRequest" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="MaxDaysPerRequest" class="form-label"></label>
+            <input asp-for="MaxDaysPerRequest" type="number" min="1" class="form-control" />
+            <span asp-validation-for="MaxDaysPerRequest" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="form-group">
+            <div class="form-check">
+                <input asp-for="RequiresHRAdminApproval" class="form-check-input" type="checkbox" />
+                <label asp-for="RequiresHRAdminApproval" class="form-check-label">
+                    Requires HR Admin Approval Only
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="form-check">
+                <input asp-for="RequiresDocumentation" class="form-check-input" type="checkbox" />
+                <label asp-for="RequiresDocumentation" class="form-check-label">
+                    Requires Documentation
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="form-check">
+                <input asp-for="ResetOnNewYear" class="form-check-input" type="checkbox" />
+                <label asp-for="ResetOnNewYear" class="form-check-label">
+                    Reset on New Year
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="form-check">
+                <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                <label asp-for="IsActive" class="form-check-label">
+                    Active
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+        <button type="submit" class="btn-premium btn-primary">Update Policy</button>
+        <a asp-action="Index" asp-route-leaveTypeId="@Model.LeaveTypeId" class="btn-premium btn-secondary">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+
+
+
+
+

@@ -1,0 +1,89 @@
+@model List<HRMS.Models.LeaveEntitlement>
+@{
+    ViewData["Title"] = "Leave Entitlements";
+    var employees = ViewBag.Employees as List<HRMS.Models.Employee> ?? new List<HRMS.Models.Employee>();
+    var leaveTypes = ViewBag.LeaveTypes as List<HRMS.Models.Leave> ?? new List<HRMS.Models.Leave>();
+}
+
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+            <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Leave Entitlements</h1>
+            <p class="text-muted">View and adjust employee leave entitlements</p>
+        </div>
+        <a asp-action="Adjust" class="btn-premium btn-primary">Adjust Entitlement</a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="premium-card" style="margin-bottom: 1.5rem;">
+    <h3 style="font-size: 1.1rem; margin-bottom: 1rem;">Filters</h3>
+    <form method="get" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div class="form-group">
+            <label>Employee</label>
+            <select name="employeeId" class="form-control">
+                <option value="">All Employees</option>
+                @foreach (var emp in employees)
+                {
+                    <option value="@emp.employee_id">@emp.full_name</option>
+                }
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Leave Type</label>
+            <select name="leaveTypeId" class="form-control">
+                <option value="">All Leave Types</option>
+                @foreach (var lt in leaveTypes)
+                {
+                    <option value="@lt.leave_id">@lt.leave_type</option>
+                }
+            </select>
+        </div>
+        <div class="form-group" style="display: flex; align-items: flex-end;">
+            <button type="submit" class="btn-premium btn-secondary">Filter</button>
+        </div>
+    </form>
+</div>
+
+<div class="premium-card">
+    @if (!Model.Any())
+    {
+        <p class="text-muted">No leave entitlements found.</p>
+    }
+    else
+    {
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--color-border);">
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Employee</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Leave Type</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Entitlement (days)</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var entitlement in Model)
+                    {
+                        <tr style="border-bottom: 1px solid var(--color-border);">
+                            <td style="padding: 0.75rem;">
+                                <div style="font-weight: 500;">@entitlement.employee?.full_name</div>
+                                <div style="font-size: 0.85rem; color: var(--color-text-secondary);">@entitlement.employee?.email</div>
+                            </td>
+                            <td style="padding: 0.75rem;">@entitlement.leave_type?.leave_type</td>
+                            <td style="padding: 0.75rem; font-weight: 600;">@(entitlement.entitlement?.ToString("F1") ?? "0")</td>
+                            <td style="padding: 0.75rem;">
+                                <a asp-action="Adjust" asp-route-employeeId="@entitlement.employee_id" asp-route-leaveTypeId="@entitlement.leave_type_id" class="btn-premium btn-sm btn-primary">Adjust</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+
+
+
+

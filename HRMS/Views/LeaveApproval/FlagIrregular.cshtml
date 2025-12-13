@@ -1,0 +1,72 @@
+@model HRMS.Models.LeaveRequestViewModel
+@{
+    ViewData["Title"] = "Flag Leave Request as Irregular";
+}
+
+<div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Flag Leave Request as Irregular</h1>
+    <p class="text-muted">Provide a reason for flagging this leave request as irregular. The employee will be able to see this message.</p>
+</div>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" style="margin-bottom: 1.5rem;">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<div class="premium-card" style="margin-bottom: 1.5rem;">
+    <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--color-primary);">Leave Request Details</h2>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+        <div>
+            <label style="font-size: 0.85rem; color: var(--color-text-secondary); font-weight: 600;">Employee</label>
+            <div style="font-size: 1rem; margin-top: 0.25rem;">@Model.EmployeeName</div>
+        </div>
+        
+        <div>
+            <label style="font-size: 0.85rem; color: var(--color-text-secondary); font-weight: 600;">Leave Type</label>
+            <div style="font-size: 1rem; margin-top: 0.25rem;">@Model.LeaveType</div>
+        </div>
+        
+        <div>
+            <label style="font-size: 0.85rem; color: var(--color-text-secondary); font-weight: 600;">Start Date</label>
+            <div style="font-size: 1rem; margin-top: 0.25rem;">@Model.StartDate.ToString("MMMM dd, yyyy")</div>
+        </div>
+        
+        <div>
+            <label style="font-size: 0.85rem; color: var(--color-text-secondary); font-weight: 600;">End Date</label>
+            <div style="font-size: 1rem; margin-top: 0.25rem;">@Model.EndDate.ToString("MMMM dd, yyyy")</div>
+        </div>
+        
+        <div>
+            <label style="font-size: 0.85rem; color: var(--color-text-secondary); font-weight: 600;">Duration</label>
+            <div style="font-size: 1rem; margin-top: 0.25rem;">@Model.Duration day(s)</div>
+        </div>
+    </div>
+</div>
+
+<div class="premium-card">
+    <form asp-action="FlagIrregular" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="RequestId" />
+        
+        <div style="margin-bottom: 1.5rem;">
+            <label asp-for="IrregularityReason" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--color-text-primary);">
+                Reason for Flagging as Irregular <span style="color: var(--color-danger);">*</span>
+            </label>
+            <textarea asp-for="IrregularityReason" 
+                      rows="5" 
+                      style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-family: inherit; font-size: 0.95rem; background: var(--color-bg-primary); color: var(--color-text-primary);"
+                      placeholder="Please explain why this leave request is being flagged as irregular. This message will be visible to the employee."></textarea>
+            <span asp-validation-for="IrregularityReason" style="color: var(--color-danger); font-size: 0.85rem; margin-top: 0.25rem; display: block;"></span>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn-premium btn-warning">Flag as Irregular</button>
+            <a asp-action="Index" class="btn-premium btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+

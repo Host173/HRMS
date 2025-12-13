@@ -1,0 +1,20 @@
+@model HRMS.ViewComponents.ProfileImageViewModel
+
+@if (!string.IsNullOrEmpty(Model.ProfileImage))
+{
+    <img src="@Model.ProfileImage" 
+         alt="Profile" 
+         style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid var(--color-primary-light);"
+         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+    <div style="width: 32px; height: 32px; background: var(--color-primary-light); border-radius: 50%; color: white; display: none; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem; border: 2px solid var(--color-primary-light);">
+        @Model.Initial
+    </div>
+}
+else
+{
+    <div style="width: 32px; height: 32px; background: var(--color-primary-light); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem; border: 2px solid var(--color-primary-light);">
+        @Model.Initial
+    </div>
+}
+
+

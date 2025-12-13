@@ -1,0 +1,58 @@
+@model HRMS.Models.LeaveEntitlementAdjustmentViewModel
+@{
+    ViewData["Title"] = "Adjust Leave Entitlement";
+    var employees = ViewBag.Employees as List<HRMS.Models.Employee> ?? new List<HRMS.Models.Employee>();
+    var leaveTypes = ViewBag.LeaveTypes as List<HRMS.Models.Leave> ?? new List<HRMS.Models.Leave>();
+}
+
+<div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Adjust Leave Entitlement</h1>
+    <p class="text-muted">Set or update employee leave entitlement</p>
+</div>
+
+<form asp-action="Adjust" method="post" class="premium-card">
+    <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom: 1rem;"></div>
+
+    <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label asp-for="EmployeeId" class="form-label"></label>
+        <select asp-for="EmployeeId" asp-items="@(new SelectList(employees, "employee_id", "full_name"))" class="form-control">
+            <option value="">-- Select Employee --</option>
+        </select>
+        <span asp-validation-for="EmployeeId" class="text-danger"></span>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label asp-for="LeaveTypeId" class="form-label"></label>
+        <select asp-for="LeaveTypeId" asp-items="@(new SelectList(leaveTypes, "leave_id", "leave_type"))" class="form-control">
+            <option value="">-- Select Leave Type --</option>
+        </select>
+        <span asp-validation-for="LeaveTypeId" class="text-danger"></span>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label asp-for="Entitlement" class="form-label"></label>
+        <input asp-for="Entitlement" type="number" step="0.5" min="0" max="365" class="form-control" />
+        <small class="text-muted">Enter the number of days (can use decimals, e.g., 0.5 for half day)</small>
+        <span asp-validation-for="Entitlement" class="text-danger"></span>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label asp-for="Reason" class="form-label"></label>
+        <textarea asp-for="Reason" class="form-control" rows="3" placeholder="Optional: Reason for this adjustment..."></textarea>
+        <span asp-validation-for="Reason" class="text-danger"></span>
+    </div>
+
+    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+        <button type="submit" class="btn-premium btn-primary">Save Entitlement</button>
+        <a asp-action="Index" class="btn-premium btn-secondary">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+
+
+
+
+

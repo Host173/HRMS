@@ -1,0 +1,58 @@
+@model HRMS.Models.CreateLeaveRequestViewModel
+@{
+    ViewData["Title"] = "New Leave Request";
+}
+
+<div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">New Leave Request</h1>
+    <p class="text-muted">Submit a new leave request</p>
+</div>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data" class="premium-card">
+    <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom: 1rem;"></div>
+
+    <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label asp-for="LeaveTypeId" class="form-label"></label>
+        <select asp-for="LeaveTypeId" asp-items="@(new SelectList(Model.AvailableLeaveTypes ?? new List<HRMS.Models.Leave>(), "leave_id", "leave_type"))" class="form-control">
+            <option value="">-- Select Leave Type --</option>
+        </select>
+        <span asp-validation-for="LeaveTypeId" class="text-danger"></span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="form-group">
+            <label asp-for="StartDate" class="form-label"></label>
+            <input asp-for="StartDate" type="date" class="form-control" />
+            <span asp-validation-for="StartDate" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="EndDate" class="form-label"></label>
+            <input asp-for="EndDate" type="date" class="form-control" />
+            <span asp-validation-for="EndDate" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label asp-for="Justification" class="form-label"></label>
+        <textarea asp-for="Justification" class="form-control" rows="4" placeholder="Please provide a reason for your leave request..."></textarea>
+        <span asp-validation-for="Justification" class="text-danger"></span>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label asp-for="Attachments" class="form-label"></label>
+        <input asp-for="Attachments" type="file" multiple class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+        <small class="text-muted">You can upload multiple files (PDF, DOC, DOCX, JPG, PNG). Maximum file size: 10MB per file.</small>
+        <span asp-validation-for="Attachments" class="text-danger"></span>
+    </div>
+
+    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+        <button type="submit" class="btn-premium btn-primary">Submit Request</button>
+        <a asp-action="Index" class="btn-premium btn-secondary">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

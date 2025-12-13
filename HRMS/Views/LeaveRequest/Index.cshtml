@@ -1,0 +1,153 @@
+@model List<HRMS.Models.LeaveRequestViewModel>
+@{
+    ViewData["Title"] = "My Leave Requests";
+    var leaveBalance = ViewBag.LeaveBalance as Dictionary<string, HRMS.Models.LeaveBalanceViewModel> ?? new Dictionary<string, HRMS.Models.LeaveBalanceViewModel>();
+}
+
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+            <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">My Leave Requests</h1>
+            <p class="text-muted">View your leave history and balance</p>
+        </div>
+        <a asp-action="Create" class="btn-premium btn-primary">New Leave Request</a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" style="margin-bottom: 1.5rem;">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" style="margin-bottom: 1.5rem;">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<!-- Irregular Leave Warning Section -->
+@if (Model.Any(r => r.IsIrregular && !string.IsNullOrEmpty(r.IrregularityReason)))
+{
+    <div class="premium-card" style="margin-bottom: 2rem; border-left: 4px solid #ffc107;">
+        <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: #856404;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            Irregular Leave Warning
+        </h2>
+        @foreach (var request in Model.Where(r => r.IsIrregular && !string.IsNullOrEmpty(r.IrregularityReason)))
+        {
+            <div style="margin-bottom: 1rem; padding: 1rem; background: rgba(255, 193, 7, 0.1); border-radius: var(--radius-md); border-left: 3px solid #ffc107;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                    <div>
+                        <strong style="color: #856404;">@request.LeaveType</strong>
+                        <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-top: 0.25rem;">
+                            @request.StartDate.ToString("MMM dd, yyyy") - @request.EndDate.ToString("MMM dd, yyyy")
+                        </div>
+                    </div>
+                    <span class="badge badge-warning">Flagged as Irregular</span>
+                </div>
+                <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(255, 193, 7, 0.3);">
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); font-weight: 600; margin-bottom: 0.5rem;">Reason:</div>
+                    <div style="color: var(--color-text-primary); line-height: 1.6;">@request.IrregularityReason</div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<!-- Leave Balance Section -->
+<div class="premium-card" style="margin-bottom: 2rem;">
+    <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--color-primary);">Leave Balance</h2>
+    @if (leaveBalance.Any())
+    {
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            @foreach (var balance in leaveBalance.Values)
+            {
+                <div style="padding: 1rem; background: var(--color-bg-secondary); border-radius: var(--radius-md);">
+                    <h3 style="font-size: 1rem; margin-bottom: 0.5rem; color: var(--color-text-secondary);">@balance.LeaveType</h3>
+                    <div style="font-size: 1.5rem; font-weight: 600; color: var(--color-primary);">
+                        @balance.Remaining.ToString("F1")
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-top: 0.25rem;">
+                        of @balance.TotalEntitlement.ToString("F1") days
+                    </div>
+                    @if (balance.Used > 0)
+                    {
+                        <div style="font-size: 0.75rem; color: var(--color-text-secondary); margin-top: 0.25rem;">
+                            Used: @balance.Used.ToString("F1") days
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <p class="text-muted">No leave entitlements configured. Please contact HR to set up your leave entitlements.</p>
+    }
+</div>
+
+<!-- Leave Requests History -->
+<div class="premium-card">
+    <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--color-primary);">Leave History</h2>
+    
+    @if (!Model.Any())
+    {
+        <p class="text-muted">You haven't submitted any leave requests yet.</p>
+    }
+    else
+    {
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--color-border);">
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Leave Type</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Start Date</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">End Date</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Duration</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Status</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var request in Model)
+                    {
+                        <tr style="border-bottom: 1px solid var(--color-border);">
+                            <td style="padding: 0.75rem;">@request.LeaveType</td>
+                            <td style="padding: 0.75rem;">@request.StartDate.ToString("MMM dd, yyyy")</td>
+                            <td style="padding: 0.75rem;">@request.EndDate.ToString("MMM dd, yyyy")</td>
+                            <td style="padding: 0.75rem;">@request.Duration day(s)</td>
+                            <td style="padding: 0.75rem;">
+                                @{
+                                    var statusClass = request.Status switch
+                                    {
+                                        "Approved" => "success",
+                                        "Rejected" => "danger",
+                                        "Flagged" => "warning",
+                                        _ => "secondary"
+                                    };
+                                    var statusText = request.Status;
+                                    if (request.IsIrregular)
+                                    {
+                                        statusText += " (Irregular)";
+                                    }
+                                }
+                                <span class="badge badge-@statusClass">@statusText</span>
+                            </td>
+                            <td style="padding: 0.75rem;">
+                                <a asp-action="Details" asp-route-id="@request.RequestId" class="btn-premium btn-sm btn-secondary">View</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+

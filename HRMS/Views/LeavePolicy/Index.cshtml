@@ -1,0 +1,120 @@
+@model List<HRMS.Models.LeavePolicyViewModel>
+@{
+    ViewData["Title"] = "Manage Leave Policies";
+    var leaveType = ViewBag.LeaveType as HRMS.Models.Leave;
+    var leaveTypes = ViewBag.LeaveTypes as List<HRMS.Models.Leave> ?? new List<HRMS.Models.Leave>();
+}
+
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+            <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Manage Leave Policies</h1>
+            <p class="text-muted">Configure policies for leave types</p>
+        </div>
+        <a asp-action="Create" class="btn-premium btn-primary">Create New Policy</a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" style="margin-bottom: 1.5rem;">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" style="margin-bottom: 1.5rem;">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<!-- Filter by Leave Type -->
+<div class="premium-card" style="margin-bottom: 1.5rem;">
+    <h3 style="font-size: 1.1rem; margin-bottom: 1rem;">Filter by Leave Type</h3>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <a asp-action="Index" class="btn-premium btn-sm @(leaveType == null ? "btn-primary" : "btn-secondary")">All Types</a>
+        @foreach (var lt in leaveTypes)
+        {
+            <a asp-action="Index" asp-route-leaveTypeId="@lt.leave_id" class="btn-premium btn-sm @(leaveType?.leave_id == lt.leave_id ? "btn-primary" : "btn-secondary")">
+                @lt.leave_type
+            </a>
+        }
+    </div>
+</div>
+
+@if (leaveType != null)
+{
+    <div class="premium-card" style="margin-bottom: 1.5rem;">
+        <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Policies for: @leaveType.leave_type</h2>
+        <a asp-controller="LeaveType" asp-action="Index" class="btn-premium btn-sm btn-secondary">Back to Leave Types</a>
+    </div>
+}
+
+<div class="premium-card">
+    @if (!Model.Any())
+    {
+        <p class="text-muted">No policies found. @(leaveType != null ? $"Create a policy for {leaveType.leave_type}." : "Create your first policy to get started.")</p>
+    }
+    else
+    {
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--color-border);">
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Policy Name</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Leave Type</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Status</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Approval</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var policy in Model)
+                    {
+                        <tr style="border-bottom: 1px solid var(--color-border);">
+                            <td style="padding: 0.75rem; font-weight: 500;">@policy.Name</td>
+                            <td style="padding: 0.75rem;">@policy.LeaveTypeName</td>
+                            <td style="padding: 0.75rem;">
+                                @if (policy.IsActive)
+                                {
+                                    <span class="badge badge-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-secondary">Inactive</span>
+                                }
+                            </td>
+                            <td style="padding: 0.75rem;">
+                                @if (policy.RequiresHRAdminApproval)
+                                {
+                                    <span class="badge badge-warning">HR Admin Only</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-info">Line Manager</span>
+                                }
+                            </td>
+                            <td style="padding: 0.75rem;">
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <a asp-action="Edit" asp-route-id="@policy.PolicyId" class="btn-premium btn-sm btn-primary">Edit</a>
+                                    <form asp-action="ToggleActive" asp-route-id="@policy.PolicyId" method="post" style="display: inline;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn-premium btn-sm @(policy.IsActive ? "btn-warning" : "btn-success")">
+                                            @(policy.IsActive ? "Deactivate" : "Activate")
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+
+
+
+

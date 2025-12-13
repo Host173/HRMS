@@ -1,0 +1,109 @@
+@model List<HRMS.Models.LeaveRequestViewModel>
+@{
+    ViewData["Title"] = "Leave Request Approvals";
+}
+
+<div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Leave Request Approvals</h1>
+    <p class="text-muted">Review and manage leave requests from your team</p>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" style="margin-bottom: 1.5rem;">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" style="margin-bottom: 1.5rem;">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<div class="premium-card">
+    @if (!Model.Any())
+    {
+        <p class="text-muted">No leave requests to review.</p>
+    }
+    else
+    {
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--color-border);">
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Employee</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Leave Type</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Start Date</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">End Date</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Duration</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Status</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var request in Model)
+                    {
+                        <tr style="border-bottom: 1px solid var(--color-border);">
+                            <td style="padding: 0.75rem;">
+                                <div style="font-weight: 500;">@request.EmployeeName</div>
+                                <div style="font-size: 0.85rem; color: var(--color-text-secondary);">@request.EmployeeEmail</div>
+                            </td>
+                            <td style="padding: 0.75rem;">@request.LeaveType</td>
+                            <td style="padding: 0.75rem;">@request.StartDate.ToString("MMM dd, yyyy")</td>
+                            <td style="padding: 0.75rem;">@request.EndDate.ToString("MMM dd, yyyy")</td>
+                            <td style="padding: 0.75rem;">@request.Duration day(s)</td>
+                            <td style="padding: 0.75rem;">
+                                @{
+                                    var statusClass = request.Status switch
+                                    {
+                                        "Approved" => "success",
+                                        "Rejected" => "danger",
+                                        "Flagged" => "warning",
+                                        "Pending" => "info",
+                                        _ => "secondary"
+                                    };
+                                    var statusText = request.Status;
+                                    if (request.IsIrregular)
+                                    {
+                                        statusText += " (Irregular)";
+                                    }
+                                    if (request.ApprovedByHR && (request.Status == "Approved" || request.Status == "Rejected"))
+                                    {
+                                        statusText += " by HR";
+                                    }
+                                }
+                                <span class="badge badge-@statusClass">@statusText</span>
+                                @if (request.IsSpecialLeave && request.Status != "Pending")
+                                {
+                                    <div style="font-size: 0.75rem; color: var(--color-text-secondary); margin-top: 0.25rem;">
+                                        Special Leave - Managed by HR
+                                    </div>
+                                }
+                            </td>
+                            <td style="padding: 0.75rem;">
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <a asp-action="Review" asp-route-id="@request.RequestId" class="btn-premium btn-sm btn-secondary">Review</a>
+                                    @if (request.Status == "Pending")
+                                    {
+                                        <form asp-action="Approve" asp-route-id="@request.RequestId" method="post" style="display: inline;">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn-premium btn-sm btn-success">Approve</button>
+                                        </form>
+                                        <form asp-action="Reject" asp-route-id="@request.RequestId" method="post" style="display: inline;">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn-premium btn-sm btn-danger">Reject</button>
+                                        </form>
+                                        <a asp-action="FlagIrregular" asp-route-id="@request.RequestId" class="btn-premium btn-sm btn-warning">Flag Irregular</a>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
