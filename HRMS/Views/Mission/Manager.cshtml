@@ -1,0 +1,229 @@
+@model IEnumerable<HRMS.Models.Mission>
+@{
+    ViewData["Title"] = "Mission Approvals";
+    var pendingMissions = ViewBag.PendingMissions as IEnumerable<HRMS.Models.Mission> ?? new List<HRMS.Models.Mission>();
+    var allMissions = ViewBag.AllMissions as IEnumerable<HRMS.Models.Mission> ?? new List<HRMS.Models.Mission>();
+    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+}
+
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+            <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Mission Approvals</h2>
+            <p class="text-muted">Review and approve or reject mission requests from your team members</p>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="premium-card" style="background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; margin-bottom: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; color: #22c55e;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <span style="font-weight: 500;">@TempData["SuccessMessage"]</span>
+            </div>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="premium-card" style="background: rgba(220, 38, 38, 0.1); border: 1px solid #dc2626; margin-bottom: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; color: #dc2626;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span style="font-weight: 500;">@TempData["ErrorMessage"]</span>
+            </div>
+        </div>
+    }
+
+    <!-- Summary Statistics -->
+    @if (allMissions.Any())
+    {
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+            <div class="premium-card" style="padding: 1rem;">
+                <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.5rem;">Total Missions</div>
+                <div style="font-size: 2rem; font-weight: 700; color: var(--color-primary);">@allMissions.Count()</div>
+            </div>
+            @if (pendingMissions.Any())
+            {
+                <div class="premium-card" style="padding: 1rem; border-left: 4px solid #f59e0b;">
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.5rem;">Pending Approval</div>
+                    <div style="font-size: 2rem; font-weight: 700; color: #f59e0b;">@pendingMissions.Count()</div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@if (pendingMissions.Any())
+{
+    <!-- Pending Missions Requiring Action -->
+    <div style="margin-bottom: 2rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+            <div style="width: 4px; height: 24px; background: #f59e0b; border-radius: 2px;"></div>
+            <h3 style="font-size: 1.25rem; margin: 0; color: var(--color-text-primary);">Pending Approval (@pendingMissions.Count())</h3>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 1.5rem;">
+            @foreach (var mission in pendingMissions.OrderBy(m => m.start_date))
+            {
+                <div class="premium-card" style="border-left: 4px solid #f59e0b; position: relative;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                        <div style="flex: 1;">
+                            <h4 style="font-size: 1.1rem; font-weight: 600; margin: 0 0 0.5rem 0; color: var(--color-text-primary);">
+                                @(mission.destination ?? "Mission")
+                            </h4>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--color-text-secondary); margin-bottom: 0.75rem;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <span style="font-weight: 500; color: var(--color-text-primary);">@(mission.employee?.full_name ?? "Employee")</span>
+                                @if (!string.IsNullOrEmpty(mission.employee?.email))
+                                {
+                                    <span style="color: var(--color-text-secondary);">•</span>
+                                    <span>@mission.employee.email</span>
+                                }
+                            </div>
+                        </div>
+                        <span style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500; white-space: nowrap;">
+                            @(mission.status ?? "Pending")
+                        </span>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Start Date</div>
+                            <div style="font-weight: 500; color: var(--color-text-primary);">
+                                @(mission.start_date?.ToString("MMM dd, yyyy") ?? "Not set")
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">End Date</div>
+                            <div style="font-weight: 500; color: var(--color-text-primary);">
+                                @(mission.end_date?.ToString("MMM dd, yyyy") ?? "Not set")
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--color-border);">
+                        @{
+                            var destinationName = mission.destination ?? "the destination";
+                            var approveMessage = "Are you sure you want to approve this mission to " + destinationName.Replace("'", "\\'") + "?";
+                            var rejectMessage = "Are you sure you want to reject this mission to " + destinationName.Replace("'", "\\'") + "?";
+                        }
+                        <form asp-action="Approve" asp-route-id="@mission.mission_id" method="post" style="flex: 1;">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn-premium btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" 
+                                    onclick="return confirm('@approveMessage');">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                </svg>
+                                Approve
+                            </button>
+                        </form>
+                        <form asp-action="Reject" asp-route-id="@mission.mission_id" method="post" style="flex: 1;">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn-premium btn-secondary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: rgba(220, 38, 38, 0.1); color: #dc2626; border-color: #dc2626;" 
+                                    onclick="return confirm('@rejectMessage');">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                                </svg>
+                                Reject
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@if (allMissions.Any() && allMissions.Count() > pendingMissions.Count())
+{
+    <!-- Other Missions (Not Pending) -->
+    <div style="margin-bottom: 2rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+            <div style="width: 4px; height: 24px; background: #64748b; border-radius: 2px;"></div>
+            <h3 style="font-size: 1.25rem; margin: 0; color: var(--color-text-primary);">All Missions</h3>
+        </div>
+        
+        <div class="premium-card">
+            <div style="overflow-x: auto;">
+                <table class="table-premium">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Destination</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var mission in allMissions.OrderByDescending(m => m.start_date))
+                        {
+                            var isPending = (mission.status ?? "").Equals("Pending", StringComparison.OrdinalIgnoreCase) || 
+                                          (mission.status ?? "").Equals("Assigned", StringComparison.OrdinalIgnoreCase);
+                            
+                            <tr style="@(isPending ? "background: rgba(245, 158, 11, 0.05);" : "")">
+                                <td>
+                                    <div style="font-weight: 500;">@(mission.employee?.full_name ?? "N/A")</div>
+                                    @if (!string.IsNullOrEmpty(mission.employee?.email))
+                                    {
+                                        <div style="font-size: 0.85rem; color: var(--color-text-secondary);">@mission.employee.email</div>
+                                    }
+                                </td>
+                                <td>
+                                    <span style="font-weight: 500;">@(mission.destination ?? "N/A")</span>
+                                </td>
+                                <td>@(mission.start_date?.ToString("MMM dd, yyyy") ?? "N/A")</td>
+                                <td>@(mission.end_date?.ToString("MMM dd, yyyy") ?? "N/A")</td>
+                                <td>
+                                    @{
+                                        var status = mission.status ?? "N/A";
+                                        var statusColor = status == "Active" ? "#15803d" : 
+                                                         status == "Completed" ? "#3b82f6" : 
+                                                         status == "Cancelled" ? "#dc2626" : 
+                                                         status == "Pending" || status == "Assigned" ? "#d97706" : "#64748b";
+                                        var statusBg = status == "Active" ? "rgba(34, 197, 94, 0.1)" : 
+                                                      status == "Completed" ? "rgba(59, 130, 246, 0.1)" : 
+                                                      status == "Cancelled" ? "rgba(239, 68, 68, 0.1)" : 
+                                                      status == "Pending" || status == "Assigned" ? "rgba(217, 119, 6, 0.1)" : "rgba(100, 116, 139, 0.1)";
+                                    }
+                                    <span style="background: @statusBg; color: @statusColor; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500;">
+                                        @status
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@if (!allMissions.Any())
+{
+    <div class="premium-card">
+        <div style="text-align: center; padding: 3rem;">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-text-secondary); margin: 0 auto 1rem;">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <p style="color: var(--color-text-secondary); margin-bottom: 1rem; font-size: 1.1rem;">No missions to review</p>
+            <p style="color: var(--color-text-secondary); font-size: 0.9rem;">There are currently no missions assigned to you for approval.</p>
+        </div>
+    </div>
+}
