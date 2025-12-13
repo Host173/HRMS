@@ -1,0 +1,142 @@
+@model HRMS.Models.Employee
+@{
+    ViewData["Title"] = "Edit Employee Profile";
+    var isHRAdmin = ViewBag.IsHRAdmin as bool? ?? false;
+    var isSystemAdmin = ViewBag.IsSystemAdmin as bool? ?? false;
+}
+
+<div style="margin-bottom: 2rem;">
+    <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Edit Employee Profile</h2>
+    <p class="text-muted">Update employee information and details</p>
+</div>
+
+<form asp-action="Edit" method="post" enctype="multipart/form-data">
+    <input type="hidden" asp-for="employee_id" />
+    
+    <div class="premium-card" style="margin-bottom: 1.5rem;">
+        <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border);">Profile Picture</h3>
+        <div class="form-group">
+            <label class="form-label">Upload Profile Picture</label>
+            <input type="file" name="profileImage" accept="image/*" class="form-control" />
+            @if (!string.IsNullOrEmpty(Model.profile_image))
+            {
+                <div style="margin-top: 1rem;">
+                    <p style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.5rem;">Current Picture:</p>
+                    <img src="@Model.profile_image" alt="Current profile" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid var(--color-border);" />
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="premium-card" style="margin-bottom: 1.5rem;">
+        <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border);">Personal Information</h3>
+        <div asp-validation-summary="ModelOnly" style="color: var(--color-danger); margin-bottom: 1rem;"></div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label asp-for="first_name" class="form-label">First Name *</label>
+                <input asp-for="first_name" class="form-control" />
+                <span asp-validation-for="first_name" style="color: var(--color-danger); font-size: 0.8rem;"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="last_name" class="form-label">Last Name *</label>
+                <input asp-for="last_name" class="form-control" />
+                <span asp-validation-for="last_name" style="color: var(--color-danger); font-size: 0.8rem;"></span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="email" class="form-label">Email</label>
+            @if (isHRAdmin)
+            {
+                <input asp-for="email" class="form-control" />
+            }
+            else
+            {
+                <input asp-for="email" class="form-control" readonly />
+            }
+            <span asp-validation-for="email" style="color: var(--color-danger); font-size: 0.8rem;"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="phone" class="form-label">Phone *</label>
+            <input asp-for="phone" class="form-control" />
+            <span asp-validation-for="phone" style="color: var(--color-danger); font-size: 0.8rem;"></span>
+        </div>
+
+        @if (isHRAdmin)
+        {
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label asp-for="national_id" class="form-label">National ID</label>
+                    <input asp-for="national_id" class="form-control" />
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="date_of_birth" class="form-label">Date of Birth</label>
+                    <input asp-for="date_of_birth" type="date" class="form-control" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="address" class="form-label">Address</label>
+                <textarea asp-for="address" class="form-control" rows="3"></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label asp-for="department_id" class="form-label">Department</label>
+                    <select asp-for="department_id" class="form-control" asp-items="@(new SelectList(ViewBag.Departments as IEnumerable<dynamic>, "department_id", "department_name", Model.department_id))">
+                        <option value="">Select Department</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="position_id" class="form-label">Position</label>
+                    <select asp-for="position_id" class="form-control" asp-items="@(new SelectList(ViewBag.Positions as IEnumerable<dynamic>, "position_id", "position_title", Model.position_id))">
+                        <option value="">Select Position</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="manager_id" class="form-label">Manager</label>
+                <select asp-for="manager_id" class="form-control" asp-items="@(new SelectList(ViewBag.Managers as IEnumerable<dynamic>, "employee_id", "full_name", Model.manager_id))">
+                    <option value="">Select Manager</option>
+                </select>
+            </div>
+        }
+    </div>
+
+    <div class="premium-card" style="margin-bottom: 1.5rem;">
+        <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border);">Emergency Contact</h3>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label asp-for="emergency_contact_name" class="form-label">Contact Name</label>
+                <input asp-for="emergency_contact_name" class="form-control" />
+            </div>
+
+            <div class="form-group">
+                <label asp-for="emergency_contact_phone" class="form-label">Contact Phone</label>
+                <input asp-for="emergency_contact_phone" class="form-control" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="relationship" class="form-label">Relationship</label>
+            <input asp-for="relationship" class="form-control" placeholder="e.g., Spouse, Parent, Sibling" />
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 1rem;">
+        <button type="submit" class="btn-premium btn-primary">Save Changes</button>
+        <a asp-action="Details" asp-route-id="@Model.employee_id" class="btn-premium btn-secondary">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

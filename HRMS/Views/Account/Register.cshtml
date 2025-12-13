@@ -108,6 +108,27 @@
                     <span asp-validation-for="ConfirmPassword" style="color: var(--color-danger); font-size: 0.8rem; display: block; margin-top: 0.25rem;"></span>
                 </div>
 
+                <div class="form-group">
+                    <label asp-for="SelectedRole" class="form-label">Role *</label>
+                    <select asp-for="SelectedRole" class="form-control" required>
+                        <option value="">-- Select a role --</option>
+                        @if (Model.AvailableRoles != null && Model.AvailableRoles.Count > 0)
+                        {
+                            @foreach (var role in Model.AvailableRoles)
+                            {
+                                <option value="@role">@role</option>
+                            }
+                        }
+                        else
+                        {
+                            <option value="System Administrator">System Administrator</option>
+                            <option value="HR Administrator">HR Administrator</option>
+                            <option value="Line Manager">Line Manager</option>
+                        }
+                    </select>
+                    <span asp-validation-for="SelectedRole" style="color: var(--color-danger); font-size: 0.8rem; display: block; margin-top: 0.25rem;"></span>
+                </div>
+
                 <button type="submit" class="btn-premium btn-primary w-100" style="margin-top: 0.5rem;">
                     Create Account
                 </button>

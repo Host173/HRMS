@@ -1,0 +1,64 @@
+﻿@model HRMS.Models.AllowanceDeduction
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>AllowanceDeduction</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="ad_id" />
+            <div class="form-group">
+                <label asp-for="payroll_id" class="control-label"></label>
+                <select asp-for="payroll_id" class="form-control" asp-items="ViewBag.payroll_id"></select>
+                <span asp-validation-for="payroll_id" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="employee_id" class="control-label"></label>
+                <select asp-for="employee_id" class="form-control" asp-items="ViewBag.employee_id"></select>
+                <span asp-validation-for="employee_id" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="type" class="control-label"></label>
+                <input asp-for="type" class="form-control" />
+                <span asp-validation-for="type" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="amount" class="control-label"></label>
+                <input asp-for="amount" class="form-control" />
+                <span asp-validation-for="amount" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="currency_code" class="control-label"></label>
+                <select asp-for="currency_code" class="form-control" asp-items="ViewBag.currency_code"></select>
+                <span asp-validation-for="currency_code" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="duration" class="control-label"></label>
+                <input asp-for="duration" class="form-control" />
+                <span asp-validation-for="duration" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="timezone" class="control-label"></label>
+                <input asp-for="timezone" class="form-control" />
+                <span asp-validation-for="timezone" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

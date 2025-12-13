@@ -1,0 +1,86 @@
+@model IEnumerable<HRMS.Models.Employee>
+@{
+    ViewData["Title"] = "Profile Completeness";
+}
+
+<div style="margin-bottom: 2rem;">
+    <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Profile Completeness</h2>
+    <p class="text-muted">Monitor and manage employee profile completion rates</p>
+</div>
+
+<div class="premium-card">
+    @if (Model != null && Model.Any())
+    {
+        <div style="overflow-x: auto;">
+            <table class="table-premium">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Department</th>
+                        <th>Completion</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var employee in Model)
+                    {
+                        var completion = employee.profile_completion ?? 0;
+                        var statusColor = completion >= 80 ? "#15803d" : completion >= 50 ? "#d97706" : "#dc2626";
+                        var statusBg = completion >= 80 ? "rgba(34, 197, 94, 0.1)" : completion >= 50 ? "rgba(217, 119, 6, 0.1)" : "rgba(239, 68, 68, 0.1)";
+                        var statusText = completion >= 80 ? "Complete" : completion >= 50 ? "In Progress" : "Incomplete";
+                        
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    @if (!string.IsNullOrEmpty(employee.profile_image))
+                                    {
+                                        <img src="@employee.profile_image" alt="@employee.full_name" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" />
+                                    }
+                                    else
+                                    {
+                                        <div style="width: 40px; height: 40px; background: var(--color-primary-light); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem;">
+                                            @(employee.first_name?.Substring(0, 1).ToUpper() ?? "?")
+                                        </div>
+                                    }
+                                    <div>
+                                        <div style="font-weight: 600;">@(employee.full_name ?? $"{employee.first_name} {employee.last_name}")</div>
+                                        <div style="font-size: 0.85rem; color: var(--color-text-secondary);">@employee.email</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@(employee.department?.department_name ?? "N/A")</td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <div style="flex: 1; min-width: 150px;">
+                                        <div style="width: 100%; height: 8px; background: var(--color-border); border-radius: var(--radius-sm); overflow: hidden;">
+                                            <div style="width: @completion%; height: 100%; background: @statusColor; transition: width 0.3s;"></div>
+                                        </div>
+                                    </div>
+                                    <span style="font-weight: 600; min-width: 45px; text-align: right;">@completion%</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span style="background: @statusBg; color: @statusColor; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500;">
+                                    @statusText
+                                </span>
+                            </td>
+                            <td>
+                                <a asp-action="Edit" asp-route-id="@employee.employee_id" class="btn-premium btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                                    Edit Profile
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div style="text-align: center; padding: 3rem;">
+            <p style="color: var(--color-text-secondary);">No employees found.</p>
+        </div>
+    }
+</div>
+

@@ -104,5 +104,41 @@ public class NotificationService : INotificationService
         return await _context.Notification
             .AnyAsync(n => n.notification_id == notificationId);
     }
+
+    /// <summary>
+    /// Creates a notification and links it to an employee
+    /// </summary>
+    public async Task<Notification> CreateNotificationAsync(
+        int employeeId, 
+        string title, 
+        string message, 
+        string notificationType = "General",
+        string urgency = "Normal")
+    {
+        var notification = new Notification
+        {
+            notification_type = notificationType,
+            message_content = $"{title}: {message}",
+            urgency = urgency,
+            timestamp = DateTime.UtcNow,
+            read_status = false
+        };
+
+        _context.Notification.Add(notification);
+        await _context.SaveChangesAsync();
+
+        // Link notification to employee
+        var employeeNotification = new Employee_Notification
+        {
+            employee_id = employeeId,
+            notification_id = notification.notification_id,
+            delivery_status = "Unread"
+        };
+
+        _context.Employee_Notification.Add(employeeNotification);
+        await _context.SaveChangesAsync();
+
+        return notification;
+    }
 }
 

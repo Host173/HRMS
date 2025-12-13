@@ -1,0 +1,109 @@
+@model IEnumerable<HRMS.Models.Employee>
+@{
+    ViewData["Title"] = "Team Member Profiles";
+}
+
+<div style="margin-bottom: 2rem;">
+    <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Team Member Full Profiles</h2>
+    <p class="text-muted">View complete profiles of all your team members</p>
+</div>
+
+<div class="premium-card">
+    @if (Model != null && Model.Any())
+    {
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+            @foreach (var member in Model)
+            {
+                <div class="premium-card" style="padding: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                        @if (!string.IsNullOrEmpty(member.profile_image))
+                        {
+                            <img src="@member.profile_image" alt="@member.full_name" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <div style="width: 70px; height: 70px; background: var(--color-primary-light); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1.5rem;">
+                                @(member.first_name?.Substring(0, 1).ToUpper() ?? "?")
+                            </div>
+                        }
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; font-size: 1.2rem; margin-bottom: 0.25rem;">@(member.full_name ?? $"{member.first_name} {member.last_name}")</div>
+                            <div style="font-size: 0.9rem; color: var(--color-text-secondary);">@member.email</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1rem; padding-top: 1rem; border-top: 1px solid var(--color-border);">
+                        @if (member.department != null)
+                        {
+                            <div style="margin-bottom: 0.75rem;">
+                                <span style="font-size: 0.85rem; color: var(--color-text-secondary); display: block; margin-bottom: 0.25rem;">Department</span>
+                                <span style="font-weight: 500; font-size: 0.95rem;">@member.department.department_name</span>
+                            </div>
+                        }
+                        @if (member.position != null)
+                        {
+                            <div style="margin-bottom: 0.75rem;">
+                                <span style="font-size: 0.85rem; color: var(--color-text-secondary); display: block; margin-bottom: 0.25rem;">Position</span>
+                                <span style="font-weight: 500; font-size: 0.95rem;">@member.position.position_title</span>
+                            </div>
+                        }
+                        @if (member.phone != null)
+                        {
+                            <div style="margin-bottom: 0.75rem;">
+                                <span style="font-size: 0.85rem; color: var(--color-text-secondary); display: block; margin-bottom: 0.25rem;">Phone</span>
+                                <span style="font-weight: 500; font-size: 0.95rem;">@member.phone</span>
+                            </div>
+                        }
+                        @if (member.contract != null)
+                        {
+                            <div style="margin-bottom: 0.75rem;">
+                                <span style="font-size: 0.85rem; color: var(--color-text-secondary); display: block; margin-bottom: 0.25rem;">Contract Type</span>
+                                <span style="font-weight: 500; font-size: 0.95rem;">@member.contract.type</span>
+                            </div>
+                        }
+                        @if (member.Employee_Role.Any())
+                        {
+                            <div style="margin-bottom: 0.75rem;">
+                                <span style="font-size: 0.85rem; color: var(--color-text-secondary); display: block; margin-bottom: 0.25rem;">Roles</span>
+                                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                    @foreach (var role in member.Employee_Role.Select(er => er.role))
+                                    {
+                                        <span style="background: var(--color-primary-light); color: white; padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.8rem;">
+                                            @role.role_name
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem;">
+                        <a asp-action="Details" asp-route-id="@member.employee_id" class="btn-premium btn-primary" style="flex: 1; text-align: center; padding: 0.6rem;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            View Full Profile
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div style="text-align: center; padding: 3rem;">
+            <p style="color: var(--color-text-secondary); margin-bottom: 1rem;">You don't have any team members assigned yet.</p>
+            <a asp-action="AssignToTeam" class="btn-premium btn-primary">
+                Assign Employee to Team
+            </a>
+        </div>
+    }
+</div>
+
+<div style="margin-top: 1.5rem;">
+    <a asp-action="MyTeam" class="btn-premium btn-secondary">
+        ← Back to My Team
+    </a>
+</div>
+

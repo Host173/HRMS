@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HRMS.Models;
 
-public class RegisterViewModel
+public class RegisterViewModel : IValidatableObject
 {
     [Required(ErrorMessage = "First name is required")]
     [Display(Name = "First Name")]
@@ -37,5 +37,23 @@ public class RegisterViewModel
     [Display(Name = "Confirm Password")]
     [Compare("Password", ErrorMessage = "Passwords do not match")]
     public string ConfirmPassword { get; set; } = string.Empty;
+
+    [Display(Name = "Role")]
+    public string? SelectedRole { get; set; }
+
+    public List<string>? AvailableRoles { get; set; }
+    
+    /// <summary>
+    /// Validates that role is selected
+    /// </summary>
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (string.IsNullOrEmpty(SelectedRole))
+        {
+            yield return new ValidationResult(
+                "Please select a role for your account.",
+                new[] { nameof(SelectedRole) });
+        }
+    }
 }
 

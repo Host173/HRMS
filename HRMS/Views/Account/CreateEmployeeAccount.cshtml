@@ -1,0 +1,82 @@
+@model HRMS.Models.RegisterViewModel
+@{
+    ViewData["Title"] = "Create Employee Account";
+}
+
+<div class="premium-card" style="max-width: 800px; margin: 0 auto;">
+    <div style="margin-bottom: 2rem;">
+        <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Create Employee Account</h2>
+        <p class="text-muted">Create a new employee account with role assignment.</p>
+    </div>
+
+    <form asp-action="CreateEmployeeAccount" asp-controller="Account" method="post">
+        <div asp-validation-summary="ModelOnly" style="color: var(--color-danger); margin-bottom: 1rem; font-size: 0.9rem;"></div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label asp-for="FirstName" class="form-label">First Name *</label>
+                <input asp-for="FirstName" class="form-control" placeholder="John" autocomplete="given-name" />
+                <span asp-validation-for="FirstName" style="color: var(--color-danger); font-size: 0.8rem; display: block; margin-top: 0.25rem;"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="LastName" class="form-label">Last Name *</label>
+                <input asp-for="LastName" class="form-control" placeholder="Doe" autocomplete="family-name" />
+                <span asp-validation-for="LastName" style="color: var(--color-danger); font-size: 0.8rem; display: block; margin-top: 0.25rem;"></span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Email" class="form-label">Email Address *</label>
+            <input asp-for="Email" class="form-control" type="email" placeholder="name@company.com" autocomplete="email" />
+            <span asp-validation-for="Email" style="color: var(--color-danger); font-size: 0.8rem; display: block; margin-top: 0.25rem;"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Phone" class="form-label">Phone Number *</label>
+            <input asp-for="Phone" class="form-control" type="tel" placeholder="+1 (555) 000-0000" autocomplete="tel" />
+            <span asp-validation-for="Phone" style="color: var(--color-danger); font-size: 0.8rem; display: block; margin-top: 0.25rem;"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Password" class="form-label">Password *</label>
+            <input asp-for="Password" class="form-control" type="password" placeholder="Create a strong password" autocomplete="new-password" />
+            <span asp-validation-for="Password" style="color: var(--color-danger); font-size: 0.8rem; display: block; margin-top: 0.25rem;"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="ConfirmPassword" class="form-label">Confirm Password *</label>
+            <input asp-for="ConfirmPassword" class="form-control" type="password" placeholder="Repeat your password" autocomplete="new-password" />
+            <span asp-validation-for="ConfirmPassword" style="color: var(--color-danger); font-size: 0.8rem; display: block; margin-top: 0.25rem;"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="SelectedRole" class="form-label">Role *</label>
+            <select asp-for="SelectedRole" class="form-control" required>
+                <option value="">Select a role</option>
+                @if (Model.AvailableRoles != null)
+                {
+                    @foreach (var role in Model.AvailableRoles)
+                    {
+                        <option value="@role">@role</option>
+                    }
+                }
+            </select>
+            <span asp-validation-for="SelectedRole" style="color: var(--color-danger); font-size: 0.8rem; display: block; margin-top: 0.25rem;"></span>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn-premium btn-primary">
+                Create Employee Account
+            </button>
+            <a asp-controller="Employee" asp-action="Index" class="btn-premium btn-secondary">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

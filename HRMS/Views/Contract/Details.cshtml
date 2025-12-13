@@ -1,0 +1,127 @@
+@model HRMS.Models.Contract
+@{
+    ViewData["Title"] = "Contract Details";
+    var isHRAdmin = ViewBag.IsHRAdmin as bool? ?? false;
+}
+
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+            <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Contract Details</h2>
+            <p class="text-muted">View contract information and details</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            @if (isHRAdmin)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.contract_id" class="btn-premium btn-primary">
+                    Edit Contract
+                </a>
+                @if (Model.current_state == "Active" && Model.end_date.HasValue)
+                {
+                    <a asp-action="Renew" asp-route-id="@Model.contract_id" class="btn-premium btn-secondary">
+                        Renew Contract
+                    </a>
+                }
+            }
+            <a asp-action="Index" class="btn-premium btn-secondary">
+                Back to List
+            </a>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+    <div class="premium-card">
+        <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border);">Contract Information</h3>
+        
+        <div style="display: grid; gap: 1.5rem;">
+            <div>
+                <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Contract Type</div>
+                <div style="font-weight: 600; font-size: 1.1rem;">@Model.type</div>
+            </div>
+
+            <div>
+                <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Status</div>
+                @{
+                    var statusColor = Model.current_state == "Active" ? "#15803d" : 
+                                     Model.current_state == "Expired" ? "#dc2626" : 
+                                     Model.current_state == "Terminated" ? "#dc2626" : "#64748b";
+                    var statusBg = Model.current_state == "Active" ? "rgba(34, 197, 94, 0.1)" : 
+                                  Model.current_state == "Expired" ? "rgba(239, 68, 68, 0.1)" : 
+                                  Model.current_state == "Terminated" ? "rgba(239, 68, 68, 0.1)" : "rgba(100, 116, 139, 0.1)";
+                }
+                <span style="background: @statusBg; color: @statusColor; padding: 0.5rem 1rem; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 500;">
+                    @Model.current_state
+                </span>
+            </div>
+
+            <div>
+                <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Start Date</div>
+                <div style="font-weight: 500;">@(Model.start_date?.ToString("MMMM dd, yyyy") ?? "N/A")</div>
+            </div>
+
+            <div>
+                <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">End Date</div>
+                <div style="font-weight: 500;">
+                    @if (Model.end_date.HasValue)
+                    {
+                        var daysRemaining = (Model.end_date.Value.ToDateTime(TimeOnly.MinValue) - DateTime.UtcNow).Days;
+                        <div>@Model.end_date.Value.ToString("MMMM dd, yyyy")</div>
+                        @if (daysRemaining > 0 && daysRemaining <= 30)
+                        {
+                            <div style="font-size: 0.85rem; color: #d97706; margin-top: 0.25rem;">
+                                @daysRemaining day(s) remaining
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <span style="color: var(--color-text-secondary);">No end date</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="premium-card">
+        <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border);">Employee Information</h3>
+        
+        @if (Model.Employee != null && Model.Employee.Any())
+        {
+            @foreach (var employee in Model.Employee)
+            {
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                    @if (!string.IsNullOrEmpty(employee.profile_image))
+                    {
+                        <img src="@employee.profile_image" alt="@employee.full_name" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <div style="width: 60px; height: 60px; background: var(--color-primary-light); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1.25rem;">
+                            @(employee.first_name?.Substring(0, 1).ToUpper() ?? "?")
+                        </div>
+                    }
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem;">@(employee.full_name ?? $"{employee.first_name} {employee.last_name}")</div>
+                        <div style="font-size: 0.85rem; color: var(--color-text-secondary);">@employee.email</div>
+                        @if (employee.phone != null)
+                        {
+                            <div style="font-size: 0.85rem; color: var(--color-text-secondary);">@employee.phone</div>
+                        }
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border);">
+                    <a asp-controller="Employee" asp-action="Details" asp-route-id="@employee.employee_id" class="btn-premium btn-secondary">
+                        View Employee Profile
+                    </a>
+                </div>
+            }
+        }
+        else
+        {
+            <p style="color: var(--color-text-secondary);">No employee assigned to this contract.</p>
+        }
+    </div>
+</div>
+

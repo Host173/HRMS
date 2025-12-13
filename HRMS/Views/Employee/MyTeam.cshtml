@@ -1,0 +1,180 @@
+@model IEnumerable<HRMS.Models.Employee>
+@{
+    ViewData["Title"] = "My Team";
+    var isManager = ViewBag.IsManager as bool? ?? false;
+    var teamType = ViewBag.TeamType as string ?? "My Team";
+    var manager = ViewBag.Manager as HRMS.Models.Employee;
+}
+
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+            <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">@teamType</h2>
+            <p class="text-muted">
+                @if (isManager)
+                {
+                    <text>View and manage your team members (direct reports)</text>
+                }
+                else if (manager != null)
+                {
+                    <text>View your team members who report to @manager.full_name</text>
+                }
+                else
+                {
+                    <text>View your team members</text>
+                }
+            </p>
+        </div>
+        @if (isManager)
+        {
+            <div style="display: flex; gap: 0.5rem;">
+                <a asp-action="AssignToTeam" class="btn-premium btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                        <line x1="23" y1="11" x2="17" y2="11"></line>
+                    </svg>
+                    Assign Employee to Team
+                </a>
+                <a asp-action="ViewTeamProfiles" class="btn-premium btn-secondary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    View Full Profiles
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@if (manager != null && !isManager)
+{
+    <div class="premium-card" style="margin-bottom: 1.5rem; background: rgba(59, 130, 246, 0.1); border: 1px solid #3b82f6;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <div>
+                <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Team Manager</div>
+                <div style="font-weight: 600; color: #3b82f6;">@manager.full_name</div>
+                @if (!string.IsNullOrEmpty(manager.email))
+                {
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary);">@manager.email</div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" style="background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; color: #22c55e; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #ef4444; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<div class="premium-card">
+    @if (Model != null && Model.Any())
+    {
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+            @foreach (var member in Model)
+            {
+                <div class="premium-card" style="padding: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                        @if (!string.IsNullOrEmpty(member.profile_image))
+                        {
+                            <img src="@member.profile_image" alt="@member.full_name" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <div style="width: 60px; height: 60px; background: var(--color-primary-light); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1.25rem;">
+                                @(member.first_name?.Substring(0, 1).ToUpper() ?? "?")
+                            </div>
+                        }
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem;">@(member.full_name ?? $"{member.first_name} {member.last_name}")</div>
+                            <div style="font-size: 0.85rem; color: var(--color-text-secondary);">@member.email</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1rem; padding-top: 1rem; border-top: 1px solid var(--color-border);">
+                        @if (member.department != null)
+                        {
+                            <div style="margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.85rem; color: var(--color-text-secondary);">Department:</span>
+                                <span style="font-weight: 500; margin-left: 0.5rem;">@member.department.department_name</span>
+                            </div>
+                        }
+                        @if (member.position != null)
+                        {
+                            <div style="margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.85rem; color: var(--color-text-secondary);">Position:</span>
+                                <span style="font-weight: 500; margin-left: 0.5rem;">@member.position.position_title</span>
+                            </div>
+                        }
+                        @if (member.phone != null)
+                        {
+                            <div>
+                                <span style="font-size: 0.85rem; color: var(--color-text-secondary);">Phone:</span>
+                                <span style="font-weight: 500; margin-left: 0.5rem;">@member.phone</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem;">
+                        <a asp-action="Details" asp-route-id="@member.employee_id" class="btn-premium btn-primary" style="flex: 1; text-align: center; padding: 0.5rem;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            View Full Profile
+                        </a>
+                        <form asp-action="RemoveFromTeam" method="post" style="display: inline;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="employeeId" value="@member.employee_id" />
+                            <button type="submit" class="btn-premium btn-secondary" style="padding: 0.5rem;" onclick="return confirm('Are you sure you want to remove this employee from your team?');">
+                                Remove
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div style="text-align: center; padding: 3rem;">
+            @if (isManager)
+            {
+                <p style="color: var(--color-text-secondary); margin-bottom: 1rem;">You don't have any team members assigned yet.</p>
+                <a asp-action="AssignToTeam" class="btn-premium btn-primary">
+                    Assign Employee to Team
+                </a>
+            }
+            else
+            {
+                <p style="color: var(--color-text-secondary); margin-bottom: 1rem;">
+                    @if (manager != null)
+                    {
+                        <text>No other team members found under @manager.full_name.</text>
+                    }
+                    else
+                    {
+                        <text>You are not assigned to a manager, so you don't have team members to view.</text>
+                    }
+                </p>
+            }
+        </div>
+    }
+</div>
+

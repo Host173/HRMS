@@ -1,0 +1,221 @@
+@model IEnumerable<HRMS.Models.Contract>
+@{
+    ViewData["Title"] = "Contracts";
+    var activeContracts = ViewBag.ActiveContracts as IEnumerable<HRMS.Models.Contract> ?? new List<HRMS.Models.Contract>();
+    var expiringContracts = ViewBag.ExpiringContracts as IEnumerable<HRMS.Models.Contract> ?? new List<HRMS.Models.Contract>();
+    var expiredContracts = ViewBag.ExpiredContracts as IEnumerable<HRMS.Models.Contract> ?? new List<HRMS.Models.Contract>();
+    var isHRAdmin = ViewBag.IsHRAdmin as bool? ?? false;
+    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+}
+
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+            <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Contracts</h2>
+            <p class="text-muted">View and manage employment contracts</p>
+        </div>
+        @if (isHRAdmin)
+        {
+            <a asp-action="Create" class="btn-premium btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Create Contract
+            </a>
+        }
+    </div>
+</div>
+
+@if (expiredContracts.Any() && isHRAdmin)
+{
+    <div class="premium-card" style="background: rgba(220, 38, 38, 0.1); border: 1px solid #dc2626; margin-bottom: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <h3 style="font-size: 1.1rem; color: #dc2626; margin: 0;">Expired Contracts (@expiredContracts.Count())</h3>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+            @foreach (var contract in expiredContracts)
+            {
+                <div style="background: white; padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--color-border);">
+                    <div style="font-weight: 600; margin-bottom: 0.5rem;">@contract.type</div>
+                    @if (contract.Employee.Any())
+                    {
+                        <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.5rem;">
+                            @contract.Employee.First().full_name
+                        </div>
+                    }
+                    <div style="font-size: 0.85rem; color: #dc2626; font-weight: 600;">
+                        Expired: @contract.end_date?.ToString("MMM dd, yyyy")
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--color-text-secondary); margin-top: 0.25rem;">
+                        @{
+                            var daysExpired = (today.ToDateTime(TimeOnly.MinValue) - contract.end_date.Value.ToDateTime(TimeOnly.MinValue)).Days;
+                        }
+                        @daysExpired day(s) ago
+                    </div>
+                    <a asp-action="Details" asp-route-id="@contract.contract_id" style="font-size: 0.85rem; margin-top: 0.5rem; display: inline-block;">View Details →</a>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@if (expiringContracts.Any() && isHRAdmin)
+{
+    <div class="premium-card" style="background: rgba(217, 119, 6, 0.1); border: 1px solid #d97706; margin-bottom: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            <h3 style="font-size: 1.1rem; color: #d97706; margin: 0;">Contracts Expiring Soon (@expiringContracts.Count())</h3>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+            @foreach (var contract in expiringContracts)
+            {
+                <div style="background: white; padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--color-border);">
+                    <div style="font-weight: 600; margin-bottom: 0.5rem;">@contract.type</div>
+                    @if (contract.Employee.Any())
+                    {
+                        <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.5rem;">
+                            @contract.Employee.First().full_name
+                        </div>
+                    }
+                    <div style="font-size: 0.85rem; color: #d97706; font-weight: 500;">
+                        Expires: @contract.end_date?.ToString("MMM dd, yyyy")
+                    </div>
+                    <a asp-action="Details" asp-route-id="@contract.contract_id" style="font-size: 0.85rem; margin-top: 0.5rem; display: inline-block;">View Details →</a>
+                </div>
+            }
+        </div>
+        <div style="margin-top: 1rem;">
+            <a asp-action="ExpiringSoon" class="btn-premium btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                View All Expiring Contracts
+            </a>
+        </div>
+    </div>
+}
+
+<div class="premium-card">
+    @if (Model != null && Model.Any())
+    {
+        <div style="overflow-x: auto;">
+            <table class="table-premium">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Employee</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var contract in Model)
+                    {
+                        var isExpiring = contract.end_date.HasValue && 
+                                       contract.end_date.Value >= today && 
+                                       contract.end_date.Value <= today.AddDays(30);
+                        var isExpired = contract.end_date.HasValue && 
+                                      contract.end_date.Value < today &&
+                                      (contract.current_state == "Active" || contract.current_state == null || contract.current_state == "Draft");
+                        
+                        <tr style="@(isExpired ? "background: rgba(220, 38, 38, 0.05);" : "")">
+                            <td>
+                                <span style="font-weight: 500;">@contract.type</span>
+                            </td>
+                            <td>
+                                @if (contract.Employee.Any())
+                                {
+                                    <div>@contract.Employee.First().full_name</div>
+                                    <div style="font-size: 0.85rem; color: var(--color-text-secondary);">@contract.Employee.First().email</div>
+                                }
+                                else
+                                {
+                                    <span style="color: var(--color-text-secondary);">No employee assigned</span>
+                                }
+                            </td>
+                            <td>@(contract.start_date?.ToString("MMM dd, yyyy") ?? "N/A")</td>
+                            <td>
+                                @if (contract.end_date.HasValue)
+                                {
+                                    if (isExpired)
+                                    {
+                                        <div>
+                                            <span style="color: #dc2626; font-weight: 600;">@contract.end_date.Value.ToString("MMM dd, yyyy")</span>
+                                            <div style="font-size: 0.75rem; color: #dc2626; margin-top: 0.25rem;">
+                                                @{
+                                                    var daysExpired = (today.ToDateTime(TimeOnly.MinValue) - contract.end_date.Value.ToDateTime(TimeOnly.MinValue)).Days;
+                                                }
+                                                Expired @daysExpired day(s) ago
+                                            </div>
+                                        </div>
+                                    }
+                                    else if (isExpiring)
+                                    {
+                                        <span style="color: #d97706; font-weight: 500;">@contract.end_date.Value.ToString("MMM dd, yyyy")</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@contract.end_date.Value.ToString("MMM dd, yyyy")</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span style="color: var(--color-text-secondary);">No end date</span>
+                                }
+                            </td>
+                            <td>
+                                @{
+                                    var displayStatus = isExpired ? "Expired" : contract.current_state;
+                                    var statusColor = displayStatus == "Active" ? "#15803d" : 
+                                                     displayStatus == "Expired" ? "#dc2626" : 
+                                                     displayStatus == "Terminated" ? "#dc2626" : "#64748b";
+                                    var statusBg = displayStatus == "Active" ? "rgba(34, 197, 94, 0.1)" : 
+                                                  displayStatus == "Expired" ? "rgba(239, 68, 68, 0.1)" : 
+                                                  displayStatus == "Terminated" ? "rgba(239, 68, 68, 0.1)" : "rgba(100, 116, 139, 0.1)";
+                                }
+                                <span style="background: @statusBg; color: @statusColor; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500;">
+                                    @displayStatus
+                                </span>
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <a asp-action="Details" asp-route-id="@contract.contract_id" class="btn-premium btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                                        View
+                                    </a>
+                                    @if (isHRAdmin)
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@contract.contract_id" class="btn-premium btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                                            Edit
+                                        </a>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div style="text-align: center; padding: 3rem;">
+            <p style="color: var(--color-text-secondary); margin-bottom: 1rem;">No contracts found.</p>
+            @if (isHRAdmin)
+            {
+                <a asp-action="Create" class="btn-premium btn-primary">
+                    Create First Contract
+                </a>
+            }
+        </div>
+    }
+</div>
+

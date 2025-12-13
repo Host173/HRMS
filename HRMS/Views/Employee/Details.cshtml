@@ -1,0 +1,202 @@
+@model HRMS.Models.Employee
+@{
+    ViewData["Title"] = "Employee Profile";
+    var canEdit = ViewBag.CanEdit as bool? ?? false;
+    var isHRAdmin = ViewBag.IsHRAdmin as bool? ?? false;
+    var isSystemAdmin = ViewBag.IsSystemAdmin as bool? ?? false;
+}
+
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+            <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Employee Profile</h2>
+            <p class="text-muted">View employee details and information</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            @if (canEdit)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.employee_id" class="btn-premium btn-primary">
+                    Edit Profile
+                </a>
+            }
+            <a asp-controller="Employee" asp-action="Index" class="btn-premium btn-secondary">
+                Back to List
+            </a>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 300px 1fr; gap: 2rem;">
+    <!-- Profile Card -->
+    <div class="premium-card" style="height: fit-content;">
+        <div style="text-align: center; padding-bottom: 1.5rem; border-bottom: 1px solid var(--color-border);">
+            @if (!string.IsNullOrEmpty(Model.profile_image))
+            {
+                <img src="@Model.profile_image" alt="@Model.full_name" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-bottom: 1rem; border: 3px solid var(--color-primary-light);" />
+            }
+            else
+            {
+                <div style="width: 120px; height: 120px; background: var(--color-primary-light); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 2rem; margin: 0 auto 1rem;">
+                    @(Model.first_name?.Substring(0, 1).ToUpper() ?? "?")
+                </div>
+            }
+            <h3 style="font-size: 1.25rem; margin-bottom: 0.25rem;">@(Model.full_name ?? $"{Model.first_name} {Model.last_name}")</h3>
+            <p style="color: var(--color-text-secondary); font-size: 0.9rem;">@Model.email</p>
+            @if (Model.profile_completion.HasValue)
+            {
+                <div style="margin-top: 1rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.85rem; color: var(--color-text-secondary);">Profile Completion</span>
+                        <span style="font-size: 0.85rem; font-weight: 600;">@Model.profile_completion%</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: var(--color-border); border-radius: var(--radius-sm); overflow: hidden;">
+                        <div style="width: @Model.profile_completion%; height: 100%; background: var(--color-primary); transition: width 0.3s;"></div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div style="padding-top: 1.5rem;">
+            <div style="margin-bottom: 1rem;">
+                <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Status</div>
+                @if (Model.is_active == true)
+                {
+                    <span style="background: rgba(34, 197, 94, 0.1); color: #15803d; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500;">
+                        Active
+                    </span>
+                }
+                else
+                {
+                    <span style="background: rgba(239, 68, 68, 0.1); color: #dc2626; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500;">
+                        Inactive
+                    </span>
+                }
+            </div>
+
+            @if (Model.department != null)
+            {
+                <div style="margin-bottom: 1rem;">
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Department</div>
+                    <div style="font-weight: 500;">@Model.department.department_name</div>
+                </div>
+            }
+
+            @if (Model.position != null)
+            {
+                <div style="margin-bottom: 1rem;">
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Position</div>
+                    <div style="font-weight: 500;">@Model.position.position_title</div>
+                </div>
+            }
+
+            @if (Model.manager != null)
+            {
+                <div style="margin-bottom: 1rem;">
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Manager</div>
+                    <div style="font-weight: 500;">@Model.manager.full_name</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Details Card -->
+    <div>
+        <div class="premium-card" style="margin-bottom: 1.5rem;">
+            <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border);">Personal Information</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">First Name</div>
+                    <div style="font-weight: 500;">@(Model.first_name ?? "N/A")</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Last Name</div>
+                    <div style="font-weight: 500;">@(Model.last_name ?? "N/A")</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Email</div>
+                    <div style="font-weight: 500;">@Model.email</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Phone</div>
+                    <div style="font-weight: 500;">@(Model.phone ?? "N/A")</div>
+                </div>
+                @if (Model.date_of_birth.HasValue)
+                {
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Date of Birth</div>
+                        <div style="font-weight: 500;">@Model.date_of_birth.Value.ToString("MMMM dd, yyyy")</div>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.national_id))
+                {
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">National ID</div>
+                        <div style="font-weight: 500;">@Model.national_id</div>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.address))
+                {
+                    <div style="grid-column: 1 / -1;">
+                        <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Address</div>
+                        <div style="font-weight: 500;">@Model.address</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="premium-card" style="margin-bottom: 1.5rem;">
+            <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border);">Emergency Contact</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Contact Name</div>
+                    <div style="font-weight: 500;">@(Model.emergency_contact_name ?? "N/A")</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Contact Phone</div>
+                    <div style="font-weight: 500;">@(Model.emergency_contact_phone ?? "N/A")</div>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.relationship))
+                {
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Relationship</div>
+                        <div style="font-weight: 500;">@Model.relationship</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (isSystemAdmin && Model.Employee_Role != null && Model.Employee_Role.Any())
+        {
+            <div class="premium-card">
+                <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border);">System Roles</h3>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+                    @foreach (var employeeRole in Model.Employee_Role)
+                    {
+                        <div style="display: flex; align-items: center; gap: 0.5rem; background: var(--color-primary-light); color: white; padding: 0.5rem 1rem; border-radius: var(--radius-md);">
+                            <span>@employeeRole.role.role_name</span>
+                            <form asp-action="RemoveRole" method="post" style="display: inline; margin: 0;">
+                                <input type="hidden" name="employeeId" value="@Model.employee_id" />
+                                <input type="hidden" name="roleName" value="@employeeRole.role.role_name" />
+                                <button type="submit" style="background: none; border: none; color: white; cursor: pointer; padding: 0; margin-left: 0.5rem;" onclick="return confirm('Remove this role?')">
+                                    ×
+                                </button>
+                            </form>
+                        </div>
+                    }
+                </div>
+                <form asp-action="AssignRole" method="post" style="display: flex; gap: 0.5rem;">
+                    <input type="hidden" name="employeeId" value="@Model.employee_id" />
+                    <select name="roleName" class="form-control" style="flex: 1;">
+                        <option value="">Select a role to assign</option>
+                        <option value="System Administrator">System Administrator</option>
+                        <option value="HR Administrator">HR Administrator</option>
+                        <option value="Line Manager">Line Manager</option>
+                        <option value="Employee">Employee</option>
+                    </select>
+                    <button type="submit" class="btn-premium btn-primary">Assign Role</button>
+                </form>
+            </div>
+        }
+    </div>
+</div>
+

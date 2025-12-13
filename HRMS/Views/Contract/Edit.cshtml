@@ -1,0 +1,97 @@
+@model HRMS.Models.Contract
+@{
+    ViewData["Title"] = "Edit Contract";
+}
+
+<div style="margin-bottom: 2rem;">
+    <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Edit Contract</h2>
+    <p class="text-muted">Update contract information and details</p>
+</div>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="contract_id" />
+    <div asp-validation-summary="ModelOnly" style="color: var(--color-danger); margin-bottom: 1rem;"></div>
+    
+    <div class="premium-card" style="margin-bottom: 1.5rem;">
+        <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border);">Contract Details</h3>
+        
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label asp-for="type" class="form-label">Contract Type *</label>
+            <select asp-for="type" class="form-control" required>
+                @if (ViewBag.ContractTypes != null)
+                {
+                    @foreach (var type in ViewBag.ContractTypes as IEnumerable<string>)
+                    {
+                        <option value="@type" selected="@(Model.type == type)">@type</option>
+                    }
+                }
+            </select>
+            <span asp-validation-for="type" style="color: var(--color-danger); font-size: 0.8rem;"></span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label asp-for="start_date" class="form-label">Start Date *</label>
+                <input asp-for="start_date" type="date" class="form-control" required />
+                <span asp-validation-for="start_date" style="color: var(--color-danger); font-size: 0.8rem;"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="end_date" class="form-label">End Date</label>
+                <input asp-for="end_date" type="date" class="form-control" />
+                <span asp-validation-for="end_date" style="color: var(--color-danger); font-size: 0.8rem;"></span>
+                <small style="color: var(--color-text-secondary); font-size: 0.8rem;">Leave empty for indefinite contract</small>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="current_state" class="form-label">Status *</label>
+            <select asp-for="current_state" class="form-control" required>
+                @if (ViewBag.ContractStates != null)
+                {
+                    @foreach (var state in ViewBag.ContractStates as IEnumerable<string>)
+                    {
+                        <option value="@state" selected="@(Model.current_state == state)">@state</option>
+                    }
+                }
+            </select>
+            <span asp-validation-for="current_state" style="color: var(--color-danger); font-size: 0.8rem;"></span>
+        </div>
+    </div>
+
+    @if (Model.Employee != null && Model.Employee.Any())
+    {
+        <div class="premium-card" style="margin-bottom: 1.5rem; background: rgba(59, 130, 246, 0.05);">
+            <h3 style="font-size: 1.1rem; margin-bottom: 1rem;">Assigned Employee</h3>
+            @foreach (var employee in Model.Employee)
+            {
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    @if (!string.IsNullOrEmpty(employee.profile_image))
+                    {
+                        <img src="@employee.profile_image" alt="@employee.full_name" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <div style="width: 50px; height: 50px; background: var(--color-primary-light); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                            @(employee.first_name?.Substring(0, 1).ToUpper() ?? "?")
+                        </div>
+                    }
+                    <div>
+                        <div style="font-weight: 600;">@(employee.full_name ?? $"{employee.first_name} {employee.last_name}")</div>
+                        <div style="font-size: 0.85rem; color: var(--color-text-secondary);">@employee.email</div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <div style="display: flex; gap: 1rem;">
+        <button type="submit" class="btn-premium btn-primary">Save Changes</button>
+        <a asp-action="Details" asp-route-id="@Model.contract_id" class="btn-premium btn-secondary">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

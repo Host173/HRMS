@@ -139,8 +139,17 @@ public partial class HrmsDbContext : DbContext
     public virtual DbSet<Verification> Verification { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=KAREEM\\SQLEXPRESS;Database=HRMS;Trusted_Connection=True;TrustServerCertificate=True;");
+    {
+        // Connection string is configured via dependency injection in Program.cs
+        // This method is only called if DbContext is created without options
+        // In normal operation, the connection string from appsettings.json is used
+        if (!optionsBuilder.IsConfigured)
+        {
+            // Fallback connection string - should not be used in production
+            // The actual connection string should come from configuration
+            optionsBuilder.UseSqlServer("Server=localhost\\SQLEXPRESS;Database=HRMS;Trusted_Connection=True;TrustServerCertificate=True;");
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -14,5 +14,6 @@ public interface INotificationService
     Task<bool> MarkAsReadAsync(int notificationId, int employeeId);
     Task<bool> MarkAllAsReadAsync(int employeeId);
     Task<bool> ExistsAsync(int notificationId);
+    Task<Notification> CreateNotificationAsync(int employeeId, string title, string message, string notificationType = "General", string urgency = "Normal");
 }
 

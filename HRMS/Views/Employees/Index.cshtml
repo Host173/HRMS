@@ -1,0 +1,197 @@
+﻿@model IEnumerable<HRMS.Models.Employee>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.first_name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.last_name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.full_name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.national_id)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.date_of_birth)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.country_of_birth)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.phone)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.email)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.address)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.emergency_contact_name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.emergency_contact_phone)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.relationship)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.biography)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.profile_image)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.employment_progress)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.account_status)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.employment_status)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.hire_date)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.is_active)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.profile_completion)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.password_hash)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.contract)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.department)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.manager)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.pay_grade)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.position)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.salary_type)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.tax_form)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.first_name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.last_name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.full_name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.national_id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.date_of_birth)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.country_of_birth)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.phone)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.email)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.address)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.emergency_contact_name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.emergency_contact_phone)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.relationship)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.biography)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.profile_image)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.employment_progress)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.account_status)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.employment_status)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.hire_date)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.is_active)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.profile_completion)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.password_hash)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.contract.contract_id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.department.department_id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.manager.employee_id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.pay_grade.pay_grade_id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.position.position_id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.salary_type.salary_type_id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.tax_form.tax_form_id)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.employee_id">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.employee_id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.employee_id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
