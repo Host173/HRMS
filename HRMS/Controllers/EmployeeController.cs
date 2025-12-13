@@ -141,9 +141,21 @@ public class EmployeeController : Controller
         // Load related data for dropdowns
         ViewBag.Departments = await _context.Department.ToListAsync();
         ViewBag.Positions = await _context.Position.ToListAsync();
-        ViewBag.Managers = await _context.Employee
-            .Where(e => e.is_active == true && e.employee_id != id)
-            .ToListAsync();
+        
+        // Get potential managers - HR Admins can assign anyone, others should only see assignable employees
+        if (isHRAdmin)
+        {
+            // HR Admins can assign any active employee as manager
+            ViewBag.Managers = await _context.Employee
+                .Where(e => e.is_active == true && e.employee_id != id)
+                .ToListAsync();
+        }
+        else
+        {
+            // Non-HR users should only see employees who can be managed (excluding Managers, HR Admins, and System Admins)
+            ViewBag.Managers = await AuthorizationHelper.GetAssignableEmployeesAsync(_context, id);
+        }
+        
         ViewBag.Roles = await _context.Role.ToListAsync();
         ViewBag.IsHRAdmin = isHRAdmin;
         ViewBag.IsSystemAdmin = await AuthorizationHelper.IsSystemAdminAsync(_context, currentEmployeeId.Value);
@@ -227,6 +239,7 @@ public class EmployeeController : Controller
         else
         {
             // Employees can only update personal details and emergency contacts
+            // Non-HR users cannot change manager_id
             existingEmployee.first_name = employee.first_name;
             existingEmployee.last_name = employee.last_name;
             existingEmployee.full_name = $"{employee.first_name} {employee.last_name}".Trim();
@@ -257,9 +270,21 @@ public class EmployeeController : Controller
             // Reload related data
             ViewBag.Departments = await _context.Department.ToListAsync();
             ViewBag.Positions = await _context.Position.ToListAsync();
-            ViewBag.Managers = await _context.Employee
-                .Where(e => e.is_active == true && e.employee_id != id)
-                .ToListAsync();
+            
+            // Get potential managers - HR Admins can assign anyone, others should only see assignable employees
+            if (isHRAdmin)
+            {
+                // HR Admins can assign any active employee as manager
+                ViewBag.Managers = await _context.Employee
+                    .Where(e => e.is_active == true && e.employee_id != id)
+                    .ToListAsync();
+            }
+            else
+            {
+                // Non-HR users should only see employees who can be managed (excluding Managers, HR Admins, and System Admins)
+                ViewBag.Managers = await AuthorizationHelper.GetAssignableEmployeesAsync(_context, id);
+            }
+            
             ViewBag.Roles = await _context.Role.ToListAsync();
             ViewBag.IsHRAdmin = isHRAdmin;
             ViewBag.IsSystemAdmin = await AuthorizationHelper.IsSystemAdminAsync(_context, currentEmployeeId.Value);
@@ -415,15 +440,15 @@ public class EmployeeController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        // Get employees that are not already assigned to this manager and are active
-        var availableEmployees = await _context.Employee
-            .Include(e => e.department)
-            .Include(e => e.position)
-            .Where(e => e.is_active == true && 
-                   e.employee_id != currentEmployeeId.Value &&
-                   (e.manager_id == null || e.manager_id != currentEmployeeId.Value))
+        // Get employees that can be assigned to this manager
+        // Line Managers can only assign employees without Manager, HR Admin, or System Admin roles
+        var assignableEmployees = await AuthorizationHelper.GetAssignableEmployeesAsync(_context, currentEmployeeId.Value);
+        
+        // Filter to only show employees not already assigned to this manager
+        var availableEmployees = assignableEmployees
+            .Where(e => e.manager_id == null || e.manager_id != currentEmployeeId.Value)
             .OrderBy(e => e.full_name)
-            .ToListAsync();
+            .ToList();
 
         // Get current team members
         var currentTeam = await _context.Employee
@@ -456,6 +481,17 @@ public class EmployeeController : Controller
         if (employee == null)
         {
             TempData["ErrorMessage"] = "Employee not found.";
+            return RedirectToAction(nameof(AssignToTeam));
+        }
+
+        // Check if the employee can be managed by a Line Manager
+        // Line Managers cannot assign employees with Manager, HR Admin, or System Admin roles
+        var canBeManaged = await AuthorizationHelper.CanBeManagedByLineManagerAsync(_context, employeeId);
+        if (!canBeManaged)
+        {
+            _logger.LogWarning("Manager {ManagerId} attempted to assign employee {EmployeeId} who has Manager, HR Admin, or System Admin role", 
+                currentEmployeeId.Value, employeeId);
+            TempData["ErrorMessage"] = "You cannot assign employees with Manager, HR Admin, or System Admin roles. Only HR Admins can manage such assignments.";
             return RedirectToAction(nameof(AssignToTeam));
         }
 

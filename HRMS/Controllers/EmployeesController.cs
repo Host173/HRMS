@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using HRMS.Data;
 using HRMS.Models;
+using HRMS.Helpers;
 
 namespace HRMS.Controllers
 {
@@ -52,11 +53,32 @@ namespace HRMS.Controllers
         }
 
         // GET: Employees/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
+            var currentEmployeeId = AuthorizationHelper.GetCurrentEmployeeId(User);
+            bool isHRAdmin = false;
+            
+            if (currentEmployeeId.HasValue)
+            {
+                isHRAdmin = await AuthorizationHelper.IsHRAdminAsync(_context, currentEmployeeId.Value);
+            }
+            
             ViewData["contract_id"] = new SelectList(_context.Contract, "contract_id", "contract_id");
             ViewData["department_id"] = new SelectList(_context.Department, "department_id", "department_id");
-            ViewData["manager_id"] = new SelectList(_context.Employee, "employee_id", "employee_id");
+            
+            // Filter manager list based on role
+            if (isHRAdmin)
+            {
+                // HR Admins can assign any employee as manager
+                ViewData["manager_id"] = new SelectList(await _context.Employee.Where(e => e.is_active == true).ToListAsync(), "employee_id", "full_name");
+            }
+            else
+            {
+                // Non-HR users should only see employees who can be managed (excluding Managers, HR Admins, and System Admins)
+                var assignableEmployees = await AuthorizationHelper.GetAssignableEmployeesAsync(_context, null);
+                ViewData["manager_id"] = new SelectList(assignableEmployees, "employee_id", "full_name");
+            }
+            
             ViewData["pay_grade_id"] = new SelectList(_context.PayGrade, "pay_grade_id", "pay_grade_id");
             ViewData["position_id"] = new SelectList(_context.Position, "position_id", "position_id");
             ViewData["salary_type_id"] = new SelectList(_context.SalaryType, "salary_type_id", "salary_type_id");
@@ -71,15 +93,45 @@ namespace HRMS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("employee_id,first_name,last_name,full_name,national_id,date_of_birth,country_of_birth,phone,email,address,emergency_contact_name,emergency_contact_phone,relationship,biography,profile_image,employment_progress,account_status,employment_status,hire_date,is_active,profile_completion,department_id,position_id,manager_id,contract_id,tax_form_id,salary_type_id,pay_grade_id,password_hash")] Employee employee)
         {
+            var currentEmployeeId = AuthorizationHelper.GetCurrentEmployeeId(User);
+            bool isHRAdmin = false;
+            
+            if (currentEmployeeId.HasValue)
+            {
+                isHRAdmin = await AuthorizationHelper.IsHRAdminAsync(_context, currentEmployeeId.Value);
+            }
+            
+            // Validate manager assignment if manager_id is provided
+            if (!isHRAdmin && employee.manager_id.HasValue)
+            {
+                var canBeManaged = await AuthorizationHelper.CanBeManagedByLineManagerAsync(_context, employee.manager_id.Value);
+                if (!canBeManaged)
+                {
+                    ModelState.AddModelError("manager_id", "You cannot assign employees with Manager, HR Admin, or System Admin roles. Only HR Admins can manage such assignments.");
+                }
+            }
+            
             if (ModelState.IsValid)
             {
                 _context.Add(employee);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+            
             ViewData["contract_id"] = new SelectList(_context.Contract, "contract_id", "contract_id", employee.contract_id);
             ViewData["department_id"] = new SelectList(_context.Department, "department_id", "department_id", employee.department_id);
-            ViewData["manager_id"] = new SelectList(_context.Employee, "employee_id", "employee_id", employee.manager_id);
+            
+            // Filter manager list based on role
+            if (isHRAdmin)
+            {
+                ViewData["manager_id"] = new SelectList(await _context.Employee.Where(e => e.is_active == true).ToListAsync(), "employee_id", "full_name", employee.manager_id);
+            }
+            else
+            {
+                var assignableEmployees = await AuthorizationHelper.GetAssignableEmployeesAsync(_context, null);
+                ViewData["manager_id"] = new SelectList(assignableEmployees, "employee_id", "full_name", employee.manager_id);
+            }
+            
             ViewData["pay_grade_id"] = new SelectList(_context.PayGrade, "pay_grade_id", "pay_grade_id", employee.pay_grade_id);
             ViewData["position_id"] = new SelectList(_context.Position, "position_id", "position_id", employee.position_id);
             ViewData["salary_type_id"] = new SelectList(_context.SalaryType, "salary_type_id", "salary_type_id", employee.salary_type_id);
@@ -100,9 +152,31 @@ namespace HRMS.Controllers
             {
                 return NotFound();
             }
+            
+            var currentEmployeeId = AuthorizationHelper.GetCurrentEmployeeId(User);
+            bool isHRAdmin = false;
+            
+            if (currentEmployeeId.HasValue)
+            {
+                isHRAdmin = await AuthorizationHelper.IsHRAdminAsync(_context, currentEmployeeId.Value);
+            }
+            
             ViewData["contract_id"] = new SelectList(_context.Contract, "contract_id", "contract_id", employee.contract_id);
             ViewData["department_id"] = new SelectList(_context.Department, "department_id", "department_id", employee.department_id);
-            ViewData["manager_id"] = new SelectList(_context.Employee, "employee_id", "employee_id", employee.manager_id);
+            
+            // Filter manager list based on role
+            if (isHRAdmin)
+            {
+                // HR Admins can assign any employee as manager (excluding self)
+                ViewData["manager_id"] = new SelectList(await _context.Employee.Where(e => e.is_active == true && e.employee_id != id).ToListAsync(), "employee_id", "full_name", employee.manager_id);
+            }
+            else
+            {
+                // Non-HR users should only see employees who can be managed (excluding Managers and HR Admins)
+                var assignableEmployees = await AuthorizationHelper.GetAssignableEmployeesAsync(_context, id);
+                ViewData["manager_id"] = new SelectList(assignableEmployees, "employee_id", "full_name", employee.manager_id);
+            }
+            
             ViewData["pay_grade_id"] = new SelectList(_context.PayGrade, "pay_grade_id", "pay_grade_id", employee.pay_grade_id);
             ViewData["position_id"] = new SelectList(_context.Position, "position_id", "position_id", employee.position_id);
             ViewData["salary_type_id"] = new SelectList(_context.SalaryType, "salary_type_id", "salary_type_id", employee.salary_type_id);
@@ -120,6 +194,24 @@ namespace HRMS.Controllers
             if (id != employee.employee_id)
             {
                 return NotFound();
+            }
+
+            var currentEmployeeId = AuthorizationHelper.GetCurrentEmployeeId(User);
+            bool isHRAdmin = false;
+            
+            if (currentEmployeeId.HasValue)
+            {
+                isHRAdmin = await AuthorizationHelper.IsHRAdminAsync(_context, currentEmployeeId.Value);
+            }
+            
+            // Validate manager assignment if manager_id is provided
+            if (!isHRAdmin && employee.manager_id.HasValue)
+            {
+                var canBeManaged = await AuthorizationHelper.CanBeManagedByLineManagerAsync(_context, employee.manager_id.Value);
+                if (!canBeManaged)
+                {
+                    ModelState.AddModelError("manager_id", "You cannot assign employees with Manager, HR Admin, or System Admin roles. Only HR Admins can manage such assignments.");
+                }
             }
 
             if (ModelState.IsValid)
@@ -142,9 +234,21 @@ namespace HRMS.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+            
             ViewData["contract_id"] = new SelectList(_context.Contract, "contract_id", "contract_id", employee.contract_id);
             ViewData["department_id"] = new SelectList(_context.Department, "department_id", "department_id", employee.department_id);
-            ViewData["manager_id"] = new SelectList(_context.Employee, "employee_id", "employee_id", employee.manager_id);
+            
+            // Filter manager list based on role
+            if (isHRAdmin)
+            {
+                ViewData["manager_id"] = new SelectList(await _context.Employee.Where(e => e.is_active == true && e.employee_id != id).ToListAsync(), "employee_id", "full_name", employee.manager_id);
+            }
+            else
+            {
+                var assignableEmployees = await AuthorizationHelper.GetAssignableEmployeesAsync(_context, id);
+                ViewData["manager_id"] = new SelectList(assignableEmployees, "employee_id", "full_name", employee.manager_id);
+            }
+            
             ViewData["pay_grade_id"] = new SelectList(_context.PayGrade, "pay_grade_id", "pay_grade_id", employee.pay_grade_id);
             ViewData["position_id"] = new SelectList(_context.Position, "position_id", "position_id", employee.position_id);
             ViewData["salary_type_id"] = new SelectList(_context.SalaryType, "salary_type_id", "salary_type_id", employee.salary_type_id);
