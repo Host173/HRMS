@@ -1,0 +1,141 @@
+@model HRMS.Models.Mission
+@{
+    ViewData["Title"] = "Assign Mission";
+}
+
+<div style="margin-bottom: 2rem;">
+    <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Assign Mission</h2>
+    <p class="text-muted">Create and assign a new mission to an employee</p>
+</div>
+
+<!-- Success/Error Messages -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="premium-card" style="background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; margin-bottom: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; color: #22c55e;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <span style="font-weight: 500;">@TempData["SuccessMessage"]</span>
+        </div>
+    </div>
+}
+
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" style="color: var(--color-danger); margin-bottom: 1rem; font-size: 0.9rem;"></div>
+    
+    <div class="premium-card" style="margin-bottom: 1.5rem;">
+        <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border);">Mission Details</h3>
+        
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label">Employee *</label>
+            <select name="employeeId" class="form-control" required>
+                <option value="">Select an employee</option>
+                @if (ViewBag.Employees != null)
+                {
+                    @foreach (var employee in ViewBag.Employees as IEnumerable<dynamic>)
+                    {
+                        <option value="@employee.employee_id">
+                            @employee.full_name (@employee.email)
+                        </option>
+                    }
+                }
+            </select>
+            <span style="color: var(--color-danger); font-size: 0.8rem;">
+                @Html.ValidationMessage("employeeId")
+            </span>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label">Manager</label>
+            <select name="managerId" class="form-control">
+                <option value="">Select a manager (optional)</option>
+                @if (ViewBag.Managers != null)
+                {
+                    @foreach (var manager in ViewBag.Managers as IEnumerable<dynamic>)
+                    {
+                        <option value="@manager.employee_id">
+                            @manager.full_name (@manager.email)
+                        </option>
+                    }
+                }
+            </select>
+            <small style="color: var(--color-text-secondary); font-size: 0.8rem; display: block; margin-top: 0.25rem;">
+                Select the manager who will approve this mission. If not selected, the mission will not require manager approval.
+            </small>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label asp-for="destination" class="form-label">Destination *</label>
+            <input asp-for="destination" class="form-control" type="text" placeholder="e.g., New York, USA" required />
+            <span asp-validation-for="destination" style="color: var(--color-danger); font-size: 0.8rem;"></span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label asp-for="start_date" class="form-label">Start Date *</label>
+                <input asp-for="start_date" type="date" class="form-control" required />
+                <span asp-validation-for="start_date" style="color: var(--color-danger); font-size: 0.8rem;"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="end_date" class="form-label">End Date</label>
+                <input asp-for="end_date" type="date" class="form-control" />
+                <span asp-validation-for="end_date" style="color: var(--color-danger); font-size: 0.8rem;"></span>
+                <small style="color: var(--color-text-secondary); font-size: 0.8rem; display: block; margin-top: 0.25rem;">
+                    End date must be on or after start date
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 1rem;">
+        <button type="submit" class="btn-premium btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            Assign Mission
+        </button>
+        <a asp-controller="Home" asp-action="Index" class="btn-premium btn-secondary">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Client-side validation for end date
+        document.addEventListener('DOMContentLoaded', function() {
+            const startDateInput = document.querySelector('input[name="start_date"]');
+            const endDateInput = document.querySelector('input[name="end_date"]');
+            const form = document.querySelector('form');
+
+            function validateDates() {
+                if (startDateInput.value && endDateInput.value) {
+                    const startDate = new Date(startDateInput.value);
+                    const endDate = new Date(endDateInput.value);
+                    
+                    if (endDate < startDate) {
+                        endDateInput.setCustomValidity('End date cannot be before start date.');
+                    } else {
+                        endDateInput.setCustomValidity('');
+                    }
+                } else {
+                    endDateInput.setCustomValidity('');
+                }
+            }
+
+            startDateInput.addEventListener('change', validateDates);
+            endDateInput.addEventListener('change', validateDates);
+
+            form.addEventListener('submit', function(e) {
+                validateDates();
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            });
+        });
+    </script>
+}

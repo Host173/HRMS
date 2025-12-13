@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Dashboard";
     var userRoles = ViewBag.UserRoles as List<string> ?? new List<string>();
     var isSystemAdmin = ViewBag.IsSystemAdmin as bool? ?? false;
@@ -203,6 +203,31 @@
                 </div>
             </div>
 
+            <!-- Mission Management -->
+            <div class="premium-card">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                    </div>
+                    <h3 style="font-size: 1.1rem; margin: 0;">Mission Management</h3>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <a asp-controller="Mission" asp-action="Create" class="btn-premium btn-primary" style="text-align: left; justify-content: flex-start;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Assign Mission to Employee
+                    </a>
+                    <p style="color: var(--color-text-secondary); font-size: 0.85rem; margin: 0;">
+                        Create and assign new missions to employees. Assigned missions will require manager approval.
+                    </p>
+                </div>
+            </div>
+
         </div>
     </div>
 }
@@ -308,6 +333,31 @@
                 </div>
             </div>
 
+            <!-- Mission Approvals -->
+            <div class="premium-card">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                    </div>
+                    <h3 style="font-size: 1.1rem; margin: 0;">Mission Approvals</h3>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <a asp-controller="Mission" asp-action="Manager" class="btn-premium btn-primary" style="text-align: left; justify-content: flex-start;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        Review Mission Approvals
+                    </a>
+                    <p style="color: var(--color-text-secondary); font-size: 0.85rem; margin: 0;">
+                        Approve or reject mission requests from your team members.
+                    </p>
+                </div>
+            </div>
+
         </div>
     </div>
 }
@@ -401,6 +451,28 @@
                             <polyline points="14 2 14 8 20 8"></polyline>
                         </svg>
                         View My Contracts
+                    </a>
+                </div>
+            </div>
+
+            <!-- Missions -->
+            <div class="premium-card">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                    </div>
+                    <h3 style="font-size: 1.1rem; margin: 0;">My Missions</h3>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <a asp-controller="Mission" asp-action="Index" class="btn-premium btn-primary" style="text-align: left; justify-content: flex-start;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        View My Missions
                     </a>
                 </div>
             </div>

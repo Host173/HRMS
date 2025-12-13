@@ -62,8 +62,15 @@ public class MissionService : IMissionService
 
     public async Task<Mission> CreateAsync(Mission mission)
     {
+        Console.WriteLine($"[DEBUG] Creating mission - Employee: {mission.employee_id}, Manager: {mission.manager_id}, Destination: {mission.destination}, Status: {mission.status}");
+        
         _context.Mission.Add(mission);
-        await _context.SaveChangesAsync();
+        Console.WriteLine($"[DEBUG] Mission added to context");
+        
+        var changes = await _context.SaveChangesAsync();
+        Console.WriteLine($"[DEBUG] SaveChanges returned: {changes} changes");
+        Console.WriteLine($"[DEBUG] Mission ID after save: {mission.mission_id}");
+        
         return mission;
     }
 

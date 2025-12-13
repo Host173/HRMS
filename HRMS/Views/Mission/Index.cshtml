@@ -1,0 +1,353 @@
+@model IEnumerable<HRMS.Models.Mission>
+@{
+    ViewData["Title"] = "My Missions";
+    var isNormalEmployee = ViewBag.IsNormalEmployee as bool? ?? true;
+    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+    
+    // Group missions by status
+    var activeMissions = Model?.Where(m => (m.status ?? "").Equals("Active", StringComparison.OrdinalIgnoreCase)).ToList() ?? new List<HRMS.Models.Mission>();
+    var pendingMissions = Model?.Where(m => (m.status ?? "").Equals("Pending", StringComparison.OrdinalIgnoreCase)).ToList() ?? new List<HRMS.Models.Mission>();
+    var completedMissions = Model?.Where(m => (m.status ?? "").Equals("Completed", StringComparison.OrdinalIgnoreCase)).ToList() ?? new List<HRMS.Models.Mission>();
+    var cancelledMissions = Model?.Where(m => (m.status ?? "").Equals("Cancelled", StringComparison.OrdinalIgnoreCase)).ToList() ?? new List<HRMS.Models.Mission>();
+    var otherMissions = Model?.Where(m => !new[] { "Active", "Pending", "Completed", "Cancelled" }.Contains(m.status ?? "", StringComparer.OrdinalIgnoreCase)).ToList() ?? new List<HRMS.Models.Mission>();
+    
+    var totalMissions = Model?.Count() ?? 0;
+}
+
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+            <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">My Missions</h2>
+            <p class="text-muted">View your assigned missions and assignments</p>
+        </div>
+    </div>
+    
+    @if (totalMissions > 0)
+    {
+        <!-- Summary Statistics -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+            <div class="premium-card" style="padding: 1rem;">
+                <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.5rem;">Total Missions</div>
+                <div style="font-size: 2rem; font-weight: 700; color: var(--color-primary);">@totalMissions</div>
+            </div>
+            @if (activeMissions.Any())
+            {
+                <div class="premium-card" style="padding: 1rem; border-left: 4px solid #22c55e;">
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.5rem;">Active</div>
+                    <div style="font-size: 2rem; font-weight: 700; color: #22c55e;">@activeMissions.Count</div>
+                </div>
+            }
+            @if (pendingMissions.Any())
+            {
+                <div class="premium-card" style="padding: 1rem; border-left: 4px solid #f59e0b;">
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.5rem;">Pending</div>
+                    <div style="font-size: 2rem; font-weight: 700; color: #f59e0b;">@pendingMissions.Count</div>
+                </div>
+            }
+            @if (completedMissions.Any())
+            {
+                <div class="premium-card" style="padding: 1rem; border-left: 4px solid #3b82f6;">
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.5rem;">Completed</div>
+                    <div style="font-size: 2rem; font-weight: 700; color: #3b82f6;">@completedMissions.Count</div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@if (Model != null && Model.Any())
+{
+    <!-- Active Missions -->
+    @if (activeMissions.Any())
+    {
+        <div style="margin-bottom: 2rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <div style="width: 4px; height: 24px; background: #22c55e; border-radius: 2px;"></div>
+                <h3 style="font-size: 1.25rem; margin: 0; color: var(--color-text-primary);">Active Missions (@activeMissions.Count)</h3>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+                @foreach (var mission in activeMissions.OrderBy(m => m.start_date))
+                {
+                    var daysUntilStart = mission.start_date.HasValue ? (mission.start_date.Value.ToDateTime(TimeOnly.MinValue) - today.ToDateTime(TimeOnly.MinValue)).Days : (int?)null;
+                    var isUpcoming = daysUntilStart.HasValue && daysUntilStart.Value > 0;
+                    var isOngoing = mission.start_date.HasValue && mission.start_date.Value <= today && (!mission.end_date.HasValue || mission.end_date.Value >= today);
+                    
+                    <div class="premium-card" style="border-left: 4px solid #22c55e; position: relative;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <div style="flex: 1;">
+                                <h4 style="font-size: 1.1rem; font-weight: 600; margin: 0 0 0.5rem 0; color: var(--color-text-primary);">
+                                    @(mission.destination ?? "Mission")
+                                </h4>
+                                @if (mission.manager != null)
+                                {
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--color-text-secondary);">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
+                                        @(mission.manager.full_name ?? "Manager")
+                                    </div>
+                                }
+                            </div>
+                            <span style="background: rgba(34, 197, 94, 0.1); color: #22c55e; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500; white-space: nowrap;">
+                                Active
+                            </span>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Start Date</div>
+                                <div style="font-weight: 500; color: var(--color-text-primary);">
+                                    @if (mission.start_date.HasValue)
+                                    {
+                                        <div>@mission.start_date.Value.ToString("MMM dd, yyyy")</div>
+                                        @if (isUpcoming)
+                                        {
+                                            <div style="font-size: 0.75rem; color: #f59e0b; margin-top: 0.25rem;">
+                                                In @daysUntilStart.Value day(s)
+                                            </div>
+                                        }
+                                        else if (isOngoing)
+                                        {
+                                            <div style="font-size: 0.75rem; color: #22c55e; margin-top: 0.25rem;">
+                                                Ongoing
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span style="color: var(--color-text-secondary);">Not set</span>
+                                    }
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">End Date</div>
+                                <div style="font-weight: 500; color: var(--color-text-primary);">
+                                    @if (mission.end_date.HasValue)
+                                    {
+                                        var daysRemaining = (mission.end_date.Value.ToDateTime(TimeOnly.MinValue) - today.ToDateTime(TimeOnly.MinValue)).Days;
+                                        <div>
+                                            @mission.end_date.Value.ToString("MMM dd, yyyy")
+                                            @if (daysRemaining >= 0 && daysRemaining <= 7)
+                                            {
+                                                <div style="font-size: 0.75rem; color: #f59e0b; margin-top: 0.25rem;">
+                                                    @daysRemaining day(s) remaining
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span style="color: var(--color-text-secondary);">No end date</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        
+                        @if (mission.manager?.email != null)
+                        {
+                            <div style="padding-top: 1rem; border-top: 1px solid var(--color-border); font-size: 0.85rem;">
+                                <div style="color: var(--color-text-secondary); margin-bottom: 0.25rem;">Contact Manager</div>
+                                <a href="mailto:@mission.manager.email" style="color: var(--color-primary); text-decoration: none;">
+                                    @mission.manager.email
+                                </a>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    
+    <!-- Pending Missions -->
+    @if (pendingMissions.Any())
+    {
+        <div style="margin-bottom: 2rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <div style="width: 4px; height: 24px; background: #f59e0b; border-radius: 2px;"></div>
+                <h3 style="font-size: 1.25rem; margin: 0; color: var(--color-text-primary);">Pending Missions (@pendingMissions.Count)</h3>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+                @foreach (var mission in pendingMissions.OrderBy(m => m.start_date))
+                {
+                    <div class="premium-card" style="border-left: 4px solid #f59e0b;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <div style="flex: 1;">
+                                <h4 style="font-size: 1.1rem; font-weight: 600; margin: 0 0 0.5rem 0; color: var(--color-text-primary);">
+                                    @(mission.destination ?? "Mission")
+                                </h4>
+                                @if (mission.manager != null)
+                                {
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--color-text-secondary);">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
+                                        @(mission.manager.full_name ?? "Manager")
+                                    </div>
+                                }
+                            </div>
+                            <span style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500; white-space: nowrap;">
+                                Pending
+                            </span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Start Date</div>
+                                <div style="font-weight: 500;">
+                                    @(mission.start_date?.ToString("MMM dd, yyyy") ?? "Not set")
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">End Date</div>
+                                <div style="font-weight: 500;">
+                                    @(mission.end_date?.ToString("MMM dd, yyyy") ?? "Not set")
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    
+    <!-- Completed Missions -->
+    @if (completedMissions.Any())
+    {
+        <div style="margin-bottom: 2rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <div style="width: 4px; height: 24px; background: #3b82f6; border-radius: 2px;"></div>
+                <h3 style="font-size: 1.25rem; margin: 0; color: var(--color-text-primary);">Completed Missions (@completedMissions.Count)</h3>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+                @foreach (var mission in completedMissions.OrderByDescending(m => m.end_date ?? m.start_date))
+                {
+                    <div class="premium-card" style="border-left: 4px solid #3b82f6; opacity: 0.85;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <div style="flex: 1;">
+                                <h4 style="font-size: 1.1rem; font-weight: 600; margin: 0 0 0.5rem 0; color: var(--color-text-primary);">
+                                    @(mission.destination ?? "Mission")
+                                </h4>
+                            </div>
+                            <span style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500; white-space: nowrap;">
+                                Completed
+                            </span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Start Date</div>
+                                <div style="font-weight: 500;">
+                                    @(mission.start_date?.ToString("MMM dd, yyyy") ?? "N/A")
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">End Date</div>
+                                <div style="font-weight: 500;">
+                                    @(mission.end_date?.ToString("MMM dd, yyyy") ?? "N/A")
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    
+    <!-- Cancelled Missions -->
+    @if (cancelledMissions.Any())
+    {
+        <div style="margin-bottom: 2rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <div style="width: 4px; height: 24px; background: #dc2626; border-radius: 2px;"></div>
+                <h3 style="font-size: 1.25rem; margin: 0; color: var(--color-text-primary);">Cancelled Missions (@cancelledMissions.Count)</h3>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+                @foreach (var mission in cancelledMissions.OrderByDescending(m => m.end_date ?? m.start_date))
+                {
+                    <div class="premium-card" style="border-left: 4px solid #dc2626; opacity: 0.7;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <div style="flex: 1;">
+                                <h4 style="font-size: 1.1rem; font-weight: 600; margin: 0 0 0.5rem 0; color: var(--color-text-primary);">
+                                    @(mission.destination ?? "Mission")
+                                </h4>
+                            </div>
+                            <span style="background: rgba(220, 38, 38, 0.1); color: #dc2626; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500; white-space: nowrap;">
+                                Cancelled
+                            </span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Start Date</div>
+                                <div style="font-weight: 500;">
+                                    @(mission.start_date?.ToString("MMM dd, yyyy") ?? "N/A")
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">End Date</div>
+                                <div style="font-weight: 500;">
+                                    @(mission.end_date?.ToString("MMM dd, yyyy") ?? "N/A")
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    
+    <!-- Other Status Missions -->
+    @if (otherMissions.Any())
+    {
+        <div style="margin-bottom: 2rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <div style="width: 4px; height: 24px; background: #64748b; border-radius: 2px;"></div>
+                <h3 style="font-size: 1.25rem; margin: 0; color: var(--color-text-primary);">Other Missions (@otherMissions.Count)</h3>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+                @foreach (var mission in otherMissions)
+                {
+                    var status = mission.status ?? "Unknown";
+                    <div class="premium-card" style="border-left: 4px solid #64748b;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <div style="flex: 1;">
+                                <h4 style="font-size: 1.1rem; font-weight: 600; margin: 0 0 0.5rem 0; color: var(--color-text-primary);">
+                                    @(mission.destination ?? "Mission")
+                                </h4>
+                            </div>
+                            <span style="background: rgba(100, 116, 139, 0.1); color: #64748b; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500; white-space: nowrap;">
+                                @status
+                            </span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Start Date</div>
+                                <div style="font-weight: 500;">
+                                    @(mission.start_date?.ToString("MMM dd, yyyy") ?? "N/A")
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">End Date</div>
+                                <div style="font-weight: 500;">
+                                    @(mission.end_date?.ToString("MMM dd, yyyy") ?? "N/A")
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="premium-card">
+        <div style="text-align: center; padding: 3rem;">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-text-secondary); margin: 0 auto 1rem;">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <p style="color: var(--color-text-secondary); margin-bottom: 1rem; font-size: 1.1rem;">No missions assigned</p>
+            <p style="color: var(--color-text-secondary); font-size: 0.9rem;">You don't have any missions assigned to you at this time.</p>
+        </div>
+    </div>
+}

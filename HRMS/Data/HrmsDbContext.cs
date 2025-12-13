@@ -138,18 +138,9 @@ public partial class HrmsDbContext : DbContext
 
     public virtual DbSet<Verification> Verification { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        // Connection string is configured via dependency injection in Program.cs
-        // This method is only called if DbContext is created without options
-        // In normal operation, the connection string from appsettings.json is used
-        if (!optionsBuilder.IsConfigured)
-        {
-            // Fallback connection string - should not be used in production
-            // The actual connection string should come from configuration
-            optionsBuilder.UseSqlServer("Server=localhost\\SQLEXPRESS;Database=HRMS;Trusted_Connection=True;TrustServerCertificate=True;");
-        }
-    }
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder){}
+    
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
