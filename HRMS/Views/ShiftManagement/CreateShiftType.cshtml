@@ -1,0 +1,72 @@
+@model HRMS.Models.ShiftSchedule
+@{
+    ViewData["Title"] = "Create Shift Type";
+}
+
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h1 style="margin: 0; font-size: 2rem; font-weight: 700;">Create Shift Type</h1>
+        <a asp-action="Index" class="btn-premium btn-secondary">← Back to Shift Management</a>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-danger); color: var(--color-danger); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 2rem;">
+        <form asp-action="CreateShiftType" method="post">
+            @Html.AntiForgeryToken()
+
+            <div style="margin-bottom: 1.5rem;">
+                <label asp-for="name" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Shift Name *</label>
+                <input asp-for="name" style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem;" required />
+                <span asp-validation-for="name" style="color: var(--color-danger); font-size: 0.875rem;"></span>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label asp-for="type" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Shift Type</label>
+                <select asp-for="type" style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem;">
+                    <option value="">Standard</option>
+                    <option value="Normal">Normal</option>
+                    <option value="Rotational">Rotational</option>
+                    <option value="Split">Split</option>
+                    <option value="Custom">Custom</option>
+                    <option value="Special">Special</option>
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                    <label asp-for="start_time" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Start Time</label>
+                    <input asp-for="start_time" type="time" style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem;" />
+                </div>
+                <div>
+                    <label asp-for="end_time" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">End Time</label>
+                    <input asp-for="end_time" type="time" style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem;" />
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label asp-for="break_duration" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Break Duration (minutes)</label>
+                <input asp-for="break_duration" type="number" min="0" style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem;" />
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label asp-for="status" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Status</label>
+                <select asp-for="status" style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem;">
+                    <option value="Active" selected>Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn-premium btn-primary" style="padding: 0.75rem 1.5rem;">Create Shift Type</button>
+                <a asp-action="Index" class="btn-premium btn-secondary" style="padding: 0.75rem 1.5rem;">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+

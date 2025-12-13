@@ -1,0 +1,106 @@
+@model HRMS.Models.ShiftCycle
+@{
+    ViewData["Title"] = "Edit Rotational Shift";
+    var allShifts = ViewBag.AllShifts as List<HRMS.Models.ShiftSchedule> ?? new List<HRMS.Models.ShiftSchedule>();
+    var currentAssignments = Model.ShiftCycleAssignment.OrderBy(sca => sca.order_number).ToList();
+}
+
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h1 style="margin: 0; font-size: 2rem; font-weight: 700;">Edit Rotational Shift</h1>
+        <a asp-action="Index" class="btn-premium btn-secondary">← Back to Shift Management</a>
+    </div>
+
+    <div style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 2rem;">
+        <form asp-action="EditRotationalShift" method="post" id="rotationalForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.cycle_id" />
+
+            <div style="margin-bottom: 1.5rem;">
+                <label for="cycleName" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Cycle Name *</label>
+                <input type="text" id="cycleName" name="cycleName" value="@Model.cycle_name" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem;" />
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label for="description" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Description</label>
+                <textarea id="description" name="description" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem;">@Model.description</textarea>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Shifts in Rotation *</label>
+                <div id="shiftContainer" style="display: flex; flex-direction: column; gap: 1rem;">
+                    @for (int i = 0; i < currentAssignments.Count; i++)
+                    {
+                        var assignment = currentAssignments[i];
+                        <div class="shift-item" style="display: flex; gap: 1rem; align-items: center; padding: 1rem; background: var(--color-bg-light); border-radius: var(--radius-md);">
+                            <select name="shiftIds" class="shift-select" required style="flex: 1; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem;">
+                                <option value="">Select a shift...</option>
+                                @foreach (var shift in allShifts)
+                                {
+                                    <option value="@shift.shift_id" selected="@(shift.shift_id == assignment.shift_id)">@shift.name (@shift.start_time?.ToString("hh:mm tt") - @shift.end_time?.ToString("hh:mm tt"))</option>
+                                }
+                            </select>
+                            <input type="number" name="orderNumbers" class="order-input" value="@(assignment.order_number ?? i + 1)" min="1" style="width: 80px; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem;" />
+                            <button type="button" class="remove-shift btn-premium" style="padding: 0.75rem 1rem; background: var(--color-danger); color: white; @(currentAssignments.Count > 1 ? "" : "display: none;")">Remove</button>
+                        </div>
+                    }
+                </div>
+                <button type="button" id="addShift" class="btn-premium btn-secondary" style="margin-top: 1rem; padding: 0.75rem 1.5rem;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add Another Shift
+                </button>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn-premium btn-primary" style="padding: 0.75rem 1.5rem;">Update Rotational Shift</button>
+                <a asp-action="Index" class="btn-premium btn-secondary" style="padding: 0.75rem 1.5rem;">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const shiftTemplate = document.querySelector('.shift-item').cloneNode(true);
+        const allShifts = @Html.Raw(Json.Serialize(allShifts.Select(s => new { shift_id = s.shift_id, name = s.name, start_time = s.start_time?.ToString("hh:mm tt"), end_time = s.end_time?.ToString("hh:mm tt") })));
+        
+        document.getElementById('addShift').addEventListener('click', function() {
+            const newShift = shiftTemplate.cloneNode(true);
+            const select = newShift.querySelector('.shift-select');
+            const orderInput = newShift.querySelector('.order-input');
+            const removeBtn = newShift.querySelector('.remove-shift');
+            
+            // Clear selection
+            select.selectedIndex = 0;
+            
+            // Set order number
+            const currentItems = document.querySelectorAll('.shift-item');
+            orderInput.value = currentItems.length + 1;
+            
+            // Show remove button
+            removeBtn.style.display = 'block';
+            
+            removeBtn.addEventListener('click', function() {
+                const container = document.getElementById('shiftContainer');
+                if (container.children.length > 1) {
+                    newShift.remove();
+                }
+            });
+            
+            document.getElementById('shiftContainer').appendChild(newShift);
+        });
+        
+        document.querySelectorAll('.remove-shift').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const container = document.getElementById('shiftContainer');
+                if (container.children.length > 1) {
+                    this.closest('.shift-item').remove();
+                }
+            });
+        });
+    </script>
+}
+

@@ -1,0 +1,319 @@
+@{
+    ViewData["Title"] = "Record Attendance";
+    var hasActiveAttendance = ViewBag.HasActiveAttendance as bool? ?? false;
+    var currentAttendance = ViewBag.CurrentAttendance as HRMS.Models.Attendance;
+    var currentEmployeeId = ViewBag.CurrentEmployeeId as int? ?? 0;
+}
+
+<div style="max-width: 600px; margin: 0 auto;">
+    <div style="margin-bottom: 2rem;">
+        <h1 style="margin: 0; font-size: 2rem; font-weight: 700;">Record Attendance</h1>
+        <p style="color: var(--color-text-secondary); margin-top: 0.5rem;">Clock in and out for your work day</p>
+    </div>
+
+    <div style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 2rem;">
+        @if (hasActiveAttendance && currentAttendance != null)
+        {
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <div style="width: 80px; height: 80px; background: rgba(34, 197, 94, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </div>
+                <h2 style="margin: 0 0 0.5rem; color: var(--color-text-primary);">You're Clocked In</h2>
+                <p style="color: var(--color-text-secondary); margin-bottom: 1rem;">
+                    Clocked in at <strong>@currentAttendance.entry_time?.ToLocalTime().ToString("hh:mm tt")</strong>
+                </p>
+                <div style="background: var(--color-bg-light); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+                    <div style="font-size: 2rem; font-weight: 700; color: var(--color-primary);" id="duration-display">
+                        Calculating...
+                    </div>
+                    <div style="color: var(--color-text-secondary); font-size: 0.875rem;">Time Elapsed</div>
+                </div>
+                <button id="clock-out-btn" class="btn-premium btn-danger" style="padding: 1rem 2rem; font-size: 1rem; width: 100%;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    Clock Out
+                </button>
+            </div>
+        }
+        else
+        {
+            <div style="text-align: center;">
+                <div style="width: 80px; height: 80px; background: rgba(59, 130, 246, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="6" x2="12" y2="12"></line>
+                        <line x1="16" y1="14" x2="12" y2="12"></line>
+                    </svg>
+                </div>
+                <h2 style="margin: 0 0 0.5rem; color: var(--color-text-primary);">Ready to Clock In</h2>
+                <p style="color: var(--color-text-secondary); margin-bottom: 2rem;">
+                    Click the button below to record your attendance for today
+                </p>
+                <button id="clock-in-btn" class="btn-premium btn-primary" style="padding: 1rem 2rem; font-size: 1rem; width: 100%;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="16"></line>
+                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                    Clock In
+                </button>
+            </div>
+        }
+    </div>
+
+    <div style="margin-top: 2rem; text-align: center;">
+        <a asp-action="Index" style="color: var(--color-primary); text-decoration: none;">
+            ← Back to Attendance Records
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        @if (hasActiveAttendance && currentAttendance != null)
+        {
+            <text>
+            // Parse the UTC time from server - entry_time is stored as UTC in database
+            // Format: yyyy-MM-ddTHH:mm:ssZ (Z indicates UTC)
+            @{
+                // entry_time is stored as UTC (DateTime.UtcNow), but EF might return it as Unspecified
+                var entryTime = currentAttendance.entry_time ?? DateTime.UtcNow;
+                // Ensure it's treated as UTC
+                DateTime entryTimeUtc;
+                if (entryTime.Kind == DateTimeKind.Utc)
+                {
+                    entryTimeUtc = entryTime;
+                }
+                else if (entryTime.Kind == DateTimeKind.Unspecified)
+                {
+                    // Assume it's UTC if unspecified (since we store it as UTC)
+                    entryTimeUtc = DateTime.SpecifyKind(entryTime, DateTimeKind.Utc);
+                }
+                else
+                {
+                    // If it's Local, convert to UTC
+                    entryTimeUtc = entryTime.ToUniversalTime();
+                }
+                // Format as ISO 8601 with Z suffix to indicate UTC
+                var entryTimeString = entryTimeUtc.ToString("yyyy-MM-ddTHH:mm:ss") + "Z";
+            }
+            var clockInTimeUtc = '@entryTimeString';
+            var clockInTime = new Date(clockInTimeUtc);
+            
+            // Verify the date was parsed correctly
+            if (isNaN(clockInTime.getTime())) {
+                console.error('Invalid clock in time:', clockInTimeUtc);
+                // Fallback: use current time
+                clockInTime = new Date();
+            }
+            
+            // Debug logging
+            console.log('Clock in time (UTC string):', clockInTimeUtc);
+            console.log('Clock in time (parsed Date):', clockInTime);
+            console.log('Clock in time (UTC):', clockInTime.toISOString());
+            console.log('Current time:', new Date());
+            console.log('Current time (UTC):', new Date().toISOString());
+            
+            // Calculate initial duration to ensure timer starts correctly
+            var now = new Date();
+            var initialDiff = now.getTime() - clockInTime.getTime();
+            
+            // If the difference is negative or too large (more than 24 hours), something is wrong
+            if (initialDiff < 0 || initialDiff > 86400000) {
+                console.warn('Clock in time seems incorrect. Diff (ms):', initialDiff, 'Resetting to current time');
+                clockInTime = now;
+                initialDiff = 0;
+            }
+            
+            console.log('Initial time difference (ms):', initialDiff);
+            console.log('Initial time difference (seconds):', initialDiff / 1000);
+            
+            function updateDuration() {
+                var now = new Date();
+                // Use getTime() to ensure we're working with milliseconds
+                var diff = now.getTime() - clockInTime.getTime();
+                
+                // Ensure diff is positive (clock in time should be in the past)
+                if (diff < 0) {
+                    console.warn('Clock in time is in the future, using current time as clock in');
+                    clockInTime = now;
+                    diff = 0;
+                }
+                
+                var hours = Math.floor(diff / 3600000);
+                var minutes = Math.floor((diff % 3600000) / 60000);
+                var seconds = Math.floor((diff % 60000) / 1000);
+                
+                document.getElementById('duration-display').textContent = 
+                    String(hours).padStart(2, '0') + ':' + 
+                    String(minutes).padStart(2, '0') + ':' + 
+                    String(seconds).padStart(2, '0');
+            }
+            
+            updateDuration();
+            setInterval(updateDuration, 1000);
+            
+            document.getElementById('clock-out-btn').addEventListener('click', function() {
+                if (confirm('Are you sure you want to clock out?')) {
+                    fetch('@Url.Action("ClockOut", "Attendance")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ AttendanceId: @currentAttendance.attendance_id })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message || 'Clocked out successfully!');
+                            window.location.href = '@Url.Action("Index", "Attendance")';
+                        } else {
+                            alert(data.message || 'Error clocking out');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        
+                        // Check if offline
+                        if (!navigator.onLine || error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+                            // Store for offline sync
+                            var record = {
+                                EmployeeId: @currentEmployeeId,
+                                Action: 'ClockOut',
+                                Timestamp: new Date().toISOString(),
+                                AttendanceId: @currentAttendance.attendance_id
+                            };
+                            
+                            var offlineRecords = JSON.parse(localStorage.getItem('offlineAttendanceRecords') || '[]');
+                            offlineRecords.push(record);
+                            localStorage.setItem('offlineAttendanceRecords', JSON.stringify(offlineRecords));
+                            
+                            alert('You are offline. Your clock-out has been saved locally and will sync when you reconnect.');
+                        } else {
+                            alert('An error occurred while clocking out');
+                        }
+                    });
+                }
+            });
+            </text>
+        }
+        else
+        {
+            <text>
+            document.getElementById('clock-in-btn').addEventListener('click', function() {
+                if (confirm('Clock in now?')) {
+                    fetch('@Url.Action("ClockIn", "Attendance")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message || 'Clocked in successfully!');
+                            window.location.reload();
+                        } else {
+                            alert(data.message || 'Error clocking in');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        
+                        // Check if offline
+                        if (!navigator.onLine || error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+                            // Store for offline sync
+                            var record = {
+                                EmployeeId: @currentEmployeeId,
+                                Action: 'ClockIn',
+                                Timestamp: new Date().toISOString(),
+                                AttendanceId: null
+                            };
+                            
+                            var offlineRecords = JSON.parse(localStorage.getItem('offlineAttendanceRecords') || '[]');
+                            offlineRecords.push(record);
+                            localStorage.setItem('offlineAttendanceRecords', JSON.stringify(offlineRecords));
+                            
+                            alert('You are offline. Your clock-in has been saved locally and will sync when you reconnect.');
+                        } else {
+                            alert('An error occurred while clocking in');
+                        }
+                    });
+                }
+            });
+            </text>
+        }
+        
+        // Offline sync functionality for Record page
+        (function() {
+            var isSyncing = false;
+            
+            async function syncOfflineRecords() {
+                if (isSyncing || !navigator.onLine) return;
+                
+                var offlineRecords = JSON.parse(localStorage.getItem('offlineAttendanceRecords') || '[]');
+                if (offlineRecords.length === 0) return;
+                
+                isSyncing = true;
+                console.log('Attempting to sync', offlineRecords.length, 'offline records...');
+                
+                try {
+                    const response = await fetch('@Url.Action("SyncOfflineAttendance", "Attendance")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(offlineRecords)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Sync failed with status: ' + response.status);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        localStorage.removeItem('offlineAttendanceRecords');
+                        console.log('Offline records synced:', data.message);
+                        
+                        if (data.syncedCount > 0) {
+                            alert('Successfully synced ' + data.syncedCount + ' offline attendance record(s).');
+                            window.location.reload();
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error syncing offline records:', error);
+                } finally {
+                    isSyncing = false;
+                }
+            }
+            
+            // Listen for online event
+            window.addEventListener('online', function() {
+                console.log('Connection restored. Attempting to sync offline records...');
+                setTimeout(syncOfflineRecords, 1000);
+            });
+            
+            // Try to sync on page load
+            setTimeout(syncOfflineRecords, 500);
+        })();
+    </script>
+}
+
+

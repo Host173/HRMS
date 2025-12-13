@@ -70,8 +70,12 @@ public class EmployeeService : IEmployeeService
 
     public async Task<bool> EmailExistsAsync(string email)
     {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
         return await _context.Employee
-            .AnyAsync(e => e.email != null && e.email.ToLower() == email.ToLower());
+            .AnyAsync(e => e.email != null && e.email.ToLower() == normalizedEmail);
     }
 }
 

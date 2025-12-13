@@ -72,5 +72,6 @@ public class ApplicationDbContext : DbContext
                 .HasFilter("[email] IS NOT NULL");
         });
     }
+
 }
 #endif

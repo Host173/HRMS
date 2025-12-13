@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Dashboard";
     var userRoles = ViewBag.UserRoles as List<string> ?? new List<string>();
     var isSystemAdmin = ViewBag.IsSystemAdmin as bool? ?? false;
@@ -32,7 +32,224 @@
             }
         </div>
     }
+
 </div>
+
+<!-- Attendance & Shift Management -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <!-- Attendance Management -->
+    <div class="premium-card">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </div>
+            <h3 style="font-size: 1.1rem; margin: 0;">Attendance Management</h3>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <a asp-controller="Attendance" asp-action="Record" class="btn-premium btn-primary" style="text-align: left; justify-content: flex-start; font-weight: 600;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                Record Attendance (Clock In/Out)
+            </a>
+            @if (isSystemAdmin || isHRAdmin)
+            {
+                <a asp-controller="Attendance" asp-action="Index" class="btn-premium btn-primary" style="text-align: left; justify-content: flex-start;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    View All Attendance Records
+                </a>
+            }
+            else if (isLineManager)
+            {
+                <a asp-controller="Attendance" asp-action="Index" asp-route-myAttendance="true" class="btn-premium btn-primary" style="text-align: left; justify-content: flex-start;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    View My Attendance Records
+                </a>
+                <a asp-controller="Attendance" asp-action="TeamAttendance" class="btn-premium btn-secondary" style="text-align: left; justify-content: flex-start;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    View Team Attendance Records
+                </a>
+                <a asp-controller="Attendance" asp-action="TeamSummary" class="btn-premium btn-secondary" style="text-align: left; justify-content: flex-start;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                        <line x1="12" y1="20" x2="12" y2="10"></line>
+                        <line x1="18" y1="20" x2="18" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="16"></line>
+                    </svg>
+                    Team Attendance Summary (Per Employee)
+                </a>
+            }
+            else
+            {
+                <a asp-controller="Attendance" asp-action="Index" class="btn-premium btn-primary" style="text-align: left; justify-content: flex-start;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    View My Attendance Records
+                </a>
+            }
+            @if (isSystemAdmin)
+            {
+                <button onclick="syncLeaveWithAttendance(this)" class="btn-premium btn-secondary" style="text-align: left; justify-content: flex-start; width: 100%;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"></path>
+                    </svg>
+                    Sync Leave with Attendance
+                </button>
+                <a asp-controller="Attendance" asp-action="Correction" class="btn-premium btn-secondary" style="text-align: left; justify-content: flex-start;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    Request Attendance Correction
+                </a>
+            }
+            @if (!isSystemAdmin && !isHRAdmin)
+            {
+                <a asp-controller="Attendance" asp-action="Correction" class="btn-premium btn-secondary" style="text-align: left; justify-content: flex-start;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    Request Attendance Correction
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- Shift Management -->
+    <div class="premium-card">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+            </div>
+            <h3 style="font-size: 1.1rem; margin: 0;">Shift Management</h3>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <a asp-controller="ShiftManagement" asp-action="Index" class="btn-premium btn-primary" style="text-align: left; justify-content: flex-start; font-weight: 600;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                View Shift Management
+            </a>
+            @if (isSystemAdmin)
+            {
+                <a asp-controller="ShiftManagement" asp-action="CreateShiftType" class="btn-premium btn-primary" style="text-align: left; justify-content: flex-start;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Create Shift Type
+                </a>
+            }
+            @if (isHRAdmin)
+            {
+                <a asp-controller="ShiftManagement" asp-action="CreateRotationalShift" class="btn-premium btn-primary" style="text-align: left; justify-content: flex-start;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    Configure Rotational Shift
+                </a>
+            }
+            @if (isSystemAdmin || isLineManager)
+            {
+                <a asp-controller="ShiftManagement" asp-action="AssignShift" class="btn-premium btn-primary" style="text-align: left; justify-content: flex-start;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                        <line x1="23" y1="11" x2="17" y2="11"></line>
+                    </svg>
+                    Assign Shift to Employee/Department
+                </a>
+            }
+            @if (isSystemAdmin)
+            {
+                <a asp-controller="ShiftManagement" asp-action="ManageEmployeeShifts" class="btn-premium btn-secondary" style="text-align: left; justify-content: flex-start;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Manage Individual Employee Shifts
+                </a>
+            }
+        </div>
+    </div>
+</div>
+
+@if (isSystemAdmin)
+{
+    <script>
+        async function syncLeaveWithAttendance() {
+            if (!confirm('This will sync all approved leave requests with the attendance system and mark assigned shifts during leave periods as "on leave". Continue?')) {
+                return;
+            }
+            
+            const button = event.target.closest('button');
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Syncing...';
+            
+            try {
+                const response = await fetch('@Url.Action("SyncLeaveWithAttendance", "Attendance")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(data.message || 'Sync completed successfully!');
+                    // Optionally reload the page to show updated data
+                    // location.reload();
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to sync leave with attendance'));
+                }
+            } catch (error) {
+                console.error('Error syncing leave:', error);
+                alert('An error occurred while syncing. Please try again.');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
+        }
+    </script>
+}
 
 @if (isSystemAdmin)
 {
@@ -525,4 +742,67 @@
             }
         </div>
 </div>
+}
+
+@if (isSystemAdmin)
+{
+    <script>
+        async function syncLeaveWithAttendance(button) {
+            if (!confirm('This will sync all approved leave requests with the attendance system and mark assigned shifts during leave periods as "on leave". Continue?')) {
+                return;
+            }
+            
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Syncing...';
+            
+            try {
+                const response = await fetch('@Url.Action("SyncLeaveWithAttendance", "Attendance")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                // Check if response is OK (status 200-299)
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Server error:', response.status, errorText);
+                    alert('Server error: ' + response.status + '. ' + (errorText || 'Please check the server logs for details.'));
+                    return;
+                }
+                
+                // Try to parse JSON response
+                let data;
+                try {
+                    data = await response.json();
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError);
+                    const text = await response.text();
+                    alert('Invalid response from server. The server may have returned an error page. Please check the console for details.');
+                    return;
+                }
+                
+                if (data.success) {
+                    alert(data.message || 'Sync completed successfully!');
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to sync leave with attendance'));
+                }
+            } catch (error) {
+                console.error('Error syncing leave:', error);
+                
+                // Provide more specific error messages
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    alert('Network error: Could not connect to the server. Please check your internet connection and try again.');
+                } else if (error.message) {
+                    alert('Error: ' + error.message);
+                } else {
+                    alert('An error occurred while syncing. Please try again. Check the browser console for details.');
+                }
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
+        }
+    </script>
 }

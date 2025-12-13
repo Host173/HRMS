@@ -1,0 +1,165 @@
+@{
+    ViewData["Title"] = "Assign Shift";
+    var shifts = ViewBag.Shifts as List<HRMS.Models.ShiftSchedule> ?? new List<HRMS.Models.ShiftSchedule>();
+    var employees = ViewBag.Employees as List<HRMS.Models.Employee> ?? new List<HRMS.Models.Employee>();
+    var departments = ViewBag.Departments as List<HRMS.Models.Department> ?? new List<HRMS.Models.Department>();
+    var isSystemAdmin = ViewBag.IsSystemAdmin as bool? ?? false;
+}
+
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h1 style="margin: 0; font-size: 2rem; font-weight: 700;">Assign Shift</h1>
+        <a asp-action="Index" class="btn-premium btn-secondary">← Back to Shift Management</a>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-danger); color: var(--color-danger); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 2rem;">
+        <form asp-action="AssignShift" method="post">
+            @Html.AntiForgeryToken()
+
+            <div style="margin-bottom: 1.5rem;">
+                <label for="shiftId" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Select Shift *</label>
+                <select id="shiftId" name="shiftId" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem;">
+                    <option value="">Choose a shift...</option>
+                    @if (shifts.Any())
+                    {
+                        @foreach (var shift in shifts)
+                        {
+                            var timeRange = shift.start_time.HasValue && shift.end_time.HasValue 
+                                ? $"{shift.start_time.Value:hh:mm tt} - {shift.end_time.Value:hh:mm tt}"
+                                : "Time TBD";
+                            <option value="@shift.shift_id">@shift.name (@timeRange)</option>
+                        }
+                    }
+                    else
+                    {
+                        <option value="" disabled>No shifts available. Please create a shift type first.</option>
+                    }
+                </select>
+                @if (!shifts.Any())
+                {
+                    <p style="color: var(--color-text-secondary); font-size: 0.875rem; margin-top: 0.5rem;">
+                        <a asp-action="CreateShiftType" style="color: var(--color-primary);">Create a shift type</a> to get started.
+                    </p>
+                }
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Assign To *</label>
+                <div style="display: flex; gap: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="radio" name="assignTo" value="employee" checked onchange="toggleAssignmentType()" />
+                        <span>Individual Employee</span>
+                    </label>
+                    @if (isSystemAdmin)
+                    {
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="assignTo" value="department" onchange="toggleAssignmentType()" />
+                            <span>Entire Department</span>
+                        </label>
+                    }
+                </div>
+            </div>
+
+            <div id="employeeSection" style="margin-bottom: 1.5rem;">
+                <label for="employeeId" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Select Employee *</label>
+                <select id="employeeId" name="employeeId" style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem;">
+                    <option value="">Choose an employee...</option>
+                    @if (employees.Any())
+                    {
+                        @foreach (var employee in employees)
+                        {
+                            <option value="@employee.employee_id">@(employee.full_name ?? employee.email ?? $"Employee #{employee.employee_id}")</option>
+                        }
+                    }
+                    else
+                    {
+                        <option value="" disabled>No employees available for assignment.</option>
+                    }
+                </select>
+                @if (!employees.Any())
+                {
+                    <p style="color: var(--color-text-secondary); font-size: 0.875rem; margin-top: 0.5rem;">
+                        @if (isSystemAdmin)
+                        {
+                            <text>No active employees found. Employees must be active to be assigned shifts.</text>
+                        }
+                        else
+                        {
+                            <text>No team members found. You can only assign shifts to employees in your team.</text>
+                        }
+                    </p>
+                }
+            </div>
+
+            @if (isSystemAdmin)
+            {
+                <div id="departmentSection" style="margin-bottom: 1.5rem; display: none;">
+                    <label for="departmentId" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Select Department *</label>
+                    <select id="departmentId" name="departmentId" style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem;">
+                        <option value="">Choose a department...</option>
+                        @foreach (var dept in departments)
+                        {
+                            <option value="@dept.department_id">@dept.department_name</option>
+                        }
+                    </select>
+                </div>
+            }
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                    <label for="startDate" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Start Date</label>
+                    <input type="date" id="startDate" name="startDate" style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem;" />
+                </div>
+                <div>
+                    <label for="endDate" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">End Date (Optional)</label>
+                    <input type="date" id="endDate" name="endDate" style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem;" />
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label for="notes" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Notes (Optional)</label>
+                <textarea id="notes" name="notes" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem;" placeholder="Additional notes about this assignment"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn-premium btn-primary" style="padding: 0.75rem 1.5rem;">Assign Shift</button>
+                <a asp-action="Index" class="btn-premium btn-secondary" style="padding: 0.75rem 1.5rem;">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleAssignmentType() {
+            const assignTo = document.querySelector('input[name="assignTo"]:checked').value;
+            const employeeSection = document.getElementById('employeeSection');
+            const departmentSection = document.getElementById('departmentSection');
+            const employeeSelect = document.getElementById('employeeId');
+            const departmentSelect = document.getElementById('departmentId');
+            
+            if (assignTo === 'employee') {
+                employeeSection.style.display = 'block';
+                if (departmentSection) departmentSection.style.display = 'none';
+                employeeSelect.required = true;
+                if (departmentSelect) departmentSelect.required = false;
+            } else {
+                employeeSection.style.display = 'none';
+                if (departmentSection) departmentSection.style.display = 'block';
+                employeeSelect.required = false;
+                if (departmentSelect) departmentSelect.required = true;
+            }
+        }
+        
+        // Set default start date to today
+        document.getElementById('startDate').valueAsDate = new Date();
+    </script>
+}
+

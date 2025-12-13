@@ -1,0 +1,318 @@
+@{
+    ViewData["Title"] = "Team Attendance Summary";
+    var teamMembers = ViewBag.TeamMembers as List<HRMS.Models.Employee> ?? new List<HRMS.Models.Employee>();
+    var summary = ViewBag.Summary as System.Collections.IEnumerable;
+    var days = ViewBag.Days as int? ?? 30;
+    var selectedEmployeeId = ViewBag.SelectedEmployeeId as int?;
+    var pendingCorrections = ViewBag.PendingCorrections as int? ?? 0;
+    var attendanceData = ViewBag.AttendanceData as List<HRMS.Models.Attendance> ?? new List<HRMS.Models.Attendance>();
+    var totalTeamSize = ViewBag.TotalTeamSize as int? ?? teamMembers.Count;
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-danger); color: #DC2626; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+            <h1 style="margin: 0; font-size: 2rem; font-weight: 700;">Team Attendance Summary</h1>
+            <p style="color: var(--color-text-secondary); margin-top: 0.5rem;">
+                View attendance statistics for your team (@totalTeamSize team member@(totalTeamSize != 1 ? "s" : ""))
+            </p>
+        </div>
+        @if (pendingCorrections > 0)
+        {
+            <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid #F59E0B; color: #D97706; padding: 0.75rem 1.5rem; border-radius: var(--radius-md); display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span><strong>@pendingCorrections</strong> pending correction requests</span>
+            </div>
+        }
+    </div>
+
+    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center;">
+        <form method="get" style="display: flex; gap: 1rem; align-items: center;">
+            <label style="color: var(--color-text-secondary); font-weight: 500;">Period:</label>
+            <select name="days" onchange="this.form.submit()" style="padding: 0.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text-primary);">
+                @if (days == 7)
+                {
+                    <option value="7" selected>Last 7 days</option>
+                }
+                else
+                {
+                    <option value="7">Last 7 days</option>
+                }
+                @if (days == 30)
+                {
+                    <option value="30" selected>Last 30 days</option>
+                }
+                else
+                {
+                    <option value="30">Last 30 days</option>
+                }
+                @if (days == 60)
+                {
+                    <option value="60" selected>Last 60 days</option>
+                }
+                else
+                {
+                    <option value="60">Last 60 days</option>
+                }
+                @if (days == 90)
+                {
+                    <option value="90" selected>Last 90 days</option>
+                }
+                else
+                {
+                    <option value="90">Last 90 days</option>
+                }
+            </select>
+            <label style="color: var(--color-text-secondary); font-weight: 500; margin-left: 1rem;">Employee:</label>
+            <select name="employeeId" onchange="this.form.submit()" style="padding: 0.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text-primary); min-width: 200px;">
+                <option value="">All Team Members (@teamMembers.Count)</option>
+                @foreach (var member in teamMembers)
+                {
+                    @if (selectedEmployeeId == member.employee_id)
+                    {
+                        <option value="@member.employee_id" selected>@(member.full_name ?? member.email ?? "Unknown")</option>
+                    }
+                    else
+                    {
+                        <option value="@member.employee_id">@(member.full_name ?? member.email ?? "Unknown")</option>
+                    }
+                }
+            </select>
+            @if (selectedEmployeeId.HasValue)
+            {
+                <a href="@Url.Action("TeamSummary", new { days = days })" class="btn-premium btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Clear Filter</a>
+            }
+        </form>
+    </div>
+</div>
+
+@if (teamMembers.Any())
+{
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        @foreach (var member in teamMembers)
+        {
+            int totalDays = 0;
+            decimal totalHours = 0;
+            int lateCount = 0;
+            
+            if (summary != null)
+            {
+                foreach (var s in summary)
+                {
+                    var employeeIdProp = s.GetType().GetProperty("EmployeeId");
+                    if (employeeIdProp != null && (int)employeeIdProp.GetValue(s) == member.employee_id)
+                    {
+                        var totalDaysProp = s.GetType().GetProperty("TotalDays");
+                        var totalHoursProp = s.GetType().GetProperty("TotalHours");
+                        var lateCountProp = s.GetType().GetProperty("LateCount");
+                        
+                        if (totalDaysProp != null) totalDays = (int)totalDaysProp.GetValue(s);
+                        if (totalHoursProp != null) totalHours = (decimal)totalHoursProp.GetValue(s);
+                        if (lateCountProp != null) lateCount = (int)lateCountProp.GetValue(s);
+                        break;
+                    }
+                }
+            }
+            
+            <div style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 1.5rem;">
+                <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                    <div style="width: 48px; height: 48px; background: var(--color-primary-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; margin-right: 1rem;">
+                        @(member.full_name?.Substring(0, 1).ToUpper() ?? "?")
+                    </div>
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.125rem; font-weight: 600;">@(member.full_name ?? "Unknown")</h3>
+                        <p style="margin: 0; color: var(--color-text-secondary); font-size: 0.875rem;">@(member.email ?? "")</p>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1rem;">
+                    <div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--color-primary);">
+                            @totalDays
+                        </div>
+                        <div style="color: var(--color-text-secondary); font-size: 0.875rem;">Days</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--color-success);">
+                            @totalHours.ToString("F1")
+                        </div>
+                        <div style="color: var(--color-text-secondary); font-size: 0.875rem;">Total Hours</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--color-danger);">
+                            @lateCount
+                        </div>
+                        <div style="color: var(--color-text-secondary); font-size: 0.875rem;">Late Arrivals</div>
+                    </div>
+                    <div>
+                        @{
+                            var avgHours = totalDays > 0 ? (totalHours / totalDays) : 0;
+                        }
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--color-primary-light);">
+                            @avgHours.ToString("F1")
+                        </div>
+                        <div style="color: var(--color-text-secondary); font-size: 0.875rem;">Avg Hours/Day</div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (attendanceData.Any())
+    {
+        <div style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 2rem; margin-top: 2rem;">
+            <h3 style="margin: 0 0 1.5rem; font-size: 1.25rem; font-weight: 600;">
+                @if (selectedEmployeeId.HasValue)
+                {
+                    <text>Detailed Attendance Records</text>
+                }
+                else
+                {
+                    <text>All Team Attendance Records (Last @days days)</text>
+                }
+            </h3>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: var(--color-bg-light); border-bottom: 2px solid var(--color-border);">
+                            @if (!selectedEmployeeId.HasValue)
+                            {
+                                <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Employee</th>
+                            }
+                            <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Date</th>
+                            <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Clock In</th>
+                            <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Clock Out</th>
+                            <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Duration</th>
+                            <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var record in attendanceData.Take(50))
+                        {
+                            <tr style="border-bottom: 1px solid var(--color-border); transition: background var(--transition-fast);" 
+                                onmouseover="this.style.background='var(--color-bg-light)'" 
+                                onmouseout="this.style.background='transparent'">
+                                @if (!selectedEmployeeId.HasValue)
+                                {
+                                    <td style="padding: 0.75rem; color: var(--color-text-primary); font-weight: 500;">
+                                        @(record.employee?.full_name ?? record.employee?.email ?? "Unknown")
+                                    </td>
+                                }
+                                <td style="padding: 0.75rem; color: var(--color-text-primary);">
+                                    @(record.entry_time?.ToString("MMM dd, yyyy") ?? "N/A")
+                                </td>
+                                <td style="padding: 0.75rem; color: var(--color-text-primary);">
+                                    @if (record.entry_time.HasValue)
+                                    {
+                                        <span style="font-weight: 500;">@record.entry_time.Value.ToString("hh:mm tt")</span>
+                                        @if (!string.IsNullOrEmpty(record.login_method))
+                                        {
+                                            <span style="font-size: 0.875rem; color: var(--color-text-secondary); margin-left: 0.5rem;">
+                                                (@record.login_method)
+                                            </span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span style="color: var(--color-text-secondary);">-</span>
+                                    }
+                                </td>
+                                <td style="padding: 0.75rem; color: var(--color-text-primary);">
+                                    @if (record.exit_time.HasValue)
+                                    {
+                                        <span style="font-weight: 500;">@record.exit_time.Value.ToString("hh:mm tt")</span>
+                                        @if (!string.IsNullOrEmpty(record.logout_method))
+                                        {
+                                            <span style="font-size: 0.875rem; color: var(--color-text-secondary); margin-left: 0.5rem;">
+                                                (@record.logout_method)
+                                            </span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span style="color: var(--color-danger); font-weight: 500;">Active</span>
+                                    }
+                                </td>
+                                <td style="padding: 0.75rem; color: var(--color-text-primary);">
+                                    @if (record.duration.HasValue)
+                                    {
+                                        <span style="font-weight: 500;">@record.duration.Value.ToString("F2") hrs</span>
+                                    }
+                                    else if (!record.exit_time.HasValue)
+                                    {
+                                        <span style="color: var(--color-text-secondary);">-</span>
+                                    }
+                                    else
+                                    {
+                                        <span style="color: var(--color-text-secondary);">N/A</span>
+                                    }
+                                </td>
+                                <td style="padding: 0.75rem;">
+                                    @if (record.exception_id.HasValue)
+                                    {
+                                        <span style="background: rgba(239, 68, 68, 0.1); color: var(--color-danger); padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 500;">
+                                            Late
+                                        </span>
+                                    }
+                                    else if (!record.exit_time.HasValue)
+                                    {
+                                        <span style="background: rgba(34, 197, 94, 0.1); color: var(--color-success); padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 500;">
+                                            Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span style="background: rgba(59, 130, 246, 0.1); color: var(--color-primary); padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 500;">
+                                            Complete
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @if (attendanceData.Count > 50)
+            {
+                <div style="margin-top: 1rem; text-align: center; color: var(--color-text-secondary); font-size: 0.875rem;">
+                    Showing first 50 of @attendanceData.Count records. Use filters to narrow down results.
+                </div>
+            }
+        </div>
+    }
+}
+else
+{
+    <div style="background: var(--color-surface); padding: 3rem; border-radius: var(--radius-lg); text-align: center; box-shadow: var(--shadow-md);">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 auto 1rem; opacity: 0.5;">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <h3 style="color: var(--color-text-secondary); margin-bottom: 0.5rem;">No Team Members</h3>
+        <p style="color: var(--color-text-secondary);">You don't have any team members assigned yet. Team members are assigned via the manager_id field in the Employee table.</p>
+    </div>
+}
+
+<div style="margin-top: 2rem; text-align: center;">
+    <a asp-action="Index" style="color: var(--color-primary); text-decoration: none;">
+        ← Back to Attendance Records
+    </a>
+</div>
+

@@ -76,6 +76,7 @@
                 @if (User.Identity?.IsAuthenticated == true)
                 {
                     <a asp-controller="Home" asp-action="Index" class="nav-link">Dashboard</a>
+                    <a asp-controller="Attendance" asp-action="Index" class="nav-link">Attendance</a>
                     <div style="width: 1px; height: 24px; background: var(--color-border); margin: 0 0.5rem;"></div>
                     <span style="display: flex; align-items: center; gap: 0.5rem; margin-right: 1rem;">
                         <div style="width: 32px; height: 32px; background: var(--color-primary-light); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem;">

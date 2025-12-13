@@ -1,0 +1,101 @@
+@{
+    ViewData["Title"] = "Sync Leave with Attendance";
+}
+
+<div style="max-width: 800px; margin: 0 auto;">
+    <div style="margin-bottom: 2rem;">
+        <h1 style="margin: 0; font-size: 2rem; font-weight: 700;">Sync Leave with Attendance</h1>
+        <p style="color: var(--color-text-secondary); margin-top: 0.5rem;">System Administrator Tool</p>
+    </div>
+
+    <div style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 2rem; margin-bottom: 2rem;">
+        @{
+            var pendingLeaves = ViewBag.PendingLeaves as int? ?? 0;
+            var alreadySynced = ViewBag.AlreadySynced as int? ?? 0;
+        }
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+            <div style="background: var(--color-bg-light); padding: 1.5rem; border-radius: var(--radius-md); text-align: center;">
+                <div style="font-size: 2rem; font-weight: 700; color: var(--color-primary);">@pendingLeaves</div>
+                <div style="color: var(--color-text-secondary); font-size: 0.875rem; margin-top: 0.5rem;">Approved Leave Requests</div>
+            </div>
+            <div style="background: var(--color-bg-light); padding: 1.5rem; border-radius: var(--radius-md); text-align: center;">
+                <div style="font-size: 2rem; font-weight: 700; color: var(--color-success);">@alreadySynced</div>
+                <div style="color: var(--color-text-secondary); font-size: 0.875rem; margin-top: 0.5rem;">Already Synced Records</div>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <h3 style="margin: 0 0 1rem; font-size: 1.25rem; font-weight: 600;">What this does:</h3>
+            <ul style="color: var(--color-text-secondary); line-height: 1.8; padding-left: 1.5rem;">
+                <li>Syncs approved leave requests with the attendance system</li>
+                <li>Creates attendance records for leave periods (8 hours per day)</li>
+                <li>Ensures leave days are properly tracked in attendance</li>
+                <li>Skips records that have already been synced to avoid duplicates</li>
+            </ul>
+        </div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid var(--color-success); color: #15803d; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                @TempData["SuccessMessage"]
+            </div>
+        }
+        
+        @if (TempData["InfoMessage"] != null)
+        {
+            <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid var(--color-primary); color: var(--color-primary); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                @TempData["InfoMessage"]
+            </div>
+        }
+
+        @if (pendingLeaves > 0)
+        {
+            <form asp-action="SyncLeaveWithAttendance" method="post" id="sync-form">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-premium btn-primary" style="padding: 0.75rem 2rem; font-size: 1rem; width: 100%;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;">
+                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"></path>
+                    </svg>
+                    Sync Leave Records Now (@pendingLeaves pending)
+                </button>
+            </form>
+        }
+        else
+        {
+            <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid var(--color-success); color: #15803d; padding: 1rem; border-radius: var(--radius-md); text-align: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 auto 0.5rem; display: block;">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <p style="margin: 0; font-weight: 500;">No pending leave requests to sync.</p>
+            </div>
+        }
+    </div>
+
+    <div style="margin-top: 2rem; text-align: center;">
+        <a asp-action="Index" style="color: var(--color-primary); text-decoration: none;">
+            ← Back to Attendance Records
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('sync-form').addEventListener('submit', function(e) {
+            if (!confirm('This will sync all approved leave requests with the attendance system. Continue?')) {
+                e.preventDefault();
+            }
+        });
+    </script>
+}
+

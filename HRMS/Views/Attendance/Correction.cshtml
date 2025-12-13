@@ -1,0 +1,100 @@
+@{
+    ViewData["Title"] = "Request Attendance Correction";
+    var recentAttendance = ViewBag.RecentAttendance as List<HRMS.Models.Attendance> ?? new List<HRMS.Models.Attendance>();
+}
+
+<div style="max-width: 800px; margin: 0 auto;">
+    <div style="margin-bottom: 2rem;">
+        <h1 style="margin: 0; font-size: 2rem; font-weight: 700;">Request Attendance Correction</h1>
+        <p style="color: var(--color-text-secondary); margin-top: 0.5rem;">Submit a request to correct your attendance record</p>
+    </div>
+
+    <div style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 2rem; margin-bottom: 2rem;">
+        <form asp-action="Correction" method="post">
+            @Html.AntiForgeryToken()
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--color-text-primary);">
+                    Date to Correct
+                </label>
+                <input type="date" name="date" required 
+                       style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text-primary); font-size: 1rem;"
+                       max="@DateTime.Now.ToString("yyyy-MM-dd")"
+                       value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--color-text-primary);">
+                    Correction Type
+                </label>
+                <select name="correction_type" required 
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text-primary); font-size: 1rem;">
+                    <option value="">Select correction type...</option>
+                    <option value="Missing Entry">Missing Clock In</option>
+                    <option value="Missing Exit">Missing Clock Out</option>
+                    <option value="Time Adjustment">Time Adjustment</option>
+                    <option value="Wrong Date">Wrong Date</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--color-text-primary);">
+                    Reason
+                </label>
+                <textarea name="reason" required rows="4" 
+                          placeholder="Please provide a detailed reason for this correction request..."
+                          style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text-primary); font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
+            </div>
+
+            <button type="submit" class="btn-premium btn-primary" style="padding: 0.75rem 2rem; font-size: 1rem; width: 100%;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                Submit Request
+            </button>
+        </form>
+    </div>
+
+    @if (recentAttendance.Any())
+    {
+        <div style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 2rem;">
+            <h3 style="margin: 0 0 1rem; font-size: 1.25rem; font-weight: 600;">Recent Attendance Records</h3>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--color-border);">
+                            <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Date</th>
+                            <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Clock In</th>
+                            <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Clock Out</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var record in recentAttendance)
+                        {
+                            <tr style="border-bottom: 1px solid var(--color-border);">
+                                <td style="padding: 0.75rem; color: var(--color-text-primary);">
+                                    @(record.entry_time?.ToString("MMM dd, yyyy") ?? "N/A")
+                                </td>
+                                <td style="padding: 0.75rem; color: var(--color-text-primary);">
+                                    @(record.entry_time?.ToString("hh:mm tt") ?? "-")
+                                </td>
+                                <td style="padding: 0.75rem; color: var(--color-text-primary);">
+                                    @(record.exit_time?.ToString("hh:mm tt") ?? "-")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <div style="margin-top: 2rem; text-align: center;">
+        <a asp-action="Index" style="color: var(--color-primary); text-decoration: none;">
+            ← Back to Attendance Records
+        </a>
+    </div>
+</div>
+

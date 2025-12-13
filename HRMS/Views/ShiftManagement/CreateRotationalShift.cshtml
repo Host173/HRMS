@@ -1,0 +1,95 @@
+@{
+    ViewData["Title"] = "Configure Rotational Shift";
+    var shifts = ViewBag.Shifts as List<HRMS.Models.ShiftSchedule> ?? new List<HRMS.Models.ShiftSchedule>();
+}
+
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h1 style="margin: 0; font-size: 2rem; font-weight: 700;">Configure Rotational Shift</h1>
+        <a asp-action="Index" class="btn-premium btn-secondary">← Back to Shift Management</a>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-danger); color: var(--color-danger); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 2rem;">
+        <form asp-action="CreateRotationalShift" method="post" id="rotationalForm">
+            @Html.AntiForgeryToken()
+
+            <div style="margin-bottom: 1.5rem;">
+                <label for="cycleName" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Cycle Name *</label>
+                <input type="text" id="cycleName" name="cycleName" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem;" placeholder="e.g., Weekly Rotation, Monthly Cycle" />
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label for="description" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Description</label>
+                <textarea id="description" name="description" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem;" placeholder="Optional description of the rotational shift cycle"></textarea>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Select Shifts for Rotation *</label>
+                <div id="shiftContainer" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div class="shift-item" style="display: flex; gap: 1rem; align-items: center; padding: 1rem; background: var(--color-bg-light); border-radius: var(--radius-md);">
+                        <select name="shiftIds" class="shift-select" required style="flex: 1; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem;">
+                            <option value="">Select a shift...</option>
+                            @foreach (var shift in shifts)
+                            {
+                                <option value="@shift.shift_id">@shift.name (@shift.start_time?.ToString("hh:mm tt") - @shift.end_time?.ToString("hh:mm tt"))</option>
+                            }
+                        </select>
+                        <input type="number" name="orderNumbers" class="order-input" value="1" min="1" style="width: 80px; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem;" placeholder="Order" />
+                        <button type="button" class="remove-shift btn-premium" style="padding: 0.75rem 1rem; background: var(--color-danger); color: white; display: none;">Remove</button>
+                    </div>
+                </div>
+                <button type="button" id="addShift" class="btn-premium btn-secondary" style="margin-top: 1rem; padding: 0.75rem 1.5rem;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add Another Shift
+                </button>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn-premium btn-primary" style="padding: 0.75rem 1.5rem;">Create Rotational Shift</button>
+                <a asp-action="Index" class="btn-premium btn-secondary" style="padding: 0.75rem 1.5rem;">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let shiftCount = 1;
+        const shiftTemplate = document.querySelector('.shift-item').cloneNode(true);
+        
+        document.getElementById('addShift').addEventListener('click', function() {
+            shiftCount++;
+            const newShift = shiftTemplate.cloneNode(true);
+            const select = newShift.querySelector('.shift-select');
+            const orderInput = newShift.querySelector('.order-input');
+            const removeBtn = newShift.querySelector('.remove-shift');
+            
+            select.value = '';
+            orderInput.value = shiftCount;
+            removeBtn.style.display = 'block';
+            
+            removeBtn.addEventListener('click', function() {
+                newShift.remove();
+            });
+            
+            document.getElementById('shiftContainer').appendChild(newShift);
+        });
+        
+        document.querySelectorAll('.remove-shift').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.closest('.shift-item').remove();
+            });
+        });
+    </script>
+}
+

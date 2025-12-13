@@ -1,0 +1,622 @@
+@model List<HRMS.Models.Attendance>
+@{
+    ViewData["Title"] = "Attendance Records";
+    var isManager = ViewBag.IsManager as bool? ?? false;
+    var isSystemAdmin = ViewBag.IsSystemAdmin as bool? ?? false;
+    var isHRAdmin = ViewBag.IsHRAdmin as bool? ?? false;
+    var currentEmployeeId = ViewBag.CurrentEmployeeId as int? ?? 0;
+    var canViewAll = isSystemAdmin || isHRAdmin;
+    var showOnlyMyAttendance = ViewBag.ShowOnlyMyAttendance as bool? ?? false;
+    var pendingShifts = ViewBag.PendingShifts as List<object> ?? new List<object>();
+    
+    // Role-based access control:
+    // - Regular Employees: Can only see their own attendance records
+    // - Managers: Can see their team's attendance records (or their own if myAttendance=true)
+    // - System Admin & HR Admin: Can see all attendance records
+}
+
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+            <h1 style="margin: 0; font-size: 2rem; font-weight: 700;">Attendance Tracking</h1>
+            @if (isManager && showOnlyMyAttendance)
+            {
+                <p style="color: var(--color-text-secondary); margin-top: 0.5rem;">Viewing your personal attendance records</p>
+            }
+            else if (isManager && !showOnlyMyAttendance)
+            {
+                <p style="color: var(--color-text-secondary); margin-top: 0.5rem;">Viewing team attendance records</p>
+            }
+        </div>
+        <a asp-action="Record" class="btn-premium btn-primary" style="padding: 0.75rem 1.5rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            Record Attendance
+        </a>
+    </div>
+
+    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+        @* Managers can view team attendance and summary *@
+        @if (isManager && !canViewAll)
+        {
+            <a asp-action="TeamAttendance" class="btn-premium btn-primary" style="padding: 0.75rem 1.5rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                View Team Attendance
+            </a>
+            <a asp-action="TeamSummary" class="btn-premium btn-secondary" style="padding: 0.75rem 1.5rem;">
+                Team Summary
+            </a>
+        }
+        @* All employees (including System Admin) can request corrections *@
+        <a asp-action="Correction" class="btn-premium btn-secondary" style="padding: 0.75rem 1.5rem;">
+            Request Correction
+        </a>
+        @* Only System Admin can sync leave *@
+        @if (isSystemAdmin)
+        {
+            <a asp-action="AdminSync" class="btn-premium" style="padding: 0.75rem 1.5rem; background: var(--color-danger); color: white;">
+                Admin: Sync Leave
+            </a>
+        }
+        @if (canViewAll)
+        {
+            <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid var(--color-primary); color: var(--color-primary); padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-size: 0.875rem;">
+                @if (isSystemAdmin)
+                {
+                    <text>System Admin View: All Attendance Records</text>
+                }
+                else if (isHRAdmin)
+                {
+                    <text>HR Admin View: All Attendance Records</text>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Pending Shifts Section -->
+@if (pendingShifts.Any())
+{
+    <div style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 2rem; margin-bottom: 2rem;">
+        <h2 style="margin: 0 0 1.5rem; font-size: 1.5rem; font-weight: 600;">Scheduled Shifts</h2>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: var(--color-bg-light); border-bottom: 2px solid var(--color-border);">
+                        @if (canViewAll || isManager)
+                        {
+                            <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Employee</th>
+                        }
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Shift</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Start Time</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">End Time</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Status</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var pending in pendingShifts)
+                    {
+                        var employeeId = pending.GetType().GetProperty("EmployeeId")?.GetValue(pending);
+                        var employeeName = pending.GetType().GetProperty("EmployeeName")?.GetValue(pending)?.ToString() ?? "Unknown";
+                        var shiftName = pending.GetType().GetProperty("ShiftName")?.GetValue(pending)?.ToString() ?? "Unknown";
+                        var startTime = pending.GetType().GetProperty("StartTime")?.GetValue(pending) as DateTime?;
+                        var endTime = pending.GetType().GetProperty("EndTime")?.GetValue(pending) as DateTime?;
+                        var status = pending.GetType().GetProperty("Status")?.GetValue(pending)?.ToString() ?? "Pending";
+                        var canClockIn = pending.GetType().GetProperty("CanClockIn")?.GetValue(pending) as bool? ?? false;
+                        var canClockOut = pending.GetType().GetProperty("CanClockOut")?.GetValue(pending) as bool? ?? false;
+                        var attendanceId = pending.GetType().GetProperty("AttendanceId")?.GetValue(pending) as int? ?? 0;
+                        var shiftId = pending.GetType().GetProperty("ShiftId")?.GetValue(pending) as int? ?? 0;
+                        var isCurrentEmployee = (employeeId as int?) == currentEmployeeId;
+                        
+                        <tr style="border-bottom: 1px solid var(--color-border);">
+                            @if (canViewAll || isManager)
+                            {
+                                <td style="padding: 0.75rem; color: var(--color-text-primary);">@employeeName</td>
+                            }
+                            <td style="padding: 0.75rem; color: var(--color-text-primary);">@shiftName</td>
+                            <td style="padding: 0.75rem; color: var(--color-text-primary);">
+                                @if (startTime.HasValue)
+                                {
+                                    <text>@startTime.Value.ToString("MMM dd, yyyy hh:mm tt")</text>
+                                }
+                                else
+                                {
+                                    <text>-</text>
+                                }
+                            </td>
+                            <td style="padding: 0.75rem; color: var(--color-text-primary);">
+                                @if (endTime.HasValue)
+                                {
+                                    <text>@endTime.Value.ToString("MMM dd, yyyy hh:mm tt")</text>
+                                }
+                                else
+                                {
+                                    <text>-</text>
+                                }
+                            </td>
+                            <td style="padding: 0.75rem;" class="shift-status-cell" data-status="@status">
+                                @if (status == "On Leave")
+                                {
+                                    <span class="shift-status-badge" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 500;">
+                                        On Leave
+                                    </span>
+                                }
+                                else if (status == "Absent")
+                                {
+                                    <span class="shift-status-badge" style="background: rgba(239, 68, 68, 0.1); color: var(--color-danger); padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 500;">
+                                        Absent
+                                    </span>
+                                }
+                                else if (status == "Started - Not Clocked In")
+                                {
+                                    <span class="shift-status-badge" style="background: rgba(251, 191, 36, 0.1); color: #f59e0b; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 500;">
+                                        Started - Not Clocked In
+                                    </span>
+                                }
+                                else if (status == "Active - Clocked In" || status == "Working")
+                                {
+                                    <span class="shift-status-badge" style="background: rgba(34, 197, 94, 0.1); color: var(--color-success); padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 500;">
+                                        Working
+                                    </span>
+                                }
+                                else if (status == "Shift Ended - Clock Out Required")
+                                {
+                                    <span class="shift-status-badge" style="background: rgba(239, 68, 68, 0.1); color: var(--color-danger); padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 500;">
+                                        Shift Ended - Clock Out Required
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="shift-status-badge" style="background: rgba(59, 130, 246, 0.1); color: var(--color-primary); padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 500;">
+                                        Pending
+                                    </span>
+                                }
+                            </td>
+                            <td style="padding: 0.75rem;">
+                                @if (isCurrentEmployee)
+                                {
+                                    @* Only the employee themselves can clock in/out for their own shifts *@
+                                    @if (canClockIn)
+                                    {
+                                        <button onclick="clockInFromShift(@shiftId, @employeeId, this)" class="btn-premium btn-primary clock-in-btn" style="padding: 0.5rem 1rem; font-size: 0.875rem;" data-shift-id="@shiftId" data-employee-id="@employeeId">
+                                            Clock In
+                                        </button>
+                                    }
+                                    else if (canClockOut)
+                                    {
+                                        <button onclick="clockOut(@attendanceId)" class="btn-premium clock-out-btn" style="padding: 0.5rem 1rem; font-size: 0.875rem; background: var(--color-danger); color: white;" data-attendance-id="@attendanceId">
+                                            Clock Out
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span style="color: var(--color-text-secondary); font-size: 0.875rem;">-</span>
+                                    }
+                                }
+                                else if (canViewAll)
+                                {
+                                    @* System Admin and HR Admin can see actions but cannot perform them for others *@
+                                    <span style="color: var(--color-text-secondary); font-size: 0.875rem;" title="Only the employee can clock in/out for their own shifts">View Only</span>
+                                }
+                                else
+                                {
+                                    @* Managers and others cannot see actions for employees not in their scope *@
+                                    <span style="color: var(--color-text-secondary); font-size: 0.875rem;">-</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@if (Model == null || !Model.Any())
+{
+    <div style="background: var(--color-surface); padding: 3rem; border-radius: var(--radius-lg); text-align: center; box-shadow: var(--shadow-md);">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 auto 1rem; opacity: 0.5;">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        <h3 style="color: var(--color-text-secondary); margin-bottom: 0.5rem;">No Attendance Records</h3>
+        <p style="color: var(--color-text-secondary);">Start recording your attendance to see your history here.</p>
+    </div>
+}
+else
+{
+    <div style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); overflow: hidden;">
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: var(--color-bg-light); border-bottom: 2px solid var(--color-border);">
+                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Date</th>
+                        @if (isManager || canViewAll)
+                        {
+                            <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Employee</th>
+                        }
+                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Clock In</th>
+                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Clock Out</th>
+                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Duration</th>
+                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var record in Model)
+                    {
+                        <tr style="border-bottom: 1px solid var(--color-border); transition: background var(--transition-fast);" 
+                            onmouseover="this.style.background='var(--color-bg-light)'" 
+                            onmouseout="this.style.background='transparent'">
+                            <td style="padding: 1rem; color: var(--color-text-primary);">
+                                @(record.entry_time?.ToLocalTime().ToString("MMM dd, yyyy") ?? "N/A")
+                            </td>
+                            @if (isManager || canViewAll)
+                            {
+                                <td style="padding: 1rem; color: var(--color-text-primary);">
+                                    @(record.employee?.full_name ?? record.employee?.email ?? "N/A")
+                                </td>
+                            }
+                            <td style="padding: 1rem; color: var(--color-text-primary);">
+                                @if (record.entry_time.HasValue)
+                                {
+                                    @if (record.login_method == "Absent")
+                                    {
+                                        <span style="color: var(--color-danger); font-weight: 500;">Absent</span>
+                                        <span style="font-size: 0.875rem; color: var(--color-text-secondary); margin-left: 0.5rem;">
+                                            (@record.entry_time.Value.ToLocalTime().ToString("MMM dd, yyyy"))
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span style="font-weight: 500;">@record.entry_time.Value.ToLocalTime().ToString("hh:mm tt")</span>
+                                        <span style="font-size: 0.875rem; color: var(--color-text-secondary); margin-left: 0.5rem;">
+                                            (@record.login_method)
+                                        </span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span style="color: var(--color-text-secondary);">-</span>
+                                }
+                            </td>
+                            <td style="padding: 1rem; color: var(--color-text-primary);">
+                                @if (record.exit_time.HasValue)
+                                {
+                                    <span style="font-weight: 500;">@record.exit_time.Value.ToLocalTime().ToString("hh:mm tt")</span>
+                                    <span style="font-size: 0.875rem; color: var(--color-text-secondary); margin-left: 0.5rem;">
+                                        (@record.logout_method)
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span style="color: var(--color-danger); font-weight: 500;">Active</span>
+                                }
+                            </td>
+                            <td style="padding: 1rem; color: var(--color-text-primary);">
+                                @if (record.duration.HasValue)
+                                {
+                                    <span style="font-weight: 500;">@record.duration.Value.ToString("F2") hrs</span>
+                                }
+                                else if (!record.exit_time.HasValue)
+                                {
+                                    <span style="color: var(--color-text-secondary);">-</span>
+                                }
+                                else
+                                {
+                                    <span style="color: var(--color-text-secondary);">Calculating...</span>
+                                }
+                            </td>
+                            <td style="padding: 1rem;">
+                                @if (record.login_method == "Absent")
+                                {
+                                    <span style="background: rgba(239, 68, 68, 0.1); color: var(--color-danger); padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 500;">
+                                        Absent
+                                    </span>
+                                }
+                                else if (record.exception_id.HasValue)
+                                {
+                                    var exception = record.exception;
+                                    var exceptionName = exception?.name ?? "Exception";
+                                    <span style="background: rgba(239, 68, 68, 0.1); color: var(--color-danger); padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 500;" title="@exceptionName">
+                                        @(exceptionName.Contains("Early") ? "Early Departure" : exceptionName.Contains("Late") ? "Late" : exceptionName)
+                                    </span>
+                                }
+                                else if (!record.exit_time.HasValue)
+                                {
+                                    <span style="background: rgba(34, 197, 94, 0.1); color: var(--color-success); padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 500;">
+                                        Active
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span style="background: rgba(59, 130, 246, 0.1); color: var(--color-primary); padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 500;">
+                                        Complete
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Store offline record
+        function storeOfflineRecord(action, attendanceId) {
+            var record = {
+                EmployeeId: @currentEmployeeId,
+                Action: action,
+                Timestamp: new Date().toISOString(),
+                AttendanceId: attendanceId || null
+            };
+            
+            var offlineRecords = JSON.parse(localStorage.getItem('offlineAttendanceRecords') || '[]');
+            offlineRecords.push(record);
+            localStorage.setItem('offlineAttendanceRecords', JSON.stringify(offlineRecords));
+            console.log('Stored offline record:', record);
+        }
+        
+        // Clock In function from shift schedule
+        async function clockInFromShift(shiftId, employeeId, buttonElement) {
+            if (!confirm('Are you sure you want to clock in?')) {
+                return;
+            }
+            
+            // Disable button to prevent double-clicking
+            buttonElement.disabled = true;
+            buttonElement.textContent = 'Clocking In...';
+            
+            try {
+                const response = await fetch('@Url.Action("ClockIn", "Attendance")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    }
+                });
+                
+                // Check if response is ok (status 200-299)
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Find the row containing this button
+                    const row = buttonElement.closest('tr');
+                    
+                    // Update status badge
+                    const statusBadge = row.querySelector('.shift-status-badge');
+                    if (statusBadge) {
+                        statusBadge.textContent = 'Working';
+                        statusBadge.style.background = 'rgba(34, 197, 94, 0.1)';
+                        statusBadge.style.color = 'var(--color-success)';
+                    }
+                    
+                    // Update status cell data attribute
+                    const statusCell = row.querySelector('.shift-status-cell');
+                    if (statusCell) {
+                        statusCell.setAttribute('data-status', 'Working');
+                    }
+                    
+                    // Remove Clock In button and add Clock Out button
+                    const actionCell = row.querySelector('td:last-child');
+                    if (actionCell) {
+                        actionCell.innerHTML = '<button onclick="clockOut(' + data.attendanceId + ')" class="btn-premium clock-out-btn" style="padding: 0.5rem 1rem; font-size: 0.875rem; background: var(--color-danger); color: white;" data-attendance-id="' + data.attendanceId + '">Clock Out</button>';
+                    }
+                    
+                    // Show success message
+                    alert('Clocked in successfully!');
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to clock in'));
+                    // Re-enable button on error
+                    buttonElement.disabled = false;
+                    buttonElement.textContent = 'Clock In';
+                }
+            } catch (error) {
+                console.error('Error clocking in:', error);
+                
+                // Re-enable button on error
+                buttonElement.disabled = false;
+                buttonElement.textContent = 'Clock In';
+                
+                // Check if we're offline or network error occurred
+                if (!navigator.onLine || error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+                    // Store for offline sync
+                    storeOfflineRecord('ClockIn', null);
+                    alert('You are offline. Your clock-in has been saved locally and will sync when you reconnect.');
+                    // Update UI optimistically
+                    const row = buttonElement.closest('tr');
+                    const statusBadge = row.querySelector('.shift-status-badge');
+                    if (statusBadge) {
+                        statusBadge.textContent = 'Working (Offline)';
+                        statusBadge.style.background = 'rgba(251, 191, 36, 0.1)';
+                        statusBadge.style.color = '#f59e0b';
+                    }
+                    const statusCell = row.querySelector('.shift-status-cell');
+                    if (statusCell) {
+                        statusCell.setAttribute('data-status', 'Working (Offline)');
+                    }
+                    buttonElement.style.display = 'none';
+                } else {
+                    alert('An error occurred while clocking in. Please try again.');
+                }
+            }
+        }
+        
+        // Clock In function (for backward compatibility)
+        async function clockIn(shiftId) {
+            const button = document.querySelector(`button[data-shift-id="${shiftId}"]`);
+            if (button) {
+                const employeeId = button.getAttribute('data-employee-id');
+                await clockInFromShift(shiftId, employeeId, button);
+            } else {
+                // Fallback to old behavior
+                if (!confirm('Are you sure you want to clock in?')) {
+                    return;
+                }
+                try {
+                    const response = await fetch('@Url.Action("ClockIn", "Attendance")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                        }
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        alert('Clocked in successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + (data.message || 'Failed to clock in'));
+                    }
+                } catch (error) {
+                    console.error('Error clocking in:', error);
+                    alert('An error occurred while clocking in. Please try again.');
+                }
+            }
+        }
+        
+        // Clock Out function
+        async function clockOut(attendanceId) {
+            if (!confirm('Are you sure you want to clock out?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('@Url.Action("ClockOut", "Attendance")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify({ AttendanceId: attendanceId })
+                });
+                
+                // Check if response is ok (status 200-299)
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Clocked out successfully!');
+                    location.reload(); // Reload to update the page
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to clock out'));
+                }
+            } catch (error) {
+                console.error('Error clocking out:', error);
+                
+                // Check if we're offline or network error occurred
+                if (!navigator.onLine || error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+                    // Store for offline sync
+                    storeOfflineRecord('ClockOut', attendanceId);
+                    alert('You are offline. Your clock-out has been saved locally and will sync when you reconnect.');
+                } else {
+                    alert('An error occurred while clocking out. Please try again.');
+                }
+            }
+        }
+        
+        // Offline attendance sync functionality
+        (function() {
+            var isSyncing = false;
+            
+            // Check if we're back online and have offline records to sync
+            async function syncOfflineRecords() {
+                // Don't sync if already syncing or offline
+                if (isSyncing || !navigator.onLine) return;
+                
+                var offlineRecords = JSON.parse(localStorage.getItem('offlineAttendanceRecords') || '[]');
+                if (offlineRecords.length === 0) return;
+                
+                isSyncing = true;
+                console.log('Attempting to sync', offlineRecords.length, 'offline records...');
+                
+                try {
+                    const response = await fetch('@Url.Action("SyncOfflineAttendance", "Attendance")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(offlineRecords)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Sync failed with status: ' + response.status);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Remove synced records from localStorage
+                        localStorage.removeItem('offlineAttendanceRecords');
+                        console.log('Offline records synced:', data.message);
+                        
+                        if (data.syncedCount > 0) {
+                            alert('Successfully synced ' + data.syncedCount + ' offline attendance record(s).');
+                            // Reload to show updated records
+                            location.reload();
+                        }
+                        
+                        if (data.errorCount > 0) {
+                            console.warn(data.errorCount + ' record(s) failed to sync');
+                        }
+                    } else {
+                        console.error('Sync failed:', data.message);
+                    }
+                } catch (error) {
+                    console.error('Error syncing offline records:', error);
+                    // Don't remove records if sync failed - will try again later
+                } finally {
+                    isSyncing = false;
+                }
+            }
+            
+            // Listen for online event
+            window.addEventListener('online', function() {
+                console.log('Connection restored. Attempting to sync offline records...');
+                setTimeout(syncOfflineRecords, 1000); // Wait a bit to ensure connection is stable
+            });
+            
+            // Try to sync on page load
+            setTimeout(syncOfflineRecords, 500);
+            
+            // Periodically try to sync (every 30 seconds) if there are offline records
+            setInterval(function() {
+                var offlineRecords = JSON.parse(localStorage.getItem('offlineAttendanceRecords') || '[]');
+                if (offlineRecords.length > 0 && navigator.onLine) {
+                    syncOfflineRecords();
+                }
+            }, 30000);
+        })();
+        
+        // Auto-refresh every 30 seconds if there are active attendance records
+        @if (Model != null && Model.Any(r => !r.exit_time.HasValue))
+        {
+            <text>
+            setTimeout(function() {
+                location.reload();
+            }, 30000);
+            </text>
+        }
+    </script>
+}
+

@@ -1,0 +1,244 @@
+@{
+    ViewData["Title"] = "Shift Management";
+    var isSystemAdmin = ViewBag.IsSystemAdmin as bool? ?? false;
+    var isHRAdmin = ViewBag.IsHRAdmin as bool? ?? false;
+    var isManager = ViewBag.IsManager as bool? ?? false;
+    var shifts = ViewBag.Shifts as List<HRMS.Models.ShiftSchedule> ?? new List<HRMS.Models.ShiftSchedule>();
+    var cycles = ViewBag.Cycles as List<HRMS.Models.ShiftCycle> ?? new List<HRMS.Models.ShiftCycle>();
+    var recentAssignments = ViewBag.RecentAssignments as List<HRMS.Models.ShiftAssignment> ?? new List<HRMS.Models.ShiftAssignment>();
+}
+
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h1 style="margin: 0; font-size: 2rem; font-weight: 700;">Shift Management</h1>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid var(--color-success); color: var(--color-success); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-danger); color: var(--color-danger); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- Quick Actions - Only show if user has permissions -->
+    @{
+        var hasAnyActions = isSystemAdmin || isHRAdmin || isManager;
+    }
+    @if (hasAnyActions)
+    {
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+            @if (isSystemAdmin)
+            {
+                <a asp-action="CreateShiftType" class="btn-premium btn-primary" style="padding: 1rem; text-align: center;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 0.5rem;">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <div style="font-weight: 600;">Create Shift Type</div>
+                </a>
+            }
+
+            @if (isHRAdmin)
+            {
+                <a asp-action="CreateRotationalShift" class="btn-premium btn-primary" style="padding: 1rem; text-align: center;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 0.5rem;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <div style="font-weight: 600;">Configure Rotational Shift</div>
+                </a>
+            }
+
+            @if (isSystemAdmin || isManager)
+            {
+                <a asp-action="AssignShift" class="btn-premium btn-primary" style="padding: 1rem; text-align: center;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 0.5rem;">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                        <line x1="23" y1="11" x2="17" y2="11"></line>
+                    </svg>
+                    <div style="font-weight: 600;">Assign Shift</div>
+                </a>
+            }
+
+            @if (isSystemAdmin)
+            {
+                <a asp-action="ManageEmployeeShifts" class="btn-premium btn-primary" style="padding: 1rem; text-align: center;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 0.5rem;">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <div style="font-weight: 600;">Manage Employee Shifts</div>
+                </a>
+            }
+        </div>
+    }
+    else
+    {
+        <div style="background: var(--color-bg-light); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 2rem; text-align: center;">
+            <p style="color: var(--color-text-secondary); margin: 0;">You don't have permission to perform shift management actions. Contact your administrator if you need access.</p>
+        </div>
+    }
+</div>
+
+<!-- Shift Types Section - Visible to all for viewing, but only System Admin can edit -->
+<div style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 2rem; margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">Shift Types</h2>
+    </div>
+
+    @if (shifts.Any())
+    {
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: var(--color-bg-light); border-bottom: 2px solid var(--color-border);">
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Name</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Type</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Start Time</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">End Time</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Break (min)</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Status</th>
+                        @if (isSystemAdmin)
+                        {
+                            <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Actions</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var shift in shifts)
+                    {
+                        <tr style="border-bottom: 1px solid var(--color-border);">
+                            <td style="padding: 0.75rem;">@shift.name</td>
+                            <td style="padding: 0.75rem;">@(shift.type ?? "Standard")</td>
+                            <td style="padding: 0.75rem;">@(shift.start_time?.ToString("hh:mm tt") ?? "N/A")</td>
+                            <td style="padding: 0.75rem;">@(shift.end_time?.ToString("hh:mm tt") ?? "N/A")</td>
+                            <td style="padding: 0.75rem;">@(shift.break_duration?.ToString() ?? "0")</td>
+                            <td style="padding: 0.75rem;">
+                                <span style="background: rgba(34, 197, 94, 0.1); color: var(--color-success); padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.875rem;">
+                                    @(shift.status ?? "Active")
+                                </span>
+                            </td>
+                            @if (isSystemAdmin)
+                            {
+                                <td style="padding: 0.75rem;">
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <a asp-action="EditShiftType" asp-route-id="@shift.shift_id" class="btn-premium btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Edit</a>
+                                        <form asp-action="DeleteShiftType" asp-route-id="@shift.shift_id" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this shift type?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn-premium" style="padding: 0.5rem 1rem; font-size: 0.875rem; background: var(--color-danger); color: white;">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p style="color: var(--color-text-secondary); text-align: center; padding: 2rem;">No shift types found.</p>
+    }
+</div>
+
+<!-- Rotational Shifts Section -->
+@if (isHRAdmin || isSystemAdmin)
+{
+    <div style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 2rem; margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">Rotational Shift Cycles</h2>
+        </div>
+
+        @if (cycles.Any())
+        {
+            <div style="display: grid; gap: 1rem;">
+                @foreach (var cycle in cycles)
+                {
+                    <div style="background: var(--color-bg-light); border-radius: var(--radius-md); padding: 1.5rem; border: 1px solid var(--color-border);">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.1rem; font-weight: 600;">@cycle.cycle_name</h3>
+                                @if (!string.IsNullOrEmpty(cycle.description))
+                                {
+                                    <p style="margin: 0.5rem 0 0; color: var(--color-text-secondary); font-size: 0.9rem;">@cycle.description</p>
+                                }
+                            </div>
+                            @if (isHRAdmin)
+                            {
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <a asp-action="EditRotationalShift" asp-route-id="@cycle.cycle_id" class="btn-premium btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Edit</a>
+                                    <form asp-action="DeleteRotationalShift" asp-route-id="@cycle.cycle_id" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this rotational shift cycle?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn-premium" style="padding: 0.5rem 1rem; font-size: 0.875rem; background: var(--color-danger); color: white;">Delete</button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            @foreach (var assignment in cycle.ShiftCycleAssignment.OrderBy(sca => sca.order_number))
+                            {
+                                <span style="background: var(--color-primary-light); color: white; padding: 0.5rem 1rem; border-radius: var(--radius-sm); font-size: 0.875rem;">
+                                    @assignment.order_number. @assignment.shift.name
+                                </span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p style="color: var(--color-text-secondary); text-align: center; padding: 2rem;">No rotational shift cycles found.</p>
+        }
+    </div>
+}
+
+<!-- Recent Assignments Section -->
+@if (recentAssignments.Any())
+{
+    <div style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 2rem;">
+        <h2 style="margin: 0 0 1.5rem; font-size: 1.5rem; font-weight: 600;">Recent Shift Assignments</h2>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: var(--color-bg-light); border-bottom: 2px solid var(--color-border);">
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Employee</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Shift</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Start Date</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">End Date</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var assignment in recentAssignments)
+                    {
+                        <tr style="border-bottom: 1px solid var(--color-border);">
+                            <td style="padding: 0.75rem;">@(assignment.employee?.full_name ?? "Unknown")</td>
+                            <td style="padding: 0.75rem;">@assignment.shift.name</td>
+                            <td style="padding: 0.75rem;">@(assignment.start_date?.ToString("MMM dd, yyyy") ?? "N/A")</td>
+                            <td style="padding: 0.75rem;">@(assignment.end_date?.ToString("MMM dd, yyyy") ?? "Ongoing")</td>
+                            <td style="padding: 0.75rem;">
+                                <span style="background: rgba(34, 197, 94, 0.1); color: var(--color-success); padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.875rem;">
+                                    @(assignment.status ?? "Active")
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
