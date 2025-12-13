@@ -1,0 +1,29 @@
+@model HRMS.Models.HierarchyNodeViewModel
+
+<div class="hierarchy-node hierarchy-node-level-@Model.Level">
+    <div style="font-weight: 600; color: var(--color-text-primary); margin-bottom: 0.5rem;">
+        @Model.EmployeeName
+    </div>
+    @if (!string.IsNullOrEmpty(Model.Position))
+    {
+        <div style="font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">
+            📋 @Model.Position
+        </div>
+    }
+    @if (!string.IsNullOrEmpty(Model.Department))
+    {
+        <div style="font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: 0.5rem;">
+            🏢 @Model.Department
+        </div>
+    }
+    @if (Model.Subordinates.Any())
+    {
+        <div class="hierarchy-subordinates">
+            @foreach (var subordinate in Model.Subordinates)
+            {
+                @await Html.PartialAsync("_HierarchyNode", subordinate)
+            }
+        </div>
+    }
+</div>
+

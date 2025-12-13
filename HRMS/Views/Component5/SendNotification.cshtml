@@ -1,0 +1,189 @@
+@model HRMS.Models.SendNotificationViewModel
+@{
+    ViewData["Title"] = "Send Notification";
+}
+
+<div class="premium-card">
+    <h1 style="margin-bottom: 1.5rem; color: var(--color-text-primary);">Send Notification</h1>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-error); color: #dc2626; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;" role="alert">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <form asp-controller="Component5" asp-action="SendNotification" method="post">
+        @Html.AntiForgeryToken()
+
+        <div style="margin-bottom: 1.5rem;">
+            <label asp-for="Message" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary);">
+                Message <span style="color: var(--color-error);">*</span>
+            </label>
+            <textarea asp-for="Message" rows="4" 
+                      style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
+                             background: var(--color-bg-primary); color: var(--color-text-primary); font-family: inherit;"
+                      placeholder="Enter your notification message..."></textarea>
+            <span asp-validation-for="Message" style="color: var(--color-error); font-size: 0.875rem;"></span>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label asp-for="NotificationType" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary);">
+                Notification Type
+            </label>
+            <select asp-for="NotificationType" 
+                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
+                           background: var(--color-bg-primary); color: var(--color-text-primary);">
+                <option value="General">General</option>
+                <option value="Contract">Contract</option>
+                <option value="Leave">Leave</option>
+                <option value="Shift">Shift</option>
+                <option value="Mission">Mission</option>
+                <option value="Team">Team</option>
+                <option value="Department">Department</option>
+            </select>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label asp-for="Urgency" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary);">
+                Urgency
+            </label>
+            <select asp-for="Urgency" 
+                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
+                           background: var(--color-bg-primary); color: var(--color-text-primary);">
+                <option value="Normal">Normal</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+            </select>
+        </div>
+
+        @if (ViewBag.IsManager == true)
+        {
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" asp-for="SendToTeam" />
+                    <span style="font-weight: 500; color: var(--color-text-primary);">Send to my entire team</span>
+                </label>
+            </div>
+        }
+
+        @if (ViewBag.IsManager == true && !Model.SendToTeam)
+        {
+            <div style="margin-bottom: 1.5rem;">
+                <label asp-for="ReceiverId" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary);">
+                    Select Team Member
+                </label>
+                <select asp-for="ReceiverId" 
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
+                               background: var(--color-bg-primary); color: var(--color-text-primary);"
+                        required>
+                    <option value="">-- Select Team Member --</option>
+                    @if (ViewBag.TeamMembers != null)
+                    {
+                        @foreach (var member in (List<HRMS.Models.Employee>)ViewBag.TeamMembers)
+                        {
+                            <option value="@member.employee_id">@(member.full_name ?? $"{member.first_name} {member.last_name}")</option>
+                        }
+                    }
+                </select>
+                <span asp-validation-for="ReceiverId" style="color: var(--color-error); font-size: 0.875rem;"></span>
+            </div>
+        }
+
+        @if ((ViewBag.IsHRAdmin == true || ViewBag.IsSystemAdmin == true) && !Model.SendToTeam)
+        {
+            <div style="margin-bottom: 1.5rem;">
+                <label asp-for="DepartmentId" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary);">
+                    Send to Department (Optional)
+                </label>
+                <select asp-for="DepartmentId" 
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
+                               background: var(--color-bg-primary); color: var(--color-text-primary);">
+                    <option value="">-- Select Department --</option>
+                    @if (ViewBag.Departments != null)
+                    {
+                        @foreach (var dept in (List<HRMS.Models.Department>)ViewBag.Departments)
+                        {
+                            <option value="@dept.department_id">@dept.department_name</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label asp-for="ReceiverId" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary);">
+                    Or Select Individual Employee
+                </label>
+                <select asp-for="ReceiverId" 
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
+                               background: var(--color-bg-primary); color: var(--color-text-primary);">
+                    <option value="">-- Select Employee --</option>
+                    @if (ViewBag.AllEmployees != null)
+                    {
+                        @foreach (var emp in (List<HRMS.Models.Employee>)ViewBag.AllEmployees)
+                        {
+                            <option value="@emp.employee_id">@(emp.full_name ?? $"{emp.first_name} {emp.last_name}") - @(emp.department?.department_name ?? "No Department")</option>
+                        }
+                    }
+                </select>
+            </div>
+        }
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn-premium btn-primary" style="padding: 0.75rem 2rem;">
+                Send Notification
+            </button>
+            <a asp-controller="Component5" asp-action="MyNotifications" class="btn-premium btn-secondary" style="padding: 0.75rem 2rem; text-decoration: none;">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sendToTeamCheckbox = document.querySelector('input[type="checkbox"][name="SendToTeam"]');
+            const receiverIdSelect = document.querySelector('select[name="ReceiverId"]');
+            const form = document.querySelector('form');
+            
+            if (sendToTeamCheckbox && receiverIdSelect) {
+                // Handle checkbox change
+                sendToTeamCheckbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        // Clear receiver selection when sending to entire team
+                        receiverIdSelect.value = '';
+                        receiverIdSelect.removeAttribute('required');
+                    } else {
+                        // Require receiver selection when not sending to entire team
+                        receiverIdSelect.setAttribute('required', 'required');
+                    }
+                });
+                
+                // Set initial state
+                if (sendToTeamCheckbox.checked) {
+                    receiverIdSelect.removeAttribute('required');
+                } else {
+                    receiverIdSelect.setAttribute('required', 'required');
+                }
+                
+                // Form validation before submit
+                if (form) {
+                    form.addEventListener('submit', function(e) {
+                        const isSendToTeam = sendToTeamCheckbox.checked;
+                        const receiverId = receiverIdSelect.value;
+                        
+                        if (!isSendToTeam && (!receiverId || receiverId === '')) {
+                            e.preventDefault();
+                            alert('Please select a team member or check "Send to my entire team".');
+                            receiverIdSelect.focus();
+                            return false;
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+}
+

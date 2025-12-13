@@ -1,0 +1,154 @@
+@{
+    ViewData["Title"] = "Organizational Hierarchy";
+}
+
+<div class="premium-card" style="margin-bottom: 2rem;">
+    <h1 style="margin-bottom: 1.5rem; color: var(--color-text-primary);">Organizational Hierarchy</h1>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid var(--color-success); color: #15803d; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;" role="alert">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-error); color: #dc2626; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;" role="alert">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- Hierarchy Visualization -->
+    <section style="margin-bottom: 3rem;">
+        <h2 style="margin-bottom: 1.5rem; color: var(--color-text-primary);">Organization Structure</h2>
+        @if (ViewBag.Hierarchy != null && ((List<HRMS.Models.HierarchyNodeViewModel>)ViewBag.Hierarchy).Any())
+        {
+            <div style="overflow-x: auto; padding: 2rem; background: var(--color-bg-secondary); border-radius: var(--radius-lg);">
+                @foreach (var root in (List<HRMS.Models.HierarchyNodeViewModel>)ViewBag.Hierarchy)
+                {
+                    @await Html.PartialAsync("_HierarchyNode", root)
+                }
+            </div>
+        }
+        else
+        {
+            <p style="color: var(--color-text-secondary);">No hierarchy data available.</p>
+        }
+    </section>
+
+    <!-- Reassign Employee -->
+    <section>
+        <h2 style="margin-bottom: 1.5rem; color: var(--color-text-primary);">Reassign Employee</h2>
+        <div class="premium-card" style="background: var(--color-bg-secondary); padding: 1.5rem;">
+            <form asp-controller="Component5" asp-action="ReassignEmployee" method="post">
+                @Html.AntiForgeryToken()
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="EmployeeId" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary);">
+                        Select Employee <span style="color: var(--color-error);">*</span>
+                    </label>
+                    <select name="EmployeeId" id="EmployeeId" required
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
+                                   background: var(--color-bg-primary); color: var(--color-text-primary);">
+                        <option value="">-- Select Employee --</option>
+                        @if (ViewBag.AllEmployees != null)
+                        {
+                            @foreach (var emp in (List<HRMS.Models.Employee>)ViewBag.AllEmployees)
+                            {
+                                <option value="@emp.employee_id">
+                                    @(emp.full_name ?? $"{emp.first_name} {emp.last_name}") - 
+                                    @(emp.department?.department_name ?? "No Department")
+                                </option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="NewDepartmentId" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary);">
+                        New Department (Optional)
+                    </label>
+                    <select name="NewDepartmentId" id="NewDepartmentId"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
+                                   background: var(--color-bg-primary); color: var(--color-text-primary);">
+                        <option value="">-- Keep Current Department --</option>
+                        @if (ViewBag.Departments != null)
+                        {
+                            @foreach (var dept in (List<HRMS.Models.Department>)ViewBag.Departments)
+                            {
+                                <option value="@dept.department_id">@dept.department_name</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="NewManagerId" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary);">
+                        New Manager (Optional)
+                    </label>
+                    <select name="NewManagerId" id="NewManagerId"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
+                                   background: var(--color-bg-primary); color: var(--color-text-primary);">
+                        <option value="">-- Keep Current Manager --</option>
+                        @if (ViewBag.AllEmployees != null)
+                        {
+                            @foreach (var emp in (List<HRMS.Models.Employee>)ViewBag.AllEmployees)
+                            {
+                                <option value="@emp.employee_id">
+                                    @(emp.full_name ?? $"{emp.first_name} {emp.last_name}")
+                                </option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn-premium btn-primary" style="padding: 0.75rem 2rem;">
+                        Reassign Employee
+                    </button>
+                    <button type="reset" class="btn-premium btn-secondary" style="padding: 0.75rem 2rem;">
+                        Reset
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+</div>
+
+<style>
+    .hierarchy-node {
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--color-bg-primary);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        display: inline-block;
+        min-width: 250px;
+    }
+
+    .hierarchy-node-level-0 {
+        border-left: 4px solid var(--color-primary);
+    }
+
+    .hierarchy-node-level-1 {
+        border-left: 4px solid #3b82f6;
+        margin-left: 2rem;
+    }
+
+    .hierarchy-node-level-2 {
+        border-left: 4px solid #8b5cf6;
+        margin-left: 4rem;
+    }
+
+    .hierarchy-node-level-3 {
+        border-left: 4px solid #ec4899;
+        margin-left: 6rem;
+    }
+
+    .hierarchy-subordinates {
+        margin-top: 1rem;
+        padding-left: 1rem;
+        border-left: 2px dashed var(--color-border);
+    }
+</style>

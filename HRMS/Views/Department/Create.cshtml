@@ -1,0 +1,66 @@
+@{
+    ViewData["Title"] = "Create Department";
+}
+
+<div class="premium-card">
+    <h1 style="margin-bottom: 1.5rem; color: var(--color-text-primary);">Create New Department</h1>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-error); color: #dc2626; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;" role="alert">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <form asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
+
+        <div style="margin-bottom: 1.5rem;">
+            <label for="departmentName" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary);">
+                Department Name <span style="color: var(--color-error);">*</span>
+            </label>
+            <input type="text" id="departmentName" name="departmentName" required
+                   style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
+                          background: var(--color-bg-primary); color: var(--color-text-primary); font-family: inherit;"
+                   placeholder="Enter department name..." />
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label for="purpose" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary);">
+                Purpose (Optional)
+            </label>
+            <textarea id="purpose" name="purpose" rows="3"
+                      style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
+                             background: var(--color-bg-primary); color: var(--color-text-primary); font-family: inherit;"
+                      placeholder="Describe the department's purpose..."></textarea>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label for="departmentHeadId" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary);">
+                Department Head (Optional)
+            </label>
+            <select id="departmentHeadId" name="departmentHeadId"
+                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
+                           background: var(--color-bg-primary); color: var(--color-text-primary);">
+                <option value="">-- Select Department Head --</option>
+                @if (ViewBag.Employees != null)
+                {
+                    @foreach (var emp in (List<HRMS.Models.Employee>)ViewBag.Employees)
+                    {
+                        <option value="@emp.employee_id">@(emp.full_name ?? $"{emp.first_name} {emp.last_name}")</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn-premium btn-primary" style="padding: 0.75rem 2rem;">
+                Create Department
+            </button>
+            <a asp-action="Index" class="btn-premium btn-secondary" style="padding: 0.75rem 2rem; text-decoration: none;">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+

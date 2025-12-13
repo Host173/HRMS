@@ -1,0 +1,117 @@
+@{
+    ViewData["Title"] = "Assign People to Department";
+}
+
+<div class="premium-card" style="margin-bottom: 2rem;">
+    <h1 style="margin-bottom: 1.5rem; color: var(--color-text-primary);">Assign People to Department</h1>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid var(--color-success); color: #15803d; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;" role="alert">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-error); color: #dc2626; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;" role="alert">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <form asp-action="AssignToDepartment" method="post">
+        @Html.AntiForgeryToken()
+
+        <div style="margin-bottom: 1.5rem;">
+            <label for="personId" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary);">
+                Select Person <span style="color: var(--color-error);">*</span>
+            </label>
+            <select id="personId" name="personId" required
+                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
+                           background: var(--color-bg-primary); color: var(--color-text-primary);">
+                <option value="">-- Select Person --</option>
+                @if (ViewBag.AllPeople != null)
+                {
+                    @foreach (var person in (List<HRMS.Models.Employee>)ViewBag.AllPeople)
+                    {
+                        var roles = person.Employee_Role?.Select(er => er.role?.role_name).Where(r => r != null).ToList() ?? new List<string?>();
+                        var roleText = roles.Any() ? $" ({string.Join(", ", roles)})" : "";
+                        var currentDept = person.department?.department_name ?? "No Department";
+                        <option value="@person.employee_id">
+                            @(person.full_name ?? $"{person.first_name} {person.last_name}")@roleText - Current: @currentDept
+                        </option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label for="departmentId" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary);">
+                Select Department <span style="color: var(--color-error);">*</span>
+            </label>
+            <select id="departmentId" name="departmentId" required
+                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
+                           background: var(--color-bg-primary); color: var(--color-text-primary);">
+                <option value="">-- Select Department --</option>
+                @if (ViewBag.Departments != null)
+                {
+                    @foreach (var dept in (List<HRMS.Models.Department>)ViewBag.Departments)
+                    {
+                        <option value="@dept.department_id">@dept.department_name</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn-premium btn-primary" style="padding: 0.75rem 2rem;">
+                Assign to Department
+            </button>
+            <a asp-action="Index" class="btn-premium btn-secondary" style="padding: 0.75rem 2rem; text-decoration: none;">
+                Back to Departments
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Current Department Assignments -->
+@if (ViewBag.AllPeople != null)
+{
+    <div class="premium-card">
+        <h2 style="margin-bottom: 1rem; color: var(--color-text-primary);">Current Department Assignments</h2>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: var(--color-bg-secondary); border-bottom: 2px solid var(--color-border);">
+                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Name</th>
+                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Roles</th>
+                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Current Department</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var person in (List<HRMS.Models.Employee>)ViewBag.AllPeople)
+                    {
+                        var roles = person.Employee_Role?.Select(er => er.role?.role_name).Where(r => r != null).ToList() ?? new List<string?>();
+                        <tr style="border-bottom: 1px solid var(--color-border);">
+                            <td style="padding: 1rem; color: var(--color-text-primary);">@(person.full_name ?? $"{person.first_name} {person.last_name}")</td>
+                            <td style="padding: 1rem; color: var(--color-text-secondary);">
+                                @if (roles.Any())
+                                {
+                                    @string.Join(", ", roles)
+                                }
+                                else
+                                {
+                                    <span style="color: var(--color-text-secondary);">Employee</span>
+                                }
+                            </td>
+                            <td style="padding: 1rem; color: var(--color-text-primary);">
+                                @(person.department?.department_name ?? "Not assigned")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+

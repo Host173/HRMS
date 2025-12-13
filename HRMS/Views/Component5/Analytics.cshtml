@@ -1,0 +1,286 @@
+@{
+    ViewData["Title"] = "Analytics & Reports";
+}
+
+<div class="premium-card" style="margin-bottom: 2rem;">
+    <h1 style="margin-bottom: 1.5rem; color: var(--color-text-primary);">Analytics & Reports</h1>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-error); color: #dc2626; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;" role="alert">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- Department Statistics -->
+    <section style="margin-bottom: 3rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="margin: 0; color: var(--color-text-primary);">Department Statistics</h2>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <input type="text" id="deptSearch" placeholder="Search departments..." 
+                       style="padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
+                              background: var(--color-bg-primary); color: var(--color-text-primary); min-width: 250px;"
+                       onkeyup="filterDepartmentTable()" />
+            </div>
+        </div>
+        @if (ViewBag.DepartmentStats != null && ((List<HRMS.Models.DepartmentStatisticsViewModel>)ViewBag.DepartmentStats).Any())
+        {
+            <div style="overflow-x: auto;">
+                <table id="deptTable" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: var(--color-bg-secondary); border-bottom: 2px solid var(--color-border);">
+                            <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Department</th>
+                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--color-text-primary);">Total Employees</th>
+                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--color-text-primary);">Active</th>
+                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--color-text-primary);">Inactive</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var stat in (List<HRMS.Models.DepartmentStatisticsViewModel>)ViewBag.DepartmentStats)
+                        {
+                            <tr style="border-bottom: 1px solid var(--color-border);">
+                                <td style="padding: 1rem; color: var(--color-text-primary);">@stat.DepartmentName</td>
+                                <td style="padding: 1rem; text-align: center; color: var(--color-text-primary);">@stat.TotalEmployees</td>
+                                <td style="padding: 1rem; text-align: center; color: #22c55e;">@stat.ActiveEmployees</td>
+                                <td style="padding: 1rem; text-align: center; color: #ef4444;">@stat.InactiveEmployees</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p style="color: var(--color-text-secondary);">No department statistics available.</p>
+        }
+    </section>
+
+    <!-- Compliance Reports -->
+    <section style="margin-bottom: 3rem;">
+        <h2 style="margin-bottom: 1rem; color: var(--color-text-primary);">Compliance Reports</h2>
+        <p style="color: var(--color-text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">
+            Generate compliance reports to analyze contract and attendance compliance across the organization. Use search and filters to narrow down results.
+        </p>
+        
+        <!-- Search and Filter Form -->
+        <div class="premium-card" style="background: var(--color-bg-secondary); padding: 1.5rem; margin-bottom: 1.5rem;">
+            <h3 style="margin-bottom: 1rem; color: var(--color-text-primary); font-size: 1rem;">Search & Filter Options</h3>
+            <form id="complianceSearchForm" method="post" style="display: grid; grid-template-columns: 2fr 2fr 1fr 1fr; gap: 1rem; align-items: end;">
+                @Html.AntiForgeryToken()
+                <div>
+                    <label for="complianceSearchTerm" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary); font-size: 0.875rem;">
+                        Search (Name, Email)
+                    </label>
+                    <input type="text" id="complianceSearchTerm" name="searchTerm" 
+                           value="@(ViewBag.SearchTerm ?? "")"
+                           placeholder="Search by name or email..."
+                           style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
+                                  background: var(--color-bg-primary); color: var(--color-text-primary);" />
+                </div>
+                <div>
+                    <label for="complianceDepartmentId" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary); font-size: 0.875rem;">
+                        Filter by Department
+                    </label>
+                    <select id="complianceDepartmentId" name="departmentId"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
+                                   background: var(--color-bg-primary); color: var(--color-text-primary);">
+                        <option value="">All Departments</option>
+                        @if (ViewBag.Departments != null)
+                        {
+                            @foreach (var dept in (List<HRMS.Models.Department>)ViewBag.Departments)
+                            {
+                                <option value="@dept.department_id" selected="@(ViewBag.SelectedDepartmentId != null && ViewBag.SelectedDepartmentId.ToString() == dept.department_id.ToString())">
+                                    @dept.department_name
+                                </option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div>
+                    <button type="submit" formaction="@Url.Action("GenerateComplianceReport", "Component5", new { reportType = "contract" })" 
+                            class="btn-premium btn-primary" style="width: 100%; padding: 0.75rem 1.5rem;">
+                        Contract Report
+                    </button>
+                </div>
+                <div>
+                    <button type="submit" formaction="@Url.Action("GenerateComplianceReport", "Component5", new { reportType = "attendance" })" 
+                            class="btn-premium btn-primary" style="width: 100%; padding: 0.75rem 1.5rem;">
+                        Attendance Report
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        @if (ViewBag.ComplianceReport != null)
+        {
+            var report = (HRMS.Models.ComplianceReportViewModel)ViewBag.ComplianceReport;
+            <div class="premium-card" style="background: var(--color-bg-secondary); padding: 1.5rem;">
+                <h3 style="margin-bottom: 1rem; color: var(--color-text-primary);">@report.ReportType</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <div style="font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Total Records</div>
+                        <div style="font-size: 1.5rem; font-weight: 600; color: var(--color-text-primary);">@report.TotalRecords</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Compliant</div>
+                        <div style="font-size: 1.5rem; font-weight: 600; color: #22c55e;">@report.CompliantRecords</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Non-Compliant</div>
+                        <div style="font-size: 1.5rem; font-weight: 600; color: #ef4444;">@report.NonCompliantRecords</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Compliance Rate</div>
+                        <div style="font-size: 1.5rem; font-weight: 600; color: var(--color-primary);">@report.CompliancePercentage.ToString("F1")%</div>
+                    </div>
+                </div>
+            </div>
+        }
+    </section>
+
+    <!-- Diversity Reports -->
+    <section>
+        <h2 style="margin-bottom: 1rem; color: var(--color-text-primary);">Diversity Reports</h2>
+        <p style="color: var(--color-text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">
+            Generate diversity reports to analyze employee distribution across departments, positions, and demographics. Use search and filters to narrow down results.
+        </p>
+        
+        <!-- Search and Filter Form -->
+        <div class="premium-card" style="background: var(--color-bg-secondary); padding: 1.5rem; margin-bottom: 1.5rem;">
+            <h3 style="margin-bottom: 1rem; color: var(--color-text-primary); font-size: 1rem;">Search & Filter Options</h3>
+            <form asp-controller="Component5" asp-action="GenerateDiversityReport" method="post" style="display: grid; grid-template-columns: 2fr 2fr 1fr; gap: 1rem; align-items: end;">
+                @Html.AntiForgeryToken()
+                <div>
+                    <label for="diversitySearchTerm" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary); font-size: 0.875rem;">
+                        Search (Name, Email, Position)
+                    </label>
+                    <input type="text" id="diversitySearchTerm" name="searchTerm" 
+                           value="@(ViewBag.SearchTerm ?? "")"
+                           placeholder="Search by name, email, or position..."
+                           style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
+                                  background: var(--color-bg-primary); color: var(--color-text-primary);" />
+                </div>
+                <div>
+                    <label for="diversityDepartmentId" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary); font-size: 0.875rem;">
+                        Filter by Department
+                    </label>
+                    <select id="diversityDepartmentId" name="departmentId"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
+                                   background: var(--color-bg-primary); color: var(--color-text-primary);">
+                        <option value="">All Departments</option>
+                        @if (ViewBag.Departments != null)
+                        {
+                            @foreach (var dept in (List<HRMS.Models.Department>)ViewBag.Departments)
+                            {
+                                <option value="@dept.department_id" selected="@(ViewBag.SelectedDepartmentId != null && ViewBag.SelectedDepartmentId.ToString() == dept.department_id.ToString())">
+                                    @dept.department_name
+                                </option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div>
+                    <button type="submit" class="btn-premium btn-primary" style="width: 100%; padding: 0.75rem 1.5rem;">
+                        Generate Report
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        @if (ViewBag.DiversityReport != null)
+        {
+            var report = (HRMS.Models.DiversityReportViewModel)ViewBag.DiversityReport;
+            <div class="premium-card" style="background: var(--color-bg-secondary); padding: 1.5rem;">
+                <h3 style="margin-bottom: 1.5rem; color: var(--color-text-primary);">Diversity Statistics</h3>
+                
+                <div style="margin-bottom: 2rem;">
+                    <div style="font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: 0.5rem;">Total Employees</div>
+                    <div style="font-size: 2rem; font-weight: 600; color: var(--color-primary);">@report.TotalEmployees</div>
+                </div>
+
+                @if (report.DepartmentDistribution.Any())
+                {
+                    <div style="margin-bottom: 2rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--color-text-primary);">Department Distribution</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+                            @foreach (var dept in report.DepartmentDistribution)
+                            {
+                                <div style="padding: 1rem; background: var(--color-bg-primary); border-radius: var(--radius-md); border: 1px solid var(--color-border);">
+                                    <div style="font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">@dept.Key</div>
+                                    <div style="font-size: 1.25rem; font-weight: 600; color: var(--color-text-primary);">@dept.Value</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                @if (report.PositionDistribution.Any())
+                {
+                    <div style="margin-bottom: 2rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--color-text-primary);">Position Distribution</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+                            @foreach (var pos in report.PositionDistribution)
+                            {
+                                <div style="padding: 1rem; background: var(--color-bg-primary); border-radius: var(--radius-md); border: 1px solid var(--color-border);">
+                                    <div style="font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">@pos.Key</div>
+                                    <div style="font-size: 1.25rem; font-weight: 600; color: var(--color-text-primary);">@pos.Value</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                @if (report.DepartmentStatistics.Any())
+                {
+                    <div>
+                        <h4 style="margin-bottom: 1rem; color: var(--color-text-primary);">Department-Wise Employee Statistics</h4>
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: var(--color-bg-primary); border-bottom: 2px solid var(--color-border);">
+                                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Department</th>
+                                        <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--color-text-primary);">Total Employees</th>
+                                        <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--color-text-primary);">Active</th>
+                                        <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--color-text-primary);">Inactive</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var deptStat in report.DepartmentStatistics)
+                                    {
+                                        <tr style="border-bottom: 1px solid var(--color-border);">
+                                            <td style="padding: 1rem; color: var(--color-text-primary); font-weight: 500;">@deptStat.DepartmentName</td>
+                                            <td style="padding: 1rem; text-align: center; color: var(--color-text-primary);">@deptStat.TotalEmployees</td>
+                                            <td style="padding: 1rem; text-align: center; color: #22c55e;">@deptStat.ActiveEmployees</td>
+                                            <td style="padding: 1rem; text-align: center; color: #ef4444;">@deptStat.InactiveEmployees</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+</div>
+
+<script>
+    function filterDepartmentTable() {
+        const input = document.getElementById('deptSearch');
+        const filter = input.value.toLowerCase();
+        const table = document.getElementById('deptTable');
+        const tr = table.getElementsByTagName('tr');
+
+        for (let i = 1; i < tr.length; i++) {
+            const td = tr[i].getElementsByTagName('td')[0];
+            if (td) {
+                const txtValue = td.textContent || td.innerText;
+                if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                    tr[i].style.display = '';
+                } else {
+                    tr[i].style.display = 'none';
+                }
+            }
+        }
+    }
+</script>

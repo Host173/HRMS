@@ -1,0 +1,113 @@
+@model List<HRMS.Models.Employee>
+@{
+    ViewData["Title"] = "Department Members";
+    var department = ViewBag.Department as HRMS.Models.Department;
+    var isSystemAdmin = ViewBag.IsSystemAdmin as bool? ?? false;
+    var isHRAdmin = ViewBag.IsHRAdmin as bool? ?? false;
+}
+
+<div class="premium-card" style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+            <h1 style="margin: 0 0 0.5rem 0; color: var(--color-text-primary);">@(department?.department_name ?? "Department") Members</h1>
+            @if (department != null && !string.IsNullOrEmpty(department.purpose))
+            {
+                <p style="margin: 0; color: var(--color-text-secondary);">@department.purpose</p>
+            }
+        </div>
+        @if (isSystemAdmin || isHRAdmin)
+        {
+            <a asp-action="AssignToDepartment" class="btn-premium btn-primary" style="padding: 0.75rem 1.5rem; text-decoration: none;">
+                Assign People to Department
+            </a>
+        }
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-error); color: #dc2626; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;" role="alert">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    @if (department != null && department.department_head != null)
+    {
+        <div style="background: var(--color-bg-secondary); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+            <div style="font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Department Head</div>
+            <div style="font-weight: 600; color: var(--color-text-primary);">
+                @(department.department_head.full_name ?? $"{department.department_head.first_name} {department.department_head.last_name}")
+            </div>
+        </div>
+    }
+
+    @if (Model == null || !Model.Any())
+    {
+        <div style="text-align: center; padding: 3rem; color: var(--color-text-secondary);">
+            <p style="font-size: 1.1rem; margin: 0;">No members found in this department.</p>
+        </div>
+    }
+    else
+    {
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: var(--color-bg-secondary); border-bottom: 2px solid var(--color-border);">
+                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Name</th>
+                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Email</th>
+                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Position</th>
+                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Roles</th>
+                        <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--color-text-primary);">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var member in Model)
+                    {
+                        var roles = member.Employee_Role?.Select(er => er.role?.role_name).Where(r => r != null).ToList() ?? new List<string?>();
+                        <tr style="border-bottom: 1px solid var(--color-border);">
+                            <td style="padding: 1rem; color: var(--color-text-primary); font-weight: 500;">
+                                @(member.full_name ?? $"{member.first_name} {member.last_name}")
+                            </td>
+                            <td style="padding: 1rem; color: var(--color-text-primary);">@(member.email ?? "N/A")</td>
+                            <td style="padding: 1rem; color: var(--color-text-primary);">
+                                @(member.position?.position_title ?? "N/A")
+                            </td>
+                            <td style="padding: 1rem; color: var(--color-text-secondary);">
+                                @if (roles.Any())
+                                {
+                                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                        @foreach (var role in roles)
+                                        {
+                                            <span style="background: var(--color-primary-light); color: white; padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.75rem;">
+                                                @role
+                                            </span>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span style="color: var(--color-text-secondary);">Employee</span>
+                                }
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                <a asp-controller="Employee" asp-action="Details" asp-route-id="@member.employee_id" 
+                                   class="btn-premium btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; text-decoration: none;">
+                                    View Profile
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@if (isSystemAdmin)
+{
+    <div style="text-align: center; margin-top: 2rem;">
+        <a asp-action="Index" class="btn-premium btn-secondary" style="padding: 0.75rem 1.5rem; text-decoration: none;">
+            Back to Department Management
+        </a>
+    </div>
+}
+
