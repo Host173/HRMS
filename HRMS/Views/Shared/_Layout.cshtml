@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -12,6 +12,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+@using HRMS.Helpers
+@inject HRMS.Data.HrmsDbContext DbContext
+@{
+    int? currentEmployeeId = null;
+    bool isSystemAdmin = false;
+    bool isHRAdmin = false;
+    bool isLineManager = false;
+
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        currentEmployeeId = AuthorizationHelper.GetCurrentEmployeeId(User);
+        if (currentEmployeeId.HasValue)
+        {
+            isSystemAdmin = await AuthorizationHelper.IsSystemAdminAsync(DbContext, currentEmployeeId.Value);
+            isHRAdmin = await AuthorizationHelper.IsHRAdminAsync(DbContext, currentEmployeeId.Value);
+            isLineManager = await AuthorizationHelper.IsLineManagerAsync(DbContext, currentEmployeeId.Value);
+        }
+    }
+}
     @if (ViewData["HideLayout"] as bool? == true)
     {
         @RenderBody()
@@ -105,6 +124,17 @@
                         <path d="M22 4L12 14.01l-3-3" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                     @TempData["SuccessMessage"]
+                </div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid var(--color-danger); color: #b91c1c; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem;" role="alert">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    @TempData["ErrorMessage"]
                 </div>
             }
             @RenderBody()

@@ -11,6 +11,13 @@
 <form asp-action="Create" method="post" enctype="multipart/form-data" class="premium-card">
     <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom: 1rem;"></div>
 
+    @if (Model.AvailableLeaveTypes == null || !Model.AvailableLeaveTypes.Any())
+    {
+        <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
+            No leave types are configured yet. Please contact HR to configure leave types and policies before submitting a request.
+        </div>
+    }
+
     <div class="form-group" style="margin-bottom: 1.5rem;">
         <label asp-for="LeaveTypeId" class="form-label"></label>
         <select asp-for="LeaveTypeId" asp-items="@(new SelectList(Model.AvailableLeaveTypes ?? new List<HRMS.Models.Leave>(), "leave_id", "leave_type"))" class="form-control">
@@ -47,7 +54,7 @@
     </div>
 
     <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-        <button type="submit" class="btn-premium btn-primary">Submit Request</button>
+        <button type="submit" class="btn-premium btn-primary" @(Model.AvailableLeaveTypes == null || !Model.AvailableLeaveTypes.Any() ? "disabled" : "")>Submit Request</button>
         <a asp-action="Index" class="btn-premium btn-secondary">Cancel</a>
     </div>
 </form>

@@ -1,0 +1,72 @@
+@model List<HRMS.Models.LeaveRequestViewModel>
+@{
+    ViewData["Title"] = "My Leave History";
+}
+
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+    <div>
+        <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">My Leave History</h1>
+        <p class="text-muted">View all leave requests you have submitted</p>
+    </div>
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <a asp-action="Balance" class="btn-premium btn-secondary">View Leave Balance</a>
+        <a asp-action="Create" class="btn-premium btn-primary">Submit Leave Request</a>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="premium-card">
+        <p class="text-muted">You haven't submitted any leave requests yet.</p>
+    </div>
+}
+else
+{
+    <div class="premium-card">
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                <tr style="border-bottom: 2px solid var(--color-border);">
+                    <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Leave Type</th>
+                    <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Start Date</th>
+                    <th style="padding: 0.75rem; text-align: left; font-weight: 600;">End Date</th>
+                    <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Duration</th>
+                    <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Status</th>
+                    <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var request in Model)
+                {
+                    <tr style="border-bottom: 1px solid var(--color-border);">
+                        <td style="padding: 0.75rem;">@request.LeaveType</td>
+                        <td style="padding: 0.75rem;">@request.StartDate.ToString("MMM dd, yyyy")</td>
+                        <td style="padding: 0.75rem;">@request.EndDate.ToString("MMM dd, yyyy")</td>
+                        <td style="padding: 0.75rem;">@request.Duration day(s)</td>
+                        <td style="padding: 0.75rem;">
+                            @{
+                                var statusClass = request.Status switch
+                                {
+                                    "Approved" => "success",
+                                    "Rejected" => "danger",
+                                    "Flagged" => "warning",
+                                    _ => "secondary"
+                                };
+                                var statusText = request.Status;
+                                if (request.IsIrregular)
+                                {
+                                    statusText += " (Irregular)";
+                                }
+                            }
+                            <span class="badge badge-@statusClass">@statusText</span>
+                        </td>
+                        <td style="padding: 0.75rem;">
+                            <a asp-action="Details" asp-route-id="@request.RequestId" class="btn-premium btn-sm btn-secondary">View</a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

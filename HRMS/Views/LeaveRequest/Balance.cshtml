@@ -1,0 +1,45 @@
+@model Dictionary<string, HRMS.Models.LeaveBalanceViewModel>
+@{
+    ViewData["Title"] = "My Leave Balance";
+}
+
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+    <div>
+        <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">My Leave Balance</h1>
+        <p class="text-muted">View remaining leave entitlement by type</p>
+    </div>
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <a asp-action="History" class="btn-premium btn-secondary">View Leave History</a>
+        <a asp-action="Create" class="btn-premium btn-primary">Submit Leave Request</a>
+    </div>
+</div>
+
+<div class="premium-card">
+    @if (Model != null && Model.Any())
+    {
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            @foreach (var balance in Model.Values)
+            {
+                <div style="padding: 1rem; background: var(--color-bg-secondary); border-radius: var(--radius-md);">
+                    <h3 style="font-size: 1rem; margin-bottom: 0.5rem; color: var(--color-text-secondary);">@balance.LeaveType</h3>
+                    <div style="font-size: 1.5rem; font-weight: 600; color: var(--color-primary);">
+                        @balance.Remaining.ToString("F1")
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-top: 0.25rem;">
+                        of @balance.TotalEntitlement.ToString("F1") days
+                    </div>
+                    @if (balance.Used > 0)
+                    {
+                        <div style="font-size: 0.75rem; color: var(--color-text-secondary); margin-top: 0.25rem;">
+                            Used: @balance.Used.ToString("F1") days
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <p class="text-muted">No leave entitlements configured. Please contact HR to set up your leave entitlements.</p>
+    }
+</div>

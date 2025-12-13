@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 using HRMS.Data;
 using HRMS.Helpers;
 using HRMS.Models;
@@ -57,14 +58,13 @@ public class LeaveTypeController : Controller
 
         try
         {
-            var leave = new Leave
-            {
-                leave_type = model.LeaveType,
-                leave_description = model.LeaveDescription
-            };
-
-            _context.Leave.Add(leave);
-            await _context.SaveChangesAsync();
+            // Use existing stored procedure (DB schema/procs must be reused as-is)
+            var leaveTypeParam = new SqlParameter("@LeaveType", model.LeaveType);
+            var descriptionParam = new SqlParameter("@Description", (object?)model.LeaveDescription ?? DBNull.Value);
+            await _context.Database.ExecuteSqlRawAsync(
+                "EXEC ManageLeaveTypes @LeaveType, @Description",
+                leaveTypeParam,
+                descriptionParam);
 
             _logger.LogInformation("HR Admin created new leave type: {LeaveType}", model.LeaveType);
             TempData["SuccessMessage"] = $"Leave type '{model.LeaveType}' created successfully!";

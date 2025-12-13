@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 using HRMS.Data;
 using HRMS.Helpers;
 using HRMS.Models;
@@ -120,23 +121,38 @@ public class LeaveEntitlementController : Controller
             }
             else
             {
-                var entitlement = new LeaveEntitlement
+                // Use existing stored procedure for initial entitlement assignment
+                var leaveType = await _context.Leave.FindAsync(model.LeaveTypeId);
+                if (leaveType == null)
                 {
-                    employee_id = model.EmployeeId,
-                    leave_type_id = model.LeaveTypeId,
-                    entitlement = model.Entitlement
-                };
-                _context.LeaveEntitlement.Add(entitlement);
+                    ModelState.AddModelError(nameof(model.LeaveTypeId), "Selected leave type is not valid.");
+                    ViewBag.Employees = await _context.Employee
+                        .Where(e => e.is_active == true)
+                        .OrderBy(e => e.full_name)
+                        .ToListAsync();
+                    ViewBag.LeaveTypes = await _context.Leave.OrderBy(l => l.leave_type).ToListAsync();
+                    return View(model);
+                }
+
+                var employeeIdParam = new SqlParameter("@EmployeeID", model.EmployeeId);
+                var leaveTypeParam = new SqlParameter("@LeaveType", leaveType.leave_type);
+                var entitlementParam = new SqlParameter("@Entitlement", model.Entitlement);
+
+                await _context.Database.ExecuteSqlRawAsync(
+                    "EXEC AssignLeaveEntitlement @EmployeeID, @LeaveType, @Entitlement",
+                    employeeIdParam,
+                    leaveTypeParam,
+                    entitlementParam);
             }
 
             await _context.SaveChangesAsync();
 
             var employee = await _context.Employee.FindAsync(model.EmployeeId);
-            var leaveType = await _context.Leave.FindAsync(model.LeaveTypeId);
+            var leaveTypeForMessage = await _context.Leave.FindAsync(model.LeaveTypeId);
 
             _logger.LogInformation("HR Admin adjusted leave entitlement for employee {EmployeeId}, leave type {LeaveTypeId}, new entitlement: {Entitlement}",
                 model.EmployeeId, model.LeaveTypeId, model.Entitlement);
-            TempData["SuccessMessage"] = $"Leave entitlement for {employee?.full_name} - {leaveType?.leave_type} adjusted to {model.Entitlement} days.";
+            TempData["SuccessMessage"] = $"Leave entitlement for {employee?.full_name} - {leaveTypeForMessage?.leave_type} adjusted to {model.Entitlement} days.";
             return RedirectToAction("Index", new { employeeId = model.EmployeeId });
         }
         catch (System.Exception ex)

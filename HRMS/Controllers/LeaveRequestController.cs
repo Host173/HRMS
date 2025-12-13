@@ -71,6 +71,58 @@ public class LeaveRequestController : Controller
         return View(viewModels);
     }
 
+    // Separate page: Leave history (milestone requirement)
+    [HttpGet]
+    public async Task<IActionResult> History()
+    {
+        var employeeId = AuthorizationHelper.GetCurrentEmployeeId(User);
+        if (!employeeId.HasValue)
+        {
+            return RedirectToAction("Login", "Account");
+        }
+
+        var requests = await _leaveService.GetByEmployeeIdAsync(employeeId.Value);
+        var viewModels = requests.Select(r => new LeaveRequestViewModel
+        {
+            RequestId = r.request_id,
+            EmployeeId = r.employee_id,
+            EmployeeName = r.employee?.full_name ?? string.Empty,
+            LeaveType = r.leave?.leave_type ?? string.Empty,
+            StartDate = r.start_date ?? DateOnly.FromDateTime(DateTime.Today),
+            EndDate = r.end_date ?? DateOnly.FromDateTime(DateTime.Today),
+            Duration = r.duration,
+            Justification = r.justification,
+            Status = r.status,
+            ApprovedBy = r.approved_by,
+            IsIrregular = r.is_irregular,
+            IrregularityReason = r.irregularity_reason,
+            CreatedAt = r.created_at,
+            Documents = r.LeaveDocument?.Select(d => new LeaveDocumentViewModel
+            {
+                DocumentId = d.document_id,
+                FileName = Path.GetFileName(d.file_path ?? string.Empty),
+                FilePath = d.file_path ?? string.Empty,
+                UploadedAt = d.uploaded_at
+            }).ToList() ?? new List<LeaveDocumentViewModel>()
+        }).ToList();
+
+        return View(viewModels);
+    }
+
+    // Separate page: Leave balance (milestone requirement)
+    [HttpGet]
+    public async Task<IActionResult> Balance()
+    {
+        var employeeId = AuthorizationHelper.GetCurrentEmployeeId(User);
+        if (!employeeId.HasValue)
+        {
+            return RedirectToAction("Login", "Account");
+        }
+
+        var balance = await _leaveService.GetLeaveBalanceAsync(employeeId.Value);
+        return View(balance);
+    }
+
     [HttpGet]
     public async Task<IActionResult> Create()
     {

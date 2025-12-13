@@ -10,7 +10,11 @@
             <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">My Leave Requests</h1>
             <p class="text-muted">View your leave history and balance</p>
         </div>
-        <a asp-action="Create" class="btn-premium btn-primary">New Leave Request</a>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <a asp-action="History" class="btn-premium btn-secondary">Leave History</a>
+            <a asp-action="Balance" class="btn-premium btn-secondary">Leave Balance</a>
+            <a asp-action="Create" class="btn-premium btn-primary">New Leave Request</a>
+        </div>
     </div>
 </div>
 
