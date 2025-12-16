@@ -41,13 +41,10 @@
                     </a>
                     @if (unreadCount > 0)
                     {
-                        <form asp-action="MarkAllAsRead" method="post" class="d-inline" 
-                              onsubmit="return confirm('Mark all notifications as read?');">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-outline-success">
-                                <i class="fas fa-check-double me-1"></i>Mark All Read
-                            </button>
-                        </form>
+                        <button type="button" class="btn btn-premium mark-all-read-btn" 
+                                style="background: linear-gradient(135deg, var(--color-success), #22c55e); color: white; border: none; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);">
+                            <i class="fas fa-check-double me-1"></i>Mark All Read
+                        </button>
                     }
                 </div>
             </div>
@@ -116,61 +113,67 @@
                             _ => "fa-info-circle text-secondary"
                         };
 
-                        <div class="card notification-card mb-3 border-start border-3 @urgencyClass @(isUnread ? "bg-light-blue" : "") animate-slide-up" 
-                             style="animation-delay: @(index * 0.05)s;">
-                            <div class="card-body">
-                                <div class="d-flex align-items-start">
-                                    <!-- Notification Icon -->
-                                    <div class="notification-icon me-3">
-                                        <div class="rounded-circle bg-light p-3 @(isUnread ? "animate-pulse-subtle" : "")">
-                                            <i class="fas @iconClass fa-lg"></i>
+                        <div class="premium-card card-full-width notification-card mb-3 animate-slide-up @(isUnread ? "notification-unread" : "")" 
+                             style="animation-delay: @(index * 0.05)s; border-left: 4px solid @(notification.urgency == "High" ? "var(--color-danger)" : notification.urgency == "Medium" ? "#F59E0B" : "var(--color-primary)"); padding: 1.5rem;">
+                            <div class="d-flex align-items-start">
+                                <!-- Notification Icon -->
+                                <div class="notification-icon me-3">
+                                    <div class="rounded-circle p-3 @(isUnread ? "animate-pulse-subtle notification-icon-bg" : "notification-icon-bg-read")">
+                                        <i class="fas @iconClass fa-lg" style="color: white !important;"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Notification Content -->
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div>
+                                            <h5 class="mb-2 @(isUnread ? "fw-bold" : "fw-semibold")" style="color: var(--color-text-primary); font-size: 1.1rem;">
+                                                @if (isUnread)
+                                                {
+                                                    <span class="badge bg-primary me-2 animate-fade-in" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">New</span>
+                                                }
+                                                @notification.notification_type Notification
+                                            </h5>
+                                            <small class="text-muted" style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.875rem;">
+                                                <i class="far fa-clock"></i>
+                                                @(notification.timestamp.HasValue ? notification.timestamp.Value.ToLocalTime().ToString("MMM dd, yyyy h:mm tt") : "N/A")
+                                            </small>
                                         </div>
+                                        
+                                        @if (notification.urgency == "High")
+                                        {
+                                            <span class="badge bg-danger animate-bounce-subtle" style="font-size: 0.75rem; padding: 0.35rem 0.65rem;">
+                                                <i class="fas fa-exclamation-circle me-1"></i>Urgent
+                                            </span>
+                                        }
+                                        else if (notification.urgency == "Medium")
+                                        {
+                                            <span class="badge" style="background-color: #F59E0B; color: white; font-size: 0.75rem; padding: 0.35rem 0.65rem;">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>Medium
+                                            </span>
+                                        }
                                     </div>
 
-                                    <!-- Notification Content -->
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <div>
-                                                <h5 class="mb-1 @(isUnread ? "fw-bold" : "")">
-                                                    @if (isUnread)
-                                                    {
-                                                        <span class="badge bg-primary me-2 animate-fade-in">New</span>
-                                                    }
-                                                    @notification.notification_type Notification
-                                                </h5>
-                                                <small class="text-muted">
-                                                    <i class="far fa-clock me-1"></i>
-                                                    @(notification.timestamp.HasValue ? notification.timestamp.Value.ToLocalTime().ToString("MMM dd, yyyy h:mm tt") : "N/A")
-                                                </small>
-                                            </div>
-                                            
-                                            @if (notification.urgency == "High")
-                                            {
-                                                <span class="badge bg-danger animate-bounce-subtle">
-                                                    <i class="fas fa-exclamation-circle me-1"></i>Urgent
-                                                </span>
-                                            }
-                                        </div>
+                                    <p class="mb-3 notification-message @(isUnread ? "fw-semibold" : "")" style="color: var(--color-text-secondary); line-height: 1.6; font-size: 0.95rem;">
+                                        @notification.message_content
+                                    </p>
 
-                                        <p class="mb-2 notification-message @(isUnread ? "fw-semibold" : "text-muted")">
-                                            @notification.message_content
-                                        </p>
-
-                                        <!-- Action Buttons -->
-                                        <div class="btn-group btn-group-sm mt-2" role="group">
-                                            <a asp-action="Details" asp-route-id="@notification.notification_id" 
-                                               class="btn btn-outline-primary btn-sm">
-                                                <i class="fas fa-eye me-1"></i>View Details
-                                            </a>
-                                            
-                                            @if (isUnread)
-                                            {
-                                                <button type="button" class="btn btn-outline-success btn-sm mark-read-btn" 
-                                                        data-notification-id="@notification.notification_id">
-                                                    <i class="fas fa-check me-1"></i>Mark as Read
-                                                </button>
-                                            }
-                                        </div>
+                                    <!-- Action Buttons -->
+                                    <div class="d-flex gap-2 mt-3" role="group">
+                                        <a asp-action="Details" asp-route-id="@notification.notification_id" 
+                                           class="btn btn-premium btn-view-details" 
+                                           style="background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)); color: white; border: none; box-shadow: 0 4px 12px rgba(36, 99, 235, 0.3); font-size: 0.875rem; padding: 0.5rem 1rem;">
+                                            <i class="fas fa-eye me-1"></i>View Details
+                                        </a>
+                                        
+                                        @if (isUnread)
+                                        {
+                                            <button type="button" class="btn btn-premium btn-mark-read mark-read-btn" 
+                                                    data-notification-id="@notification.notification_id" 
+                                                    style="background: linear-gradient(135deg, var(--color-success), #22c55e); color: white; border: none; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); font-size: 0.875rem; padding: 0.5rem 1rem;">
+                                                <i class="fas fa-check me-1"></i>Mark as Read
+                                            </button>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -187,21 +190,49 @@
 @section Styles {
     <style>
         .notification-card {
-            transition: all 0.3s ease;
+            transition: all var(--transition-normal);
             cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .notification-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(36, 99, 235, 0.05), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .notification-card:hover::before {
+            left: 100%;
         }
 
         .notification-card:hover {
-            transform: translateX(5px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg), 0 0 20px rgba(36, 99, 235, 0.15);
         }
 
-        .bg-light-blue {
-            background-color: #f8f9ff !important;
+        .notification-unread {
+            background: linear-gradient(to right, rgba(36, 99, 235, 0.03), var(--color-surface)) !important;
+            border-left-width: 4px !important;
         }
 
         .notification-icon {
             flex-shrink: 0;
+        }
+
+        .notification-icon-bg {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)) !important;
+            box-shadow: 0 4px 12px rgba(36, 99, 235, 0.3);
+        }
+
+        .notification-icon-bg-read {
+            background: linear-gradient(135deg, #94A3B8, #64748B) !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .notification-message {
@@ -213,8 +244,8 @@
         }
 
         @@keyframes pulse-subtle {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(0.98); }
         }
 
         .animate-bounce-subtle {
@@ -234,77 +265,327 @@
             0%, 100% { transform: rotate(-5deg); }
             50% { transform: rotate(5deg); }
         }
+
+        /* Dark mode adjustments */
+        [data-theme="dark"] .notification-unread {
+            background: linear-gradient(to right, rgba(59, 130, 246, 0.1), var(--color-surface)) !important;
+        }
+
+        /* Premium Button Styles */
+        .btn-premium {
+            position: relative;
+            overflow: hidden;
+            transition: all var(--transition-normal);
+            font-weight: 500;
+            border-radius: var(--radius-md);
+        }
+
+        .btn-premium:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        .btn-premium:active {
+            transform: translateY(0);
+        }
+
+        .btn-premium::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .btn-premium:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-view-details {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)) !important;
+        }
+
+        .btn-view-details:hover {
+            background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary)) !important;
+            box-shadow: 0 6px 20px rgba(36, 99, 235, 0.4) !important;
+        }
+
+        .btn-mark-read, .mark-all-read-btn {
+            background: linear-gradient(135deg, var(--color-success), #22c55e) !important;
+        }
+
+        .btn-mark-read:hover, .mark-all-read-btn:hover {
+            background: linear-gradient(135deg, #16a34a, var(--color-success)) !important;
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4) !important;
+        }
+
+        .mark-all-read-btn {
+            padding: 0.6rem 1.25rem !important;
+            font-size: 0.9rem !important;
+        }
+
+        /* Button loading state */
+        .btn-loading {
+            position: relative;
+            color: transparent !important;
+            pointer-events: none;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @@keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 }
 
 @section Scripts {
+    <!-- Hidden form for AntiForgeryToken -->
+    @using (Html.BeginForm(null, null, FormMethod.Post, new { id = "anti-forgery-form", style = "display: none;" }))
+    {
+        @Html.AntiForgeryToken()
+    }
+    
     <script>
-        // Mark notification as read via AJAX
-        document.querySelectorAll('.mark-read-btn').forEach(btn => {
-            btn.addEventListener('click', async function() {
-                const notificationId = this.dataset.notificationId;
-                const card = this.closest('.notification-card');
-                
-                try {
-                    const response = await fetch('@Url.Action("MarkAsRead", "Notification")', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'RequestVerificationToken': '@Html.AntiForgeryToken()'
-                        },
-                        body: `id=${notificationId}&__RequestVerificationToken=${document.querySelector('input[name="__RequestVerificationToken"]').value}`
-                    });
+        (function() {
+            // Get AntiForgeryToken
+            function getAntiForgeryToken() {
+                const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (tokenInput) {
+                    return tokenInput.value;
+                }
+                return null;
+            }
+
+            // Mark notification as read via AJAX
+            document.querySelectorAll('.mark-read-btn').forEach(btn => {
+                btn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
                     
-                    const data = await response.json();
+                    const notificationId = this.dataset.notificationId;
+                    const card = this.closest('.notification-card');
+                    const button = this;
                     
-                    if (data.success) {
-                        // Visual feedback
-                        card.classList.remove('bg-light-blue');
-                        card.style.opacity = '0.6';
-                        this.remove();
-                        
-                        // Update unread count
-                        const badge = document.querySelector('.badge.bg-danger.animate-pulse');
-                        if (badge) {
-                            const currentCount = parseInt(badge.textContent);
-                            if (currentCount > 1) {
-                                badge.textContent = `${currentCount - 1} Unread`;
-                            } else {
-                                badge.className = 'badge bg-success';
-                                badge.innerHTML = '<i class="fas fa-check-circle me-1"></i>All Caught Up!';
-                            }
+                    // Disable button and show loading state
+                    button.disabled = true;
+                    button.classList.add('btn-loading');
+                    
+                    try {
+                        const token = getAntiForgeryToken();
+                        if (!token) {
+                            throw new Error('AntiForgeryToken not found');
                         }
                         
-                        HRMS.Toast.success('Notification marked as read');
+                        const formData = new URLSearchParams();
+                        formData.append('id', notificationId);
+                        formData.append('__RequestVerificationToken', token);
+                        
+                        const response = await fetch('@Url.Action("MarkAsRead", "Notification")', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: formData.toString()
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            // Visual feedback with animation
+                            card.style.transition = 'all 0.3s ease';
+                            card.classList.remove('notification-unread');
+                            
+                            const iconDiv = card.querySelector('.notification-icon > div');
+                            if (iconDiv) {
+                                iconDiv.classList.remove('animate-pulse-subtle', 'notification-icon-bg');
+                                iconDiv.classList.add('notification-icon-bg-read');
+                            }
+                            
+                            // Remove "New" badge
+                            const newBadge = card.querySelector('.badge.bg-primary');
+                            if (newBadge) {
+                                newBadge.style.transition = 'opacity 0.3s ease';
+                                newBadge.style.opacity = '0';
+                                setTimeout(() => newBadge.remove(), 300);
+                            }
+                            
+                            // Fade out and remove button
+                            button.style.transition = 'opacity 0.3s ease';
+                            button.style.opacity = '0';
+                            setTimeout(() => button.remove(), 300);
+                            
+                            // Update unread count badge
+                            updateUnreadCount(-1);
+                            
+                            // Show success toast
+                            if (window.HRMS && window.HRMS.Toast) {
+                                window.HRMS.Toast.success('Notification marked as read');
+                            }
+                        } else {
+                            throw new Error('Server returned success: false');
+                        }
+                    } catch (error) {
+                        console.error('Error marking notification as read:', error);
+                        button.disabled = false;
+                        button.classList.remove('btn-loading');
+                        
+                        if (window.HRMS && window.HRMS.Toast) {
+                            window.HRMS.Toast.error('Failed to mark notification as read');
+                        }
+                    }
+                });
+            });
+
+            // Mark all as read functionality
+            const markAllReadBtn = document.querySelector('.mark-all-read-btn');
+            if (markAllReadBtn) {
+                markAllReadBtn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    
+                    if (!confirm('Are you sure you want to mark all notifications as read?')) {
+                        return;
+                    }
+                    
+                    const button = this;
+                    button.disabled = true;
+                    button.classList.add('btn-loading');
+                    
+                    try {
+                        const token = getAntiForgeryToken();
+                        if (!token) {
+                            throw new Error('AntiForgeryToken not found');
+                        }
+                        
+                        const formData = new URLSearchParams();
+                        formData.append('__RequestVerificationToken', token);
+                        
+                        const response = await fetch('@Url.Action("MarkAllAsRead", "Notification")', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: formData.toString()
+                        });
+                        
+                        if (response.ok) {
+                            // Reload page to reflect changes
+                            window.location.reload();
+                        } else {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                    } catch (error) {
+                        console.error('Error marking all as read:', error);
+                        button.disabled = false;
+                        button.classList.remove('btn-loading');
+                        
+                        if (window.HRMS && window.HRMS.Toast) {
+                            window.HRMS.Toast.error('Failed to mark all notifications as read');
+                        }
+                    }
+                });
+            }
+
+            // Helper function to update unread count
+            function updateUnreadCount(delta) {
+                const badge = document.querySelector('.badge.bg-danger.animate-pulse, .badge.bg-success');
+                let newCount = 0;
+                
+                if (badge) {
+                    const currentText = badge.textContent.trim();
+                    const match = currentText.match(/(\d+)/);
+                    if (match) {
+                        const currentCount = parseInt(match[1]);
+                        newCount = Math.max(0, currentCount + delta);
+                    } else {
+                        // If badge shows "All Caught Up", count is 0
+                        newCount = delta > 0 ? delta : 0;
+                    }
+                    
+                    if (newCount > 0) {
+                        if (badge.classList.contains('bg-success')) {
+                            badge.className = 'badge bg-danger animate-pulse';
+                        }
+                        badge.textContent = `${newCount} Unread`;
+                    } else {
+                        badge.className = 'badge bg-success';
+                        badge.classList.remove('animate-pulse');
+                        badge.innerHTML = '<i class="fas fa-check-circle me-1"></i>All Caught Up!';
+                        
+                        // Hide "Mark All Read" button
+                        const markAllBtn = document.querySelector('.mark-all-read-btn');
+                        if (markAllBtn) {
+                            markAllBtn.style.transition = 'opacity 0.3s ease';
+                            markAllBtn.style.opacity = '0';
+                            setTimeout(() => markAllBtn.remove(), 300);
+                        }
+                    }
+                }
+                
+                // Update "Unread" filter button
+                const unreadFilterBtn = document.querySelector('a[href*="filter=unread"]');
+                if (unreadFilterBtn) {
+                    if (newCount > 0) {
+                        unreadFilterBtn.innerHTML = `<i class="fas fa-envelope me-1"></i>Unread (${newCount})`;
+                    } else {
+                        unreadFilterBtn.innerHTML = '<i class="fas fa-envelope me-1"></i>Unread';
+                    }
+                }
+                
+                // Update navbar notification count if available
+                if (window.HRMS && window.HRMS.Notifications) {
+                    window.HRMS.Notifications.fetchUnreadCount();
+                }
+            }
+
+            // Auto-refresh unread count every 30 seconds
+            setInterval(async () => {
+                try {
+                    const response = await fetch('@Url.Action("GetUnreadCount", "Notification")');
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        // Update navbar badge if it exists
+                        const navBadge = document.querySelector('.notification-badge, #navbar-notification-badge');
+                        if (navBadge) {
+                            if (data.count > 0) {
+                                navBadge.textContent = data.count;
+                                navBadge.classList.remove('d-none');
+                            } else {
+                                navBadge.classList.add('d-none');
+                            }
+                        }
                     }
                 } catch (error) {
-                    console.error('Error marking notification as read:', error);
-                    HRMS.Toast.error('Failed to mark notification as read');
+                    console.error('Error fetching unread count:', error);
                 }
-            });
-        });
-
-        // Auto-refresh unread count every 30 seconds
-        setInterval(async () => {
-            try {
-                const response = await fetch('@Url.Action("GetUnreadCount", "Notification")');
-                const data = await response.json();
-                
-                // Update navbar badge if it exists
-                const navBadge = document.querySelector('.notification-badge');
-                if (navBadge) {
-                    if (data.count > 0) {
-                        navBadge.textContent = data.count;
-                        navBadge.classList.remove('d-none');
-                    } else {
-                        navBadge.classList.add('d-none');
-                    }
-                }
-            } catch (error) {
-                console.error('Error fetching unread count:', error);
-            }
-        }, 30000);
+            }, 30000);
+        })();
     </script>
 }
 
