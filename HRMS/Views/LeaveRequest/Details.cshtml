@@ -65,7 +65,27 @@
         {
             <div>
                 <label style="font-size: 0.85rem; color: var(--color-text-secondary); font-weight: 600;">Reviewed By</label>
-                <div style="font-size: 1rem; margin-top: 0.25rem;">@Model.ApprovedByName</div>
+                <div style="font-size: 1rem; margin-top: 0.25rem;">
+                    @Model.ApprovedByName
+                    @if (Model.ApprovedByHR)
+                    {
+                        <span style="font-size: 0.75rem; color: var(--color-primary); font-weight: 500; margin-left: 0.5rem;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 0.25rem;">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="8.5" cy="7" r="4"></circle>
+                                <line x1="20" y1="8" x2="20" y2="14"></line>
+                                <line x1="23" y1="11" x2="17" y2="11"></line>
+                            </svg>
+                            (HR Admin)
+                        </span>
+                    }
+                    else if (Model.ApprovedBy.HasValue)
+                    {
+                        <span style="font-size: 0.75rem; color: var(--color-text-secondary); margin-left: 0.5rem;">
+                            (Manager)
+                        </span>
+                    }
+                </div>
             </div>
         }
     </div>

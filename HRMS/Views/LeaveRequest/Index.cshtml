@@ -143,7 +143,36 @@
                                         statusText += " (Irregular)";
                                     }
                                 }
-                                <span class="badge badge-@statusClass">@statusText</span>
+                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                    <span class="badge badge-@statusClass">@statusText</span>
+                                    @if (request.Status == "Approved" || request.Status == "Rejected")
+                                    {
+                                        @if (request.ApprovedByHR)
+                                        {
+                                            <span style="font-size: 0.75rem; color: var(--color-primary); font-weight: 500;">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 0.25rem;">
+                                                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                                    <circle cx="8.5" cy="7" r="4"></circle>
+                                                    <line x1="20" y1="8" x2="20" y2="14"></line>
+                                                    <line x1="23" y1="11" x2="17" y2="11"></line>
+                                                </svg>
+                                                Approved by HR Admin
+                                            </span>
+                                        }
+                                        else if (request.ApprovedBy.HasValue)
+                                        {
+                                            <span style="font-size: 0.75rem; color: var(--color-text-secondary);">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 0.25rem;">
+                                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                                    <circle cx="9" cy="7" r="4"></circle>
+                                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                                </svg>
+                                                Approved by Manager
+                                            </span>
+                                        }
+                                    }
+                                </div>
                             </td>
                             <td style="padding: 0.75rem;">
                                 <a asp-action="Details" asp-route-id="@request.RequestId" class="btn-premium btn-sm btn-secondary">View</a>

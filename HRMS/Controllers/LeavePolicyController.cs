@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using HRMS.Data;
 using HRMS.Helpers;
 using HRMS.Models;
+using System.Data;
 
 namespace HRMS.Controllers;
 
@@ -262,9 +263,64 @@ public class LeavePolicyController : Controller
                 return NotFound();
             }
 
-            // NOTE: is_active column doesn't exist yet - cannot toggle
-            // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to enable this functionality
-            TempData["ErrorMessage"] = "Toggle active functionality requires database columns that don't exist yet. Please run SQL_ADD_LEAVE_POLICY_COLUMNS.sql";
+            // Try to toggle is_active using raw SQL since the column is ignored in DbContext
+            // This will work if the column exists in the database
+            try
+            {
+                // Get current value from database using raw SQL
+                var connection = _context.Database.GetDbConnection();
+                var wasOpen = connection.State == ConnectionState.Open;
+                if (!wasOpen)
+                {
+                    await connection.OpenAsync();
+                }
+
+                bool currentValue = true; // Default to true
+                try
+                {
+                    using var getCommand = connection.CreateCommand();
+                    getCommand.CommandText = "SELECT is_active FROM LeavePolicy WHERE policy_id = @PolicyId";
+                    getCommand.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@PolicyId", id));
+                    var result = await getCommand.ExecuteScalarAsync();
+                    if (result != null && result != DBNull.Value)
+                    {
+                        currentValue = Convert.ToBoolean(result);
+                    }
+                }
+                catch (System.Exception)
+                {
+                    // Column doesn't exist or can't read it
+                    if (!wasOpen)
+                    {
+                        await connection.CloseAsync();
+                    }
+                    TempData["ErrorMessage"] = "Toggle active functionality requires database columns that don't exist yet. Please run SQL_ADD_LEAVE_POLICY_COLUMNS.sql";
+                    return RedirectToAction("Index");
+                }
+
+                var newValue = !currentValue;
+
+                // Update the column using raw SQL
+                using var updateCommand = connection.CreateCommand();
+                updateCommand.CommandText = "UPDATE LeavePolicy SET is_active = @NewValue WHERE policy_id = @PolicyId";
+                updateCommand.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@NewValue", newValue));
+                updateCommand.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@PolicyId", id));
+                await updateCommand.ExecuteNonQueryAsync();
+
+                if (!wasOpen)
+                {
+                    await connection.CloseAsync();
+                }
+
+                TempData["SuccessMessage"] = $"Leave policy '{policy.name}' has been {(newValue ? "activated" : "deactivated")}.";
+            }
+            catch (System.Exception sqlEx)
+            {
+                // If the column doesn't exist or update fails, inform the user
+                _logger.LogWarning(sqlEx, "Error toggling is_active for policy {PolicyId}. Column may not exist.", id);
+                TempData["ErrorMessage"] = "Toggle active functionality requires database columns that don't exist yet. Please run SQL_ADD_LEAVE_POLICY_COLUMNS.sql";
+            }
+
             return RedirectToAction("Index");
         }
         catch (System.Exception ex)

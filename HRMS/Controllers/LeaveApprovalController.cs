@@ -87,14 +87,16 @@ public class LeaveApprovalController : Controller
             }).ToList());
         }
 
-        // Query policies in a way that is safe for EF translation and empty lists.
-        var policiesQuery = _context.LeavePolicy
-            .Where(p => (p.is_active ?? true));
-
-        policiesQuery = policiesQuery
-            .Where(p => p.leave_type_id.HasValue && leaveTypeIds.Contains(p.leave_type_id.Value));
-
-        var policies = await policiesQuery.ToListAsync();
+        // Query policies - load into memory first since is_active and leave_type_id are not mapped
+        // Note: These properties are ignored in HrmsDbContext until SQL_ADD_LEAVE_POLICY_COLUMNS.sql is run
+        var allPolicies = await _context.LeavePolicy.ToListAsync();
+        
+        // Filter in memory (since is_active and leave_type_id are not mapped to database columns)
+        var policies = allPolicies
+            .Where(p => (p.is_active ?? true) && 
+                       p.leave_type_id.HasValue && 
+                       leaveTypeIds.Contains(p.leave_type_id.Value))
+            .ToList();
         
         // Filter out special leave requests that require HR Admin approval (only show pending ones that line managers can approve)
         var requests = allRequestsList.Where(request =>
@@ -103,7 +105,30 @@ public class LeaveApprovalController : Controller
             if (request.status != "Pending")
                 return true;
             
-            // Check if this is a special leave type that requires HR Admin approval
+            // Check if this is a special leave type by checking leave type name
+            // Special leave requests should only be visible to HR Admins
+            if (request.leave != null && !string.IsNullOrEmpty(request.leave.leave_type))
+            {
+                var leaveTypeName = request.leave.leave_type;
+                // If leave type contains "Special" or "Holiday", it's a special leave request
+                if (leaveTypeName.Contains("Special", StringComparison.OrdinalIgnoreCase) ||
+                    leaveTypeName.Contains("Holiday", StringComparison.OrdinalIgnoreCase))
+                {
+                    return false; // Don't show special leave requests to managers
+                }
+                
+                // Also check policies for special_leave_type match
+                var matchingPolicy = allPolicies.FirstOrDefault(p =>
+                    !string.IsNullOrEmpty(p.special_leave_type) &&
+                    p.special_leave_type.Equals(leaveTypeName, StringComparison.OrdinalIgnoreCase));
+                
+                if (matchingPolicy != null)
+                {
+                    return false; // Don't show special leave requests to managers
+                }
+            }
+            
+            // Check if this is a special leave type that requires HR Admin approval (using policy if available)
             var policy = policies.FirstOrDefault(p => p.leave_type_id == request.leave_id);
             
             // Only show requests that don't require HR Admin approval
@@ -194,8 +219,10 @@ public class LeaveApprovalController : Controller
         }
 
         // Check if this is a special leave type
-        var policy = await _context.LeavePolicy
-            .FirstOrDefaultAsync(p => p.leave_type_id == request.leave_id && (p.is_active ?? true));
+        // Note: Load into memory first since is_active and leave_type_id are not mapped
+        var allPolicies = await _context.LeavePolicy.ToListAsync();
+        var policy = allPolicies
+            .FirstOrDefault(p => p.leave_type_id == request.leave_id && (p.is_active ?? true));
         var isSpecialLeave = policy != null && policy.requires_hr_admin_approval == true;
 
         // Check if approved by HR Admin
@@ -250,9 +277,10 @@ public class LeaveApprovalController : Controller
         var request = await _leaveService.GetByIdAsync(id);
         if (request != null)
         {
-            var policy = await _context.LeavePolicy
-                .Where(p => p.leave_type_id == request.leave_id && (p.is_active ?? true))
-                .FirstOrDefaultAsync();
+            // Note: Load into memory first since is_active and leave_type_id are not mapped
+            var allPolicies = await _context.LeavePolicy.ToListAsync();
+            var policy = allPolicies
+                .FirstOrDefault(p => p.leave_type_id == request.leave_id && (p.is_active ?? true));
 
             if (policy != null && policy.requires_hr_admin_approval == true)
             {

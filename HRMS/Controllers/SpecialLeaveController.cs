@@ -30,22 +30,138 @@ public class SpecialLeaveController : Controller
     [HttpGet]
     public async Task<IActionResult> Index()
     {
+        // Verify user is HR Admin
+        var hrAdminId = AuthorizationHelper.GetCurrentEmployeeId(User);
+        if (!hrAdminId.HasValue)
+        {
+            return RedirectToAction("Login", "Account");
+        }
+
+        var isHRAdmin = await AuthorizationHelper.IsHRAdminAsync(_context, hrAdminId.Value);
+        if (!isHRAdmin)
+        {
+            return RedirectToAction("AccessDenied", "Account");
+        }
+
         // Ensure DbSets are available
         if (_context.LeavePolicy == null || _context.LeaveRequest == null)
         {
             return View(new List<LeaveRequestViewModel>());
         }
 
-        // NOTE: Columns requires_hr_admin_approval, is_active, leave_type_id don't exist yet
-        // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to add them
-        // For now, return empty list since we cannot identify special leave requests
-        // without these columns
-        return View(new List<LeaveRequestViewModel>());
+        // Get all leave requests with their related data
+        var allRequests = await _context.LeaveRequest
+            .Include(lr => lr.employee)
+            .Include(lr => lr.leave)
+            .Include(lr => lr.LeaveDocument)
+            .OrderByDescending(lr => lr.request_id)
+            .ToListAsync();
+
+        // Identify special leave requests by checking:
+        // 1. Leave type name contains "Special" (case-insensitive)
+        // 2. Or policy special_leave_type matches the leave type name
+        var allPolicies = await _context.LeavePolicy.ToListAsync();
+        
+        var specialLeaveRequests = allRequests.Where(request =>
+        {
+            // Check if leave type name contains "Special" or "Holiday"
+            if (request.leave != null && !string.IsNullOrEmpty(request.leave.leave_type))
+            {
+                var leaveTypeName = request.leave.leave_type;
+                if (leaveTypeName.Contains("Special", StringComparison.OrdinalIgnoreCase) ||
+                    leaveTypeName.Contains("Holiday", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            // Check if there's a policy with matching special_leave_type
+            if (request.leave != null && !string.IsNullOrEmpty(request.leave.leave_type))
+            {
+                var matchingPolicy = allPolicies.FirstOrDefault(p =>
+                    !string.IsNullOrEmpty(p.special_leave_type) &&
+                    p.special_leave_type.Equals(request.leave.leave_type, StringComparison.OrdinalIgnoreCase));
+                
+                if (matchingPolicy != null)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }).ToList();
+
+        // Get all approver IDs to check if they are HR Admins
+        var approverIds = specialLeaveRequests
+            .Where(r => r.approved_by.HasValue)
+            .Select(r => r.approved_by!.Value)
+            .Distinct()
+            .ToList();
+
+        var hrAdminIds = new HashSet<int>();
+        if (approverIds.Any())
+        {
+            var hrAdmins = await _context.Employee_Role
+                .Include(er => er.role)
+                .Where(er => approverIds.Contains(er.employee_id) && 
+                             er.role.role_name == AuthorizationHelper.HRAdminRole)
+                .Select(er => er.employee_id)
+                .ToListAsync();
+            hrAdminIds = new HashSet<int>(hrAdmins);
+        }
+
+        // Convert to view models
+        var viewModels = specialLeaveRequests.Select(r =>
+        {
+            var approvedByHR = r.approved_by.HasValue && hrAdminIds.Contains(r.approved_by.Value);
+            
+            return new LeaveRequestViewModel
+            {
+                RequestId = r.request_id,
+                EmployeeId = r.employee_id,
+                EmployeeName = r.employee?.full_name ?? string.Empty,
+                EmployeeEmail = r.employee?.email ?? string.Empty,
+                LeaveType = r.leave?.leave_type ?? string.Empty,
+                StartDate = r.start_date ?? DateOnly.FromDateTime(DateTime.Today),
+                EndDate = r.end_date ?? DateOnly.FromDateTime(DateTime.Today),
+                Duration = r.duration,
+                Justification = r.justification,
+                Status = r.status,
+                ApprovedBy = r.approved_by,
+                IsIrregular = r.is_irregular,
+                IrregularityReason = r.irregularity_reason,
+                CreatedAt = r.created_at,
+                IsSpecialLeave = true,
+                ApprovedByHR = approvedByHR,
+                Documents = r.LeaveDocument?.Select(d => new LeaveDocumentViewModel
+                {
+                    DocumentId = d.document_id,
+                    FileName = Path.GetFileName(d.file_path ?? string.Empty),
+                    FilePath = d.file_path ?? string.Empty,
+                    UploadedAt = d.uploaded_at
+                }).ToList() ?? new List<LeaveDocumentViewModel>()
+            };
+        }).ToList();
+
+        return View(viewModels);
     }
 
     [HttpGet]
     public async Task<IActionResult> Review(int id)
     {
+        // Verify user is HR Admin
+        var hrAdminId = AuthorizationHelper.GetCurrentEmployeeId(User);
+        if (!hrAdminId.HasValue)
+        {
+            return RedirectToAction("Login", "Account");
+        }
+
+        var isHRAdmin = await AuthorizationHelper.IsHRAdminAsync(_context, hrAdminId.Value);
+        if (!isHRAdmin)
+        {
+            return RedirectToAction("AccessDenied", "Account");
+        }
+
         // Verify this is a special leave request
         var request = await _context.LeaveRequest
             .Include(lr => lr.leave)
@@ -56,11 +172,30 @@ public class SpecialLeaveController : Controller
             return NotFound();
         }
 
-        // NOTE: Cannot verify special leave without leave_type_id, is_active, requires_hr_admin_approval columns
-        // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to enable this check
-        // For now, show error since we cannot identify special leave requests
-        TempData["ErrorMessage"] = "Special leave functionality requires database columns that don't exist yet. Please run SQL_ADD_LEAVE_POLICY_COLUMNS.sql";
-        return RedirectToAction("Index");
+        // Verify this is a special leave request by checking leave type name
+        var isSpecialLeave = false;
+        if (request.leave != null && !string.IsNullOrEmpty(request.leave.leave_type))
+        {
+            var leaveTypeName = request.leave.leave_type;
+            isSpecialLeave = leaveTypeName.Contains("Special", StringComparison.OrdinalIgnoreCase) ||
+                           leaveTypeName.Contains("Holiday", StringComparison.OrdinalIgnoreCase);
+            
+            // Also check policies
+            if (!isSpecialLeave)
+            {
+                var allPolicies = await _context.LeavePolicy.ToListAsync();
+                var matchingPolicy = allPolicies.FirstOrDefault(p =>
+                    !string.IsNullOrEmpty(p.special_leave_type) &&
+                    p.special_leave_type.Equals(request.leave.leave_type, StringComparison.OrdinalIgnoreCase));
+                isSpecialLeave = matchingPolicy != null;
+            }
+        }
+
+        if (!isSpecialLeave)
+        {
+            TempData["ErrorMessage"] = "This is not a special leave request.";
+            return RedirectToAction("Index");
+        }
 
         var fullRequest = await _leaveService.GetByIdAsync(id);
         if (fullRequest == null)
@@ -112,6 +247,14 @@ public class SpecialLeaveController : Controller
             return RedirectToAction("Login", "Account");
         }
 
+        // Verify user is HR Admin
+        var isHRAdmin = await AuthorizationHelper.IsHRAdminAsync(_context, hrAdminId.Value);
+        if (!isHRAdmin)
+        {
+            TempData["ErrorMessage"] = "Only HR Administrators can approve special leave requests.";
+            return RedirectToAction("AccessDenied", "Account");
+        }
+
         // Verify this is a special leave request
         var request = await _context.LeaveRequest
             .Include(lr => lr.leave)
@@ -123,10 +266,30 @@ public class SpecialLeaveController : Controller
             return RedirectToAction("Index");
         }
 
-        // NOTE: Cannot verify special leave without leave_type_id, is_active, requires_hr_admin_approval columns
-        // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to enable this check
-        TempData["ErrorMessage"] = "Special leave functionality requires database columns that don't exist yet. Please run SQL_ADD_LEAVE_POLICY_COLUMNS.sql";
-        return RedirectToAction("Index");
+        // Verify this is a special leave request by checking leave type name
+        var isSpecialLeave = false;
+        if (request.leave != null && !string.IsNullOrEmpty(request.leave.leave_type))
+        {
+            var leaveTypeName = request.leave.leave_type;
+            isSpecialLeave = leaveTypeName.Contains("Special", StringComparison.OrdinalIgnoreCase) ||
+                           leaveTypeName.Contains("Holiday", StringComparison.OrdinalIgnoreCase);
+            
+            // Also check policies
+            if (!isSpecialLeave)
+            {
+                var allPolicies = await _context.LeavePolicy.ToListAsync();
+                var matchingPolicy = allPolicies.FirstOrDefault(p =>
+                    !string.IsNullOrEmpty(p.special_leave_type) &&
+                    p.special_leave_type.Equals(request.leave.leave_type, StringComparison.OrdinalIgnoreCase));
+                isSpecialLeave = matchingPolicy != null;
+            }
+        }
+
+        if (!isSpecialLeave)
+        {
+            TempData["ErrorMessage"] = "This is not a special leave request. Only special leave requests can be approved here.";
+            return RedirectToAction("Index");
+        }
 
         var result = await _leaveService.ApproveAsync(id, hrAdminId.Value);
         if (result)
@@ -152,6 +315,14 @@ public class SpecialLeaveController : Controller
             return RedirectToAction("Login", "Account");
         }
 
+        // Verify user is HR Admin
+        var isHRAdmin = await AuthorizationHelper.IsHRAdminAsync(_context, hrAdminId.Value);
+        if (!isHRAdmin)
+        {
+            TempData["ErrorMessage"] = "Only HR Administrators can reject special leave requests.";
+            return RedirectToAction("AccessDenied", "Account");
+        }
+
         // Verify this is a special leave request
         var request = await _context.LeaveRequest
             .Include(lr => lr.leave)
@@ -163,10 +334,30 @@ public class SpecialLeaveController : Controller
             return RedirectToAction("Index");
         }
 
-        // NOTE: Cannot verify special leave without leave_type_id, is_active, requires_hr_admin_approval columns
-        // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to enable this check
-        TempData["ErrorMessage"] = "Special leave functionality requires database columns that don't exist yet. Please run SQL_ADD_LEAVE_POLICY_COLUMNS.sql";
-        return RedirectToAction("Index");
+        // Verify this is a special leave request by checking leave type name
+        var isSpecialLeave = false;
+        if (request.leave != null && !string.IsNullOrEmpty(request.leave.leave_type))
+        {
+            var leaveTypeName = request.leave.leave_type;
+            isSpecialLeave = leaveTypeName.Contains("Special", StringComparison.OrdinalIgnoreCase) ||
+                           leaveTypeName.Contains("Holiday", StringComparison.OrdinalIgnoreCase);
+            
+            // Also check policies
+            if (!isSpecialLeave)
+            {
+                var allPolicies = await _context.LeavePolicy.ToListAsync();
+                var matchingPolicy = allPolicies.FirstOrDefault(p =>
+                    !string.IsNullOrEmpty(p.special_leave_type) &&
+                    p.special_leave_type.Equals(request.leave.leave_type, StringComparison.OrdinalIgnoreCase));
+                isSpecialLeave = matchingPolicy != null;
+            }
+        }
+
+        if (!isSpecialLeave)
+        {
+            TempData["ErrorMessage"] = "This is not a special leave request. Only special leave requests can be approved here.";
+            return RedirectToAction("Index");
+        }
 
         var result = await _leaveService.RejectAsync(id, hrAdminId.Value);
         if (result)
@@ -191,6 +382,13 @@ public class SpecialLeaveController : Controller
             return RedirectToAction("Login", "Account");
         }
 
+        // Verify user is HR Admin
+        var isHRAdmin = await AuthorizationHelper.IsHRAdminAsync(_context, hrAdminId.Value);
+        if (!isHRAdmin)
+        {
+            return RedirectToAction("AccessDenied", "Account");
+        }
+
         // Verify this is a special leave request
         var request = await _context.LeaveRequest
             .Include(lr => lr.leave)
@@ -203,10 +401,30 @@ public class SpecialLeaveController : Controller
             return RedirectToAction("Index");
         }
 
-        // NOTE: Cannot verify special leave without leave_type_id, is_active, requires_hr_admin_approval columns
-        // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to enable this check
-        TempData["ErrorMessage"] = "Special leave functionality requires database columns that don't exist yet. Please run SQL_ADD_LEAVE_POLICY_COLUMNS.sql";
-        return RedirectToAction("Index");
+        // Verify this is a special leave request by checking leave type name
+        var isSpecialLeave = false;
+        if (request.leave != null && !string.IsNullOrEmpty(request.leave.leave_type))
+        {
+            var leaveTypeName = request.leave.leave_type;
+            isSpecialLeave = leaveTypeName.Contains("Special", StringComparison.OrdinalIgnoreCase) ||
+                           leaveTypeName.Contains("Holiday", StringComparison.OrdinalIgnoreCase);
+            
+            // Also check policies
+            if (!isSpecialLeave)
+            {
+                var allPolicies = await _context.LeavePolicy.ToListAsync();
+                var matchingPolicy = allPolicies.FirstOrDefault(p =>
+                    !string.IsNullOrEmpty(p.special_leave_type) &&
+                    p.special_leave_type.Equals(request.leave.leave_type, StringComparison.OrdinalIgnoreCase));
+                isSpecialLeave = matchingPolicy != null;
+            }
+        }
+
+        if (!isSpecialLeave)
+        {
+            TempData["ErrorMessage"] = "This is not a special leave request.";
+            return RedirectToAction("Index");
+        }
 
         var viewModel = new LeaveRequestViewModel
         {
@@ -239,6 +457,14 @@ public class SpecialLeaveController : Controller
             return RedirectToAction("Login", "Account");
         }
 
+        // Verify user is HR Admin
+        var isHRAdmin = await AuthorizationHelper.IsHRAdminAsync(_context, hrAdminId.Value);
+        if (!isHRAdmin)
+        {
+            TempData["ErrorMessage"] = "Only HR Administrators can flag special leave requests as irregular.";
+            return RedirectToAction("AccessDenied", "Account");
+        }
+
         if (string.IsNullOrWhiteSpace(irregularityReason))
         {
             TempData["ErrorMessage"] = "Please provide a reason for flagging this leave request as irregular.";
@@ -256,10 +482,30 @@ public class SpecialLeaveController : Controller
             return RedirectToAction("Index");
         }
 
-        // NOTE: Cannot verify special leave without leave_type_id, is_active, requires_hr_admin_approval columns
-        // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to enable this check
-        TempData["ErrorMessage"] = "Special leave functionality requires database columns that don't exist yet. Please run SQL_ADD_LEAVE_POLICY_COLUMNS.sql";
-        return RedirectToAction("Index");
+        // Verify this is a special leave request by checking leave type name
+        var isSpecialLeave = false;
+        if (request.leave != null && !string.IsNullOrEmpty(request.leave.leave_type))
+        {
+            var leaveTypeName = request.leave.leave_type;
+            isSpecialLeave = leaveTypeName.Contains("Special", StringComparison.OrdinalIgnoreCase) ||
+                           leaveTypeName.Contains("Holiday", StringComparison.OrdinalIgnoreCase);
+            
+            // Also check policies
+            if (!isSpecialLeave)
+            {
+                var allPolicies = await _context.LeavePolicy.ToListAsync();
+                var matchingPolicy = allPolicies.FirstOrDefault(p =>
+                    !string.IsNullOrEmpty(p.special_leave_type) &&
+                    p.special_leave_type.Equals(request.leave.leave_type, StringComparison.OrdinalIgnoreCase));
+                isSpecialLeave = matchingPolicy != null;
+            }
+        }
+
+        if (!isSpecialLeave)
+        {
+            TempData["ErrorMessage"] = "This is not a special leave request. Only special leave requests can be approved here.";
+            return RedirectToAction("Index");
+        }
 
         var result = await _leaveService.FlagAsIrregularAsync(id, hrAdminId.Value, irregularityReason);
         if (result)
