@@ -177,7 +177,7 @@ public class LeaveRequestController : Controller
 
         return View(viewModels);
     }
-
+//
     // Separate page: Leave balance (milestone requirement)
     [HttpGet]
     public async Task<IActionResult> Balance()
