@@ -17,21 +17,30 @@
 </head>
 <body>
 @using HRMS.Helpers
+@using Microsoft.EntityFrameworkCore
 @inject HRMS.Data.HrmsDbContext DbContext
 @{
     int? currentEmployeeId = null;
     bool isSystemAdmin = false;
     bool isHRAdmin = false;
     bool isLineManager = false;
+    HRMS.Models.Employee? currentEmployee = null;
 
     if (User.Identity?.IsAuthenticated == true)
     {
         currentEmployeeId = AuthorizationHelper.GetCurrentEmployeeId(User);
         if (currentEmployeeId.HasValue)
         {
-            isSystemAdmin = await AuthorizationHelper.IsSystemAdminAsync(DbContext, currentEmployeeId.Value);
-            isHRAdmin = await AuthorizationHelper.IsHRAdminAsync(DbContext, currentEmployeeId.Value);
-            isLineManager = await AuthorizationHelper.IsLineManagerAsync(DbContext, currentEmployeeId.Value);
+            currentEmployee = await DbContext.Employee
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.employee_id == currentEmployeeId.Value);
+            
+            if (currentEmployee != null)
+            {
+                isSystemAdmin = await AuthorizationHelper.IsSystemAdminAsync(DbContext, currentEmployeeId.Value);
+                isHRAdmin = await AuthorizationHelper.IsHRAdminAsync(DbContext, currentEmployeeId.Value);
+                isLineManager = await AuthorizationHelper.IsLineManagerAsync(DbContext, currentEmployeeId.Value);
+            }
         }
     }
 }
@@ -114,10 +123,24 @@
                     
                     <div style="width: 1px; height: 24px; background: var(--color-border); margin: 0 0.5rem;"></div>
                     <span style="display: flex; align-items: center; gap: 0.5rem; margin-right: 1rem;">
-                        <div style="width: 32px; height: 32px; background: var(--color-primary-light); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem;">
-                            @(User.Identity.Name?.Substring(0, 1).ToUpper() ?? "U")
-                        </div>
-                        <span style="font-size: 0.9rem; font-weight: 500;">@User.Identity.Name</span>
+                        @{
+                            string? profileImage = currentEmployee?.profile_image;
+                            string displayName = currentEmployee?.full_name ?? currentEmployee?.email ?? User.Identity?.Name ?? "User";
+                            string initial = currentEmployee?.first_name?.Substring(0, 1).ToUpper() ?? 
+                                           currentEmployee?.email?.Substring(0, 1).ToUpper() ?? 
+                                           displayName.Substring(0, 1).ToUpper();
+                        }
+                        @if (!string.IsNullOrEmpty(profileImage))
+                        {
+                            <img src="@profileImage" alt="@displayName" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid var(--color-primary-light);" />
+                        }
+                        else
+                        {
+                            <div style="width: 32px; height: 32px; background: var(--color-primary-light); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem;">
+                                @initial
+                            </div>
+                        }
+                        <span style="font-size: 0.9rem; font-weight: 500;">@displayName</span>
                     </span>
                     <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline;">
                         <button type="submit" class="btn-premium btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Sign Out</button>
