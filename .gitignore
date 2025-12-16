@@ -8,6 +8,9 @@
 bin/
 obj/
 
+# SDK Configuration
+global.json
+
 # Visual Studio stuff
 .vs/
 *.user
