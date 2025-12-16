@@ -146,9 +146,9 @@ public class EmployeeController : Controller
         if (isHRAdmin)
         {
             // HR Admins can assign any active employee as manager
-            ViewBag.Managers = await _context.Employee
-                .Where(e => e.is_active == true && e.employee_id != id)
-                .ToListAsync();
+        ViewBag.Managers = await _context.Employee
+            .Where(e => e.is_active == true && e.employee_id != id)
+            .ToListAsync();
         }
         else
         {
@@ -275,9 +275,9 @@ public class EmployeeController : Controller
             if (isHRAdmin)
             {
                 // HR Admins can assign any active employee as manager
-                ViewBag.Managers = await _context.Employee
-                    .Where(e => e.is_active == true && e.employee_id != id)
-                    .ToListAsync();
+            ViewBag.Managers = await _context.Employee
+                .Where(e => e.is_active == true && e.employee_id != id)
+                .ToListAsync();
             }
             else
             {

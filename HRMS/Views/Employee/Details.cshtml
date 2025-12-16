@@ -1,9 +1,11 @@
 @model HRMS.Models.Employee
+@using HRMS.Helpers
 @{
     ViewData["Title"] = "Employee Profile";
     var canEdit = ViewBag.CanEdit as bool? ?? false;
     var isHRAdmin = ViewBag.IsHRAdmin as bool? ?? false;
     var isSystemAdmin = ViewBag.IsSystemAdmin as bool? ?? false;
+    int? currentEmployeeId = AuthorizationHelper.GetCurrentEmployeeId(User);
 }
 
 <div style="margin-bottom: 2rem;">
@@ -17,6 +19,15 @@
             {
                 <a asp-action="Edit" asp-route-id="@Model.employee_id" class="btn-premium btn-primary">
                     Edit Profile
+                </a>
+            }
+            @if (isSystemAdmin && Model.employee_id != currentEmployeeId)
+            {
+                <a asp-controller="Employees" asp-action="Delete" asp-route-id="@Model.employee_id" asp-route-returnUrl="@Url.Action("Index", "Employees")" 
+                   class="btn-premium" 
+                   style="background: #dc2626; color: white; border: none;"
+                   onclick="return confirm('Are you sure you want to delete this employee? This action cannot be undone.');">
+                    Delete Profile
                 </a>
             }
             <a asp-controller="Employee" asp-action="Index" class="btn-premium btn-secondary">
@@ -199,5 +210,9 @@
         }
     </div>
 </div>
+
+
+
+
 
 
