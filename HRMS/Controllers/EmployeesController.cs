@@ -302,7 +302,7 @@ namespace HRMS.Controllers
             }
 
             // Get employee roles for display
-            ViewBag.EmployeeRoles = employee.Employee_Role?.Select(er => er.role?.role_name).ToList() ?? new List<string>();
+            ViewBag.EmployeeRoles = employee.Employee_Role?.Select(er => er.role?.role_name).Where(r => r != null).ToList() ?? new List<string?>();
             ViewBag.ReturnUrl = returnUrl ?? Url.Action(nameof(Index));
 
             _logger.LogInformation("System Admin {AdminId} accessing delete confirmation for employee {EmployeeId}", 
@@ -338,6 +338,8 @@ namespace HRMS.Controllers
 
             try
             {
+                using var transaction = await _context.Database.BeginTransactionAsync();
+                
                 var employee = await _context.Employee
                     .Include(e => e.Employee_Role)
                     .FirstOrDefaultAsync(e => e.employee_id == id);
@@ -348,31 +350,215 @@ namespace HRMS.Controllers
                 }
 
                 var employeeName = employee.full_name;
-                var employeeRoles = employee.Employee_Role?.Select(er => er.role_id).ToList() ?? new List<int>();
 
-                // Delete related records first to avoid foreign key constraint issues
+                // Delete ALL related records first to avoid foreign key constraint issues
                 
-                // Delete employee roles
+                // 1. Delete employee roles
                 var employeeRoleRecords = await _context.Employee_Role.Where(er => er.employee_id == id).ToListAsync();
                 if (employeeRoleRecords.Any())
                 {
                     _context.Employee_Role.RemoveRange(employeeRoleRecords);
                 }
 
-                // Delete notifications
+                // 2. Delete notifications
                 var notificationRecords = await _context.Employee_Notification.Where(en => en.employee_id == id).ToListAsync();
                 if (notificationRecords.Any())
                 {
                     _context.Employee_Notification.RemoveRange(notificationRecords);
                 }
 
-                // Note: We don't delete attendance, leave requests, etc. as they are historical records
-                // Instead, we just set the employee as inactive
-                // If you want complete deletion, uncomment and add more cascade deletes here
+                // 3. Delete employee skills
+                var employeeSkills = await _context.Employee_Skill.Where(es => es.employee_id == id).ToListAsync();
+                if (employeeSkills.Any())
+                {
+                    _context.Employee_Skill.RemoveRange(employeeSkills);
+                }
 
-                // Delete the employee
+                // 4. Delete attendance logs and sources (must delete before attendance)
+                var attendances = await _context.Attendance.Where(a => a.employee_id == id).ToListAsync();
+                foreach (var attendance in attendances)
+                {
+                    var logs = await _context.AttendanceLog.Where(al => al.attendance_id == attendance.attendance_id).ToListAsync();
+                    if (logs.Any())
+                    {
+                        _context.AttendanceLog.RemoveRange(logs);
+                    }
+                    
+                    var sources = await _context.AttendanceSource.Where(als => als.attendance_id == attendance.attendance_id).ToListAsync();
+                    if (sources.Any())
+                    {
+                        _context.AttendanceSource.RemoveRange(sources);
+                    }
+                }
+                
+                // 5. Delete attendance records
+                if (attendances.Any())
+                {
+                    _context.Attendance.RemoveRange(attendances);
+                }
+
+                // 6. Delete attendance correction requests (both as employee and recorded_by)
+                var correctionRequestsEmployee = await _context.AttendanceCorrectionRequest.Where(acr => acr.employee_id == id).ToListAsync();
+                if (correctionRequestsEmployee.Any())
+                {
+                    _context.AttendanceCorrectionRequest.RemoveRange(correctionRequestsEmployee);
+                }
+                
+                var correctionRequestsRecorded = await _context.AttendanceCorrectionRequest.Where(acr => acr.recorded_by == id).ToListAsync();
+                if (correctionRequestsRecorded.Any())
+                {
+                    _context.AttendanceCorrectionRequest.RemoveRange(correctionRequestsRecorded);
+                }
+
+                // 7. Delete leave requests
+                var leaveRequests = await _context.LeaveRequest.Where(lr => lr.employee_id == id).ToListAsync();
+                if (leaveRequests.Any())
+                {
+                    _context.LeaveRequest.RemoveRange(leaveRequests);
+                }
+
+                // 8. Delete leave entitlements
+                var leaveEntitlements = await _context.LeaveEntitlement.Where(le => le.employee_id == id).ToListAsync();
+                if (leaveEntitlements.Any())
+                {
+                    _context.LeaveEntitlement.RemoveRange(leaveEntitlements);
+                }
+
+                // 9. Update missions - set manager_id to null if this employee is a manager
+                var missionsAsManager = await _context.Mission.Where(m => m.manager_id == id).ToListAsync();
+                foreach (var mission in missionsAsManager)
+                {
+                    mission.manager_id = null;
+                }
+                
+                // Delete missions where this employee is the employee
+                var missionsAsEmployee = await _context.Mission.Where(m => m.employee_id == id).ToListAsync();
+                if (missionsAsEmployee.Any())
+                {
+                    _context.Mission.RemoveRange(missionsAsEmployee);
+                }
+
+                // 10. Delete allowance deductions
+                var allowances = await _context.AllowanceDeduction.Where(ad => ad.employee_id == id).ToListAsync();
+                if (allowances.Any())
+                {
+                    _context.AllowanceDeduction.RemoveRange(allowances);
+                }
+
+                // 11. Delete payroll logs (where employee was the actor)
+                var payrollLogs = await _context.Payroll_Log.Where(pl => pl.actor == id).ToListAsync();
+                if (payrollLogs.Any())
+                {
+                    _context.Payroll_Log.RemoveRange(payrollLogs);
+                }
+                
+                // Also delete payroll logs for this employee's payroll records
+                var employeePayrollIds = await _context.Payroll.Where(p => p.employee_id == id).Select(p => p.payroll_id).ToListAsync();
+                if (employeePayrollIds.Any())
+                {
+                    var relatedPayrollLogs = await _context.Payroll_Log.Where(pl => employeePayrollIds.Contains(pl.payroll_id)).ToListAsync();
+                    if (relatedPayrollLogs.Any())
+                    {
+                        _context.Payroll_Log.RemoveRange(relatedPayrollLogs);
+                    }
+                }
+
+                // 12. Delete payroll records
+                var payrolls = await _context.Payroll.Where(p => p.employee_id == id).ToListAsync();
+                if (payrolls.Any())
+                {
+                    _context.Payroll.RemoveRange(payrolls);
+                }
+
+                // 13. Delete employee hierarchy (both as employee and as manager)
+                var hierarchyAsEmployee = await _context.EmployeeHierarchy.Where(eh => eh.employee_id == id).ToListAsync();
+                if (hierarchyAsEmployee.Any())
+                {
+                    _context.EmployeeHierarchy.RemoveRange(hierarchyAsEmployee);
+                }
+                
+                var hierarchyAsManager = await _context.EmployeeHierarchy.Where(eh => eh.manager_id == id).ToListAsync();
+                if (hierarchyAsManager.Any())
+                {
+                    _context.EmployeeHierarchy.RemoveRange(hierarchyAsManager);
+                }
+
+                // 14. Delete manager notes (both as employee and as manager)
+                var notesAsEmployee = await _context.ManagerNotes.Where(mn => mn.employee_id == id).ToListAsync();
+                if (notesAsEmployee.Any())
+                {
+                    _context.ManagerNotes.RemoveRange(notesAsEmployee);
+                }
+                
+                var notesAsManager = await _context.ManagerNotes.Where(mn => mn.manager_id == id).ToListAsync();
+                if (notesAsManager.Any())
+                {
+                    _context.ManagerNotes.RemoveRange(notesAsManager);
+                }
+
+                // 15. Delete devices
+                var devices = await _context.Device.Where(d => d.employee_id == id).ToListAsync();
+                if (devices.Any())
+                {
+                    _context.Device.RemoveRange(devices);
+                }
+
+                // 16. Delete shift assignments
+                var shiftAssignments = await _context.ShiftAssignment.Where(sa => sa.employee_id == id).ToListAsync();
+                if (shiftAssignments.Any())
+                {
+                    _context.ShiftAssignment.RemoveRange(shiftAssignments);
+                }
+
+                // 17. Delete reimbursements
+                var reimbursements = await _context.Reimbursement.Where(r => r.employee_id == id).ToListAsync();
+                if (reimbursements.Any())
+                {
+                    _context.Reimbursement.RemoveRange(reimbursements);
+                }
+
+                // 18. Update employees managed by this employee (set manager_id to null)
+                var managedEmployees = await _context.Employee.Where(e => e.manager_id == id).ToListAsync();
+                foreach (var managedEmployee in managedEmployees)
+                {
+                    managedEmployee.manager_id = null;
+                }
+
+                // 19. Update departments managed by this employee (set department_head_id to null)
+                var managedDepartments = await _context.Department.Where(d => d.department_head_id == id).ToListAsync();
+                foreach (var department in managedDepartments)
+                {
+                    department.department_head_id = null;
+                }
+
+                // 20. Delete specialist records
+                var hrAdmin = await _context.HRAdministrator.FirstOrDefaultAsync(hr => hr.employee_id == id);
+                if (hrAdmin != null)
+                {
+                    _context.HRAdministrator.Remove(hrAdmin);
+                }
+                
+                var lineManager = await _context.LineManager.FirstOrDefaultAsync(lm => lm.employee_id == id);
+                if (lineManager != null)
+                {
+                    _context.LineManager.Remove(lineManager);
+                }
+                
+                var payrollSpecialist = await _context.PayrollSpecialist.FirstOrDefaultAsync(ps => ps.employee_id == id);
+                if (payrollSpecialist != null)
+                {
+                    _context.PayrollSpecialist.Remove(payrollSpecialist);
+                }
+
+                // 21. Save all changes before deleting employee
+                await _context.SaveChangesAsync();
+
+                // 22. Finally, delete the employee
                 _context.Employee.Remove(employee);
                 await _context.SaveChangesAsync();
+
+                // Commit the transaction
+                await transaction.CommitAsync();
 
                 _logger.LogInformation("System Admin {AdminId} deleted employee {EmployeeId} ({EmployeeName})", 
                     currentEmployeeId.Value, id, employeeName);

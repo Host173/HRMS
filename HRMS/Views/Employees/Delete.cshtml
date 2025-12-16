@@ -27,14 +27,14 @@
             </div>
 
             <!-- Employee Details Card -->
-            <div class="card shadow-sm border-0 animate-scale-in mt-4">
-                <div class="card-header bg-danger text-white">
-                    <h4 class="mb-0">
+            <div class="premium-card card-full-width animate-scale-in mt-4" style="border-left: 4px solid var(--color-danger, #DC2626);">
+                <div style="border-bottom: 1px solid var(--color-border, #E2E8F0); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+                    <h4 class="mb-0" style="color: var(--color-danger, #DC2626); font-weight: 600;">
                         <i class="fas fa-user-times me-2"></i>
                         Delete Employee Profile
                     </h4>
                 </div>
-                <div class="card-body">
+                <div>
                     <h5 class="mb-3">Employee Information</h5>
                     <hr />
     <dl class="row">
@@ -230,22 +230,22 @@
                 <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
             }
             
-            <div class="d-flex gap-3 justify-content-between align-items-center">
+            <div class="d-flex gap-3 justify-content-between align-items-center flex-wrap">
                 @if (ViewBag.ReturnUrl != null)
                 {
-                    <a href="@ViewBag.ReturnUrl" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-1"></i>Cancel - Back to List
+                    <a href="@ViewBag.ReturnUrl" class="btn btn-premium btn-cancel">
+                        <i class="fas fa-arrow-left me-2"></i>Cancel - Back to List
                     </a>
                 }
                 else
                 {
-                    <a asp-action="Index" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-1"></i>Cancel - Back to List
+                    <a asp-action="Index" class="btn btn-premium btn-cancel">
+                        <i class="fas fa-arrow-left me-2"></i>Cancel - Back to List
                     </a>
                 }
                 
                 <div>
-                    <button type="submit" class="btn btn-danger btn-lg">
+                    <button type="submit" class="btn btn-premium btn-delete-permanent">
                         <i class="fas fa-trash-alt me-2"></i>
                         <strong>Permanently Delete Employee</strong>
                     </button>
@@ -282,6 +282,121 @@
         @@keyframes scaleIn {
             from { opacity: 0; transform: scale(0.95); }
             to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Premium Button Styles */
+        .btn-premium {
+            position: relative;
+            overflow: hidden;
+            transition: all var(--transition-normal, 0.3s cubic-bezier(0.4, 0, 0.2, 1));
+            font-weight: 500;
+            border-radius: var(--radius-md, 8px);
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .btn-premium::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .btn-premium:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-premium:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-premium:active {
+            transform: translateY(0);
+        }
+
+        /* Cancel/Back Button */
+        .btn-cancel {
+            background: linear-gradient(135deg, #64748B, #475569) !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+        }
+
+        .btn-cancel:hover {
+            background: linear-gradient(135deg, #475569, #334155) !important;
+            box-shadow: 0 6px 20px rgba(100, 116, 139, 0.4) !important;
+            color: white !important;
+            text-decoration: none;
+        }
+
+        /* Permanent Delete Button */
+        .btn-delete-permanent {
+            background: linear-gradient(135deg, #DC2626, #EF4444) !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+            padding: 0.875rem 2rem;
+            font-size: 1.05rem;
+        }
+
+        .btn-delete-permanent:hover {
+            background: linear-gradient(135deg, #B91C1C, #DC2626) !important;
+            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5) !important;
+            color: white !important;
+        }
+
+        .btn-delete-permanent:focus {
+            outline: 2px solid rgba(220, 38, 38, 0.5);
+            outline-offset: 2px;
+        }
+
+        /* Button loading state */
+        .btn-premium.btn-loading {
+            position: relative;
+            color: transparent !important;
+            pointer-events: none;
+        }
+
+        .btn-premium.btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin-left: -10px;
+            margin-top: -10px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @@keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive adjustments */
+        @@media (max-width: 768px) {
+            .btn-premium {
+                width: 100%;
+                margin-bottom: 0.75rem;
+            }
+
+            .d-flex.gap-3.justify-content-between {
+                flex-direction: column;
+            }
         }
     </style>
 }
