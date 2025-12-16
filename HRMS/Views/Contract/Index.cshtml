@@ -1,6 +1,7 @@
 @model IEnumerable<HRMS.Models.Contract>
 @{
     ViewData["Title"] = "Contracts";
+    ViewData["FullWidth"] = true;
     var activeContracts = ViewBag.ActiveContracts as IEnumerable<HRMS.Models.Contract> ?? new List<HRMS.Models.Contract>();
     var expiringContracts = ViewBag.ExpiringContracts as IEnumerable<HRMS.Models.Contract> ?? new List<HRMS.Models.Contract>();
     var expiredContracts = ViewBag.ExpiredContracts as IEnumerable<HRMS.Models.Contract> ?? new List<HRMS.Models.Contract>();
@@ -102,10 +103,10 @@
     </div>
 }
 
-<div class="premium-card">
+<div class="premium-card card-full-width">
     @if (Model != null && Model.Any())
     {
-        <div style="overflow-x: auto;">
+        <div class="table-container">
             <table class="table-premium">
                 <thead>
                     <tr>

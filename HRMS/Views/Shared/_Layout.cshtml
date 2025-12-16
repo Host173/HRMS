@@ -115,7 +115,7 @@
             </nav>
         </header>
 
-        <main style="padding: 2rem; max-width: 1200px; margin: 0 auto; min-height: calc(100vh - 140px);">
+        <main class="main-content @(ViewData["FullWidth"] as bool? == true ? "container-fluid" : "container-centered")" style="min-height: calc(100vh - 140px);">
             @if (TempData["SuccessMessage"] != null)
             {
                 <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid var(--color-success); color: #15803d; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem;" role="alert">

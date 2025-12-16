@@ -1,6 +1,7 @@
 @model List<HRMS.Models.LeaveRequestViewModel>
 @{
     ViewData["Title"] = "Manage Special Leave Requests";
+    ViewData["FullWidth"] = true;
 }
 
 <div style="margin-bottom: 2rem;">
@@ -22,7 +23,7 @@
     </div>
 }
 
-<div class="premium-card">
+<div class="premium-card card-full-width">
     @if (!Model.Any())
     {
         <div style="text-align: center; padding: 3rem;">
@@ -38,8 +39,8 @@
     }
     else
     {
-        <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse;">
+        <div class="table-container">
+            <table>
                 <thead>
                     <tr style="border-bottom: 2px solid var(--color-border);">
                         <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Employee</th>

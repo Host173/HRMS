@@ -1,9 +1,10 @@
 @model List<HRMS.Models.Department>
 @{
     ViewData["Title"] = "Department Management";
+    ViewData["FullWidth"] = true;
 }
 
-<div class="premium-card" style="margin-bottom: 2rem;">
+<div class="premium-card card-full-width" style="margin-bottom: 2rem;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
         <h1 style="margin: 0; color: var(--color-text-primary);">Department Management</h1>
         <a asp-action="Create" class="btn-premium btn-primary" style="padding: 0.75rem 1.5rem;">
@@ -37,8 +38,8 @@
     }
     else
     {
-        <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse;">
+        <div class="table-container">
+            <table>
                 <thead>
                     <tr style="background: var(--color-bg-secondary); border-bottom: 2px solid var(--color-border);">
                         <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Department Name</th>

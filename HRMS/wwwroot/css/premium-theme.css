@@ -188,6 +188,24 @@ a:hover {
     overflow-y: auto;
 }
 
+/* Main Content Container */
+.main-content {
+    padding: 2rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.main-content.container-centered {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.main-content.container-fluid {
+    max-width: 100%;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
 /* Card Container */
 .premium-card {
     background: var(--color-surface);
@@ -198,12 +216,62 @@ a:hover {
     max-width: 480px;
     border: 1px solid var(--color-border);
     transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+    box-sizing: border-box;
+}
+
+/* Full-width card variant for tables and data-heavy content */
+.premium-card.card-full-width {
+    max-width: 100%;
 }
 
 .premium-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-xl), 0 0 20px rgba(0, 0, 0, 0.05);
     border-color: rgba(36, 99, 235, 0.3);
+}
+
+/* Grid layout for dashboard cards */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    width: 100%;
+    margin-bottom: 2rem;
+}
+
+/* Table container */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-container table {
+    width: 100%;
+    min-width: 600px;
+    border-collapse: collapse;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .main-content {
+        padding: 1rem;
+    }
+    
+    .main-content.container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .premium-card {
+        padding: 1.5rem;
+    }
+    
 }
 
 /* --------------------------------------------------------------------------

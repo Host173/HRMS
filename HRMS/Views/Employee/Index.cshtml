@@ -1,6 +1,7 @@
 @model IEnumerable<HRMS.Models.Employee>
 @{
     ViewData["Title"] = "All Employees";
+    ViewData["FullWidth"] = true;
 }
 
 <div style="margin-bottom: 2rem;">
@@ -19,10 +20,10 @@
     </div>
 </div>
 
-<div class="premium-card">
+<div class="premium-card card-full-width">
     @if (Model != null && Model.Any())
     {
-        <div style="overflow-x: auto;">
+        <div class="table-container">
             <table class="table-premium">
                 <thead>
                     <tr>

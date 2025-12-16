@@ -1,6 +1,7 @@
 @model List<HRMS.Models.Attendance>
 @{
     ViewData["Title"] = "Attendance Records";
+    ViewData["FullWidth"] = true;
     var isManager = ViewBag.IsManager as bool? ?? false;
     var isSystemAdmin = ViewBag.IsSystemAdmin as bool? ?? false;
     var isHRAdmin = ViewBag.IsHRAdmin as bool? ?? false;
@@ -85,10 +86,10 @@
 <!-- Pending Shifts Section -->
 @if (pendingShifts.Any())
 {
-    <div style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 2rem; margin-bottom: 2rem;">
+    <div class="premium-card card-full-width" style="margin-bottom: 2rem;">
         <h2 style="margin: 0 0 1.5rem; font-size: 1.5rem; font-weight: 600;">Scheduled Shifts</h2>
-        <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse;">
+        <div class="table-container">
+            <table>
                 <thead>
                     <tr style="background: var(--color-bg-light); border-bottom: 2px solid var(--color-border);">
                         @if (canViewAll || isManager)
@@ -236,9 +237,9 @@
 }
 else
 {
-    <div style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); overflow: hidden;">
-        <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse;">
+    <div class="premium-card card-full-width">
+        <div class="table-container">
+            <table>
                 <thead>
                     <tr style="background: var(--color-bg-light); border-bottom: 2px solid var(--color-border);">
                         <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Date</th>

@@ -35,8 +35,57 @@
 
 </div>
 
+<!-- User Information Card -->
+@if (currentEmployee != null)
+{
+    <div class="premium-card card-full-width" style="margin-bottom: 2rem; padding: 1.5rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+            <h3 style="font-size: 1.1rem; margin: 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border); flex: 1;">My Information</h3>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem 2rem;">
+            <div>
+                <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Email</div>
+                <div style="font-weight: 500; font-size: 0.95rem;">@currentEmployee.email</div>
+            </div>
+            @if (currentEmployee.phone != null)
+            {
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Phone</div>
+                    <div style="font-weight: 500; font-size: 0.95rem;">@currentEmployee.phone</div>
+                </div>
+            }
+            @if (currentEmployee.department != null)
+            {
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Department</div>
+                    <div style="font-weight: 500; font-size: 0.95rem;">@currentEmployee.department.department_name</div>
+                </div>
+            }
+            @if (currentEmployee.position != null)
+            {
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Position</div>
+                    <div style="font-weight: 500; font-size: 0.95rem;">@currentEmployee.position.position_title</div>
+                </div>
+            }
+            @if (currentEmployee.profile_completion.HasValue)
+            {
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Profile Completion</div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div style="flex: 1; height: 8px; background: var(--color-border); border-radius: var(--radius-sm); overflow: hidden;">
+                            <div style="width: @currentEmployee.profile_completion%; height: 100%; background: var(--color-primary);"></div>
+                        </div>
+                        <span style="font-weight: 600; font-size: 0.9rem;">@currentEmployee.profile_completion%</span>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
 <!-- Attendance & Shift Management -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+<div class="dashboard-grid">
     <!-- Attendance Management -->
     <div class="premium-card">
         <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
@@ -257,7 +306,7 @@
     <div style="margin-bottom: 2rem;">
         <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--color-primary);">System Administrator Dashboard</h2>
         
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="dashboard-grid">
             <!-- Department Management -->
             <div class="premium-card">
                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
@@ -1039,53 +1088,6 @@
             </div>
         </div>
     </div>
-}
-
-<!-- User Information Card -->
-@if (currentEmployee != null)
-{
-    <div class="premium-card">
-        <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border);">My Information</h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
-            <div>
-                <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Email</div>
-                <div style="font-weight: 500;">@currentEmployee.email</div>
-            </div>
-            @if (currentEmployee.phone != null)
-            {
-                <div>
-                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Phone</div>
-                    <div style="font-weight: 500;">@currentEmployee.phone</div>
-                </div>
-            }
-            @if (currentEmployee.department != null)
-            {
-                <div>
-                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Department</div>
-                    <div style="font-weight: 500;">@currentEmployee.department.department_name</div>
-                </div>
-            }
-            @if (currentEmployee.position != null)
-            {
-                <div>
-                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Position</div>
-                    <div style="font-weight: 500;">@currentEmployee.position.position_title</div>
-                </div>
-            }
-            @if (currentEmployee.profile_completion.HasValue)
-            {
-                <div>
-                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Profile Completion</div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <div style="flex: 1; height: 8px; background: var(--color-border); border-radius: var(--radius-sm); overflow: hidden;">
-                            <div style="width: @currentEmployee.profile_completion%; height: 100%; background: var(--color-primary);"></div>
-                        </div>
-                        <span style="font-weight: 600; font-size: 0.9rem;">@currentEmployee.profile_completion%</span>
-                    </div>
-                </div>
-            }
-        </div>
-</div>
 }
 
 @if (isSystemAdmin)
