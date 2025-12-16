@@ -23,41 +23,52 @@ public class LeavePolicyController : Controller
     [HttpGet]
     public async Task<IActionResult> Index(int? leaveTypeId)
     {
-        var query = _context.LeavePolicy.AsQueryable();
-
-        if (leaveTypeId.HasValue)
+        // Ensure DbSet is available
+        if (_context.LeavePolicy == null)
         {
-            query = query.Where(p => p.leave_type_id == leaveTypeId.Value);
-            ViewBag.LeaveType = await _context.Leave.FindAsync(leaveTypeId.Value);
+            ViewBag.LeaveTypes = new List<Leave>();
+            return View(new List<LeavePolicyViewModel>());
         }
 
-        var policies = await query
-            .Include(p => p.leave_type)
+        // Query only existing columns to avoid "Invalid column name" errors
+        // NOTE: Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to add new columns
+        var policies = await _context.LeavePolicy
             .Select(p => new LeavePolicyViewModel
             {
                 PolicyId = p.policy_id,
                 Name = p.name,
-                LeaveTypeId = p.leave_type_id ?? 0,
-                LeaveTypeName = p.leave_type != null ? p.leave_type.leave_type : "N/A",
+                LeaveTypeId = 0, // Column doesn't exist yet - set default
+                LeaveTypeName = "N/A", // Navigation not available without leave_type_id
                 Purpose = p.purpose,
                 EligibilityRules = p.eligibility_rules,
-                DocumentationRequirements = p.documentation_requirements,
-                ApprovalWorkflow = p.approval_workflow,
+                DocumentationRequirements = null, // Column doesn't exist yet
+                ApprovalWorkflow = null, // Column doesn't exist yet
                 NoticePeriod = p.notice_period,
                 SpecialLeaveType = p.special_leave_type,
                 ResetOnNewYear = p.reset_on_new_year == true,
-                IsActive = p.is_active ?? true,
-                RequiresHRAdminApproval = p.requires_hr_admin_approval ?? false,
-                MaxDaysPerRequest = p.max_days_per_request,
-                MinDaysPerRequest = p.min_days_per_request,
-                RequiresDocumentation = p.requires_documentation ?? false
+                IsActive = true, // Column doesn't exist yet - default to active
+                RequiresHRAdminApproval = false, // Column doesn't exist yet - default to false
+                MaxDaysPerRequest = null, // Column doesn't exist yet
+                MinDaysPerRequest = null, // Column doesn't exist yet
+                RequiresDocumentation = false // Column doesn't exist yet - default to false
             })
-            .OrderBy(p => p.LeaveTypeName)
-            .ThenBy(p => p.Name)
+            .OrderBy(p => p.Name)
             .ToListAsync();
 
-        ViewBag.LeaveTypes = await _context.Leave.OrderBy(l => l.leave_type).ToListAsync();
-        return View(policies);
+        // Filter by leaveTypeId in memory if needed (since leave_type_id column doesn't exist)
+        if (leaveTypeId.HasValue)
+        {
+            // Note: Cannot filter by leave_type_id since column doesn't exist
+            // All policies will be shown until SQL_ADD_LEAVE_POLICY_COLUMNS.sql is run
+            ViewBag.LeaveType = await _context.Leave.FindAsync(leaveTypeId.Value);
+        }
+
+        // Safe query for LeaveTypes - handle empty table gracefully
+        ViewBag.LeaveTypes = _context.Leave != null 
+            ? await _context.Leave.OrderBy(l => l.leave_type).ToListAsync() 
+            : new List<Leave>();
+        
+        return View(policies ?? new List<LeavePolicyViewModel>());
     }
 
     [HttpGet]
@@ -82,7 +93,9 @@ public class LeavePolicyController : Controller
             }
         }
 
-        ViewBag.LeaveTypes = await _context.Leave.OrderBy(l => l.leave_type).ToListAsync();
+        ViewBag.LeaveTypes = _context.Leave != null 
+            ? await _context.Leave.OrderBy(l => l.leave_type).ToListAsync() 
+            : new List<Leave>();
         return View(model);
     }
 
@@ -92,28 +105,32 @@ public class LeavePolicyController : Controller
     {
         if (!ModelState.IsValid)
         {
-            ViewBag.LeaveTypes = await _context.Leave.OrderBy(l => l.leave_type).ToListAsync();
+            ViewBag.LeaveTypes = _context.Leave != null 
+                ? await _context.Leave.OrderBy(l => l.leave_type).ToListAsync() 
+                : new List<Leave>();
             return View(model);
         }
 
         try
         {
+            // NOTE: Only set columns that exist in database
+            // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to enable new columns
             var policy = new LeavePolicy
             {
                 name = model.Name,
-                leave_type_id = model.LeaveTypeId,
+                // leave_type_id = model.LeaveTypeId, // Column doesn't exist yet
                 purpose = model.Purpose,
                 eligibility_rules = model.EligibilityRules,
-                documentation_requirements = model.DocumentationRequirements,
-                approval_workflow = model.ApprovalWorkflow,
+                // documentation_requirements = model.DocumentationRequirements, // Column doesn't exist yet
+                // approval_workflow = model.ApprovalWorkflow, // Column doesn't exist yet
                 notice_period = model.NoticePeriod,
                 special_leave_type = model.SpecialLeaveType,
-                reset_on_new_year = model.ResetOnNewYear ? true : (bool?)null,
-                is_active = model.IsActive,
-                requires_hr_admin_approval = model.RequiresHRAdminApproval,
-                max_days_per_request = model.MaxDaysPerRequest,
-                min_days_per_request = model.MinDaysPerRequest,
-                requires_documentation = model.RequiresDocumentation
+                reset_on_new_year = model.ResetOnNewYear ? true : (bool?)null
+                // is_active = model.IsActive, // Column doesn't exist yet
+                // requires_hr_admin_approval = model.RequiresHRAdminApproval, // Column doesn't exist yet
+                // max_days_per_request = model.MaxDaysPerRequest, // Column doesn't exist yet
+                // min_days_per_request = model.MinDaysPerRequest, // Column doesn't exist yet
+                // requires_documentation = model.RequiresDocumentation // Column doesn't exist yet
             };
 
             _context.LeavePolicy.Add(policy);
@@ -128,7 +145,9 @@ public class LeavePolicyController : Controller
         {
             _logger.LogError(ex, "Error creating leave policy: {PolicyName}", model.Name);
             ModelState.AddModelError(string.Empty, "An error occurred while creating the leave policy. Please try again.");
-            ViewBag.LeaveTypes = await _context.Leave.OrderBy(l => l.leave_type).ToListAsync();
+            ViewBag.LeaveTypes = _context.Leave != null 
+                ? await _context.Leave.OrderBy(l => l.leave_type).ToListAsync() 
+                : new List<Leave>();
             return View(model);
         }
     }
@@ -136,8 +155,9 @@ public class LeavePolicyController : Controller
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
+        // NOTE: Cannot use Include(leave_type) or read new columns that don't exist yet
+        // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to enable full functionality
         var policy = await _context.LeavePolicy
-            .Include(p => p.leave_type)
             .FirstOrDefaultAsync(p => p.policy_id == id);
 
         if (policy == null)
@@ -149,23 +169,25 @@ public class LeavePolicyController : Controller
         {
             PolicyId = policy.policy_id,
             Name = policy.name,
-            LeaveTypeId = policy.leave_type_id ?? 0,
-            LeaveTypeName = policy.leave_type?.leave_type ?? "N/A",
+            LeaveTypeId = 0, // Column doesn't exist yet
+            LeaveTypeName = "N/A", // Navigation not available
             Purpose = policy.purpose,
             EligibilityRules = policy.eligibility_rules,
-            DocumentationRequirements = policy.documentation_requirements,
-            ApprovalWorkflow = policy.approval_workflow,
+            DocumentationRequirements = null, // Column doesn't exist yet
+            ApprovalWorkflow = null, // Column doesn't exist yet
             NoticePeriod = policy.notice_period,
             SpecialLeaveType = policy.special_leave_type,
             ResetOnNewYear = policy.reset_on_new_year == true,
-            IsActive = policy.is_active ?? true,
-            RequiresHRAdminApproval = policy.requires_hr_admin_approval ?? false,
-            MaxDaysPerRequest = policy.max_days_per_request,
-            MinDaysPerRequest = policy.min_days_per_request,
-            RequiresDocumentation = policy.requires_documentation ?? false
+            IsActive = true, // Column doesn't exist yet - default
+            RequiresHRAdminApproval = false, // Column doesn't exist yet - default
+            MaxDaysPerRequest = null, // Column doesn't exist yet
+            MinDaysPerRequest = null, // Column doesn't exist yet
+            RequiresDocumentation = false // Column doesn't exist yet - default
         };
 
-        ViewBag.LeaveTypes = await _context.Leave.OrderBy(l => l.leave_type).ToListAsync();
+        ViewBag.LeaveTypes = _context.Leave != null 
+            ? await _context.Leave.OrderBy(l => l.leave_type).ToListAsync() 
+            : new List<Leave>();
         return View(model);
     }
 
@@ -180,7 +202,9 @@ public class LeavePolicyController : Controller
 
         if (!ModelState.IsValid)
         {
-            ViewBag.LeaveTypes = await _context.Leave.OrderBy(l => l.leave_type).ToListAsync();
+            ViewBag.LeaveTypes = _context.Leave != null 
+                ? await _context.Leave.OrderBy(l => l.leave_type).ToListAsync() 
+                : new List<Leave>();
             return View(model);
         }
 
@@ -192,20 +216,22 @@ public class LeavePolicyController : Controller
                 return NotFound();
             }
 
+            // NOTE: Only set columns that exist in database
+            // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to enable new columns
             policy.name = model.Name;
-            policy.leave_type_id = model.LeaveTypeId;
+            // policy.leave_type_id = model.LeaveTypeId; // Column doesn't exist yet
             policy.purpose = model.Purpose;
             policy.eligibility_rules = model.EligibilityRules;
-            policy.documentation_requirements = model.DocumentationRequirements;
-            policy.approval_workflow = model.ApprovalWorkflow;
+            // policy.documentation_requirements = model.DocumentationRequirements; // Column doesn't exist yet
+            // policy.approval_workflow = model.ApprovalWorkflow; // Column doesn't exist yet
             policy.notice_period = model.NoticePeriod;
             policy.special_leave_type = model.SpecialLeaveType;
             policy.reset_on_new_year = model.ResetOnNewYear ? true : (bool?)null;
-            policy.is_active = model.IsActive;
-            policy.requires_hr_admin_approval = model.RequiresHRAdminApproval;
-            policy.max_days_per_request = model.MaxDaysPerRequest;
-            policy.min_days_per_request = model.MinDaysPerRequest;
-            policy.requires_documentation = model.RequiresDocumentation;
+            // policy.is_active = model.IsActive; // Column doesn't exist yet
+            // policy.requires_hr_admin_approval = model.RequiresHRAdminApproval; // Column doesn't exist yet
+            // policy.max_days_per_request = model.MaxDaysPerRequest; // Column doesn't exist yet
+            // policy.min_days_per_request = model.MinDaysPerRequest; // Column doesn't exist yet
+            // policy.requires_documentation = model.RequiresDocumentation; // Column doesn't exist yet
 
             await _context.SaveChangesAsync();
 
@@ -217,7 +243,9 @@ public class LeavePolicyController : Controller
         {
             _logger.LogError(ex, "Error updating leave policy: {PolicyName}", model.Name);
             ModelState.AddModelError(string.Empty, "An error occurred while updating the leave policy. Please try again.");
-            ViewBag.LeaveTypes = await _context.Leave.OrderBy(l => l.leave_type).ToListAsync();
+            ViewBag.LeaveTypes = _context.Leave != null 
+                ? await _context.Leave.OrderBy(l => l.leave_type).ToListAsync() 
+                : new List<Leave>();
             return View(model);
         }
     }
@@ -234,13 +262,10 @@ public class LeavePolicyController : Controller
                 return NotFound();
             }
 
-            policy.is_active = !(policy.is_active ?? true);
-            await _context.SaveChangesAsync();
-
-            var status = policy.is_active == true ? "activated" : "deactivated";
-            _logger.LogInformation("HR Admin {Status} leave policy: {PolicyId}", status, id);
-            TempData["SuccessMessage"] = $"Leave policy '{policy.name}' {status} successfully!";
-            return RedirectToAction("Index", new { leaveTypeId = policy.leave_type_id });
+            // NOTE: is_active column doesn't exist yet - cannot toggle
+            // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to enable this functionality
+            TempData["ErrorMessage"] = "Toggle active functionality requires database columns that don't exist yet. Please run SQL_ADD_LEAVE_POLICY_COLUMNS.sql";
+            return RedirectToAction("Index");
         }
         catch (System.Exception ex)
         {

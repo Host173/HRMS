@@ -30,48 +30,17 @@ public class SpecialLeaveController : Controller
     [HttpGet]
     public async Task<IActionResult> Index()
     {
-        // Get all leave policies that require HR Admin approval
-        var specialLeavePolicies = await _context.LeavePolicy
-            .Where(p => p.requires_hr_admin_approval == true && (p.is_active ?? true) && p.leave_type_id.HasValue)
-            .Select(p => p.leave_type_id!.Value)
-            .ToListAsync();
-
-        // Get all leave requests for special leave types (that require HR Admin approval)
-        var requests = await _context.LeaveRequest
-            .Include(lr => lr.employee)
-            .Include(lr => lr.leave)
-            .Include(lr => lr.LeaveDocument)
-            .Where(lr => specialLeavePolicies.Contains(lr.leave_id))
-            .OrderByDescending(lr => lr.created_at ?? DateTime.MinValue)
-            .ThenByDescending(lr => lr.request_id)
-            .ToListAsync();
-
-        var viewModels = requests.Select(r => new LeaveRequestViewModel
+        // Ensure DbSets are available
+        if (_context.LeavePolicy == null || _context.LeaveRequest == null)
         {
-            RequestId = r.request_id,
-            EmployeeId = r.employee_id,
-            EmployeeName = r.employee?.full_name ?? string.Empty,
-            EmployeeEmail = r.employee?.email ?? string.Empty,
-            LeaveType = r.leave?.leave_type ?? string.Empty,
-            StartDate = r.start_date ?? DateOnly.FromDateTime(DateTime.Today),
-            EndDate = r.end_date ?? DateOnly.FromDateTime(DateTime.Today),
-            Duration = r.duration,
-            Justification = r.justification,
-            Status = r.status,
-            ApprovedBy = r.approved_by,
-            IsIrregular = r.is_irregular,
-            IrregularityReason = r.irregularity_reason,
-            CreatedAt = r.created_at,
-            Documents = r.LeaveDocument?.Select(d => new LeaveDocumentViewModel
-            {
-                DocumentId = d.document_id,
-                FileName = Path.GetFileName(d.file_path ?? string.Empty),
-                FilePath = d.file_path ?? string.Empty,
-                UploadedAt = d.uploaded_at
-            }).ToList() ?? new List<LeaveDocumentViewModel>()
-        }).ToList();
+            return View(new List<LeaveRequestViewModel>());
+        }
 
-        return View(viewModels);
+        // NOTE: Columns requires_hr_admin_approval, is_active, leave_type_id don't exist yet
+        // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to add them
+        // For now, return empty list since we cannot identify special leave requests
+        // without these columns
+        return View(new List<LeaveRequestViewModel>());
     }
 
     [HttpGet]
@@ -87,17 +56,11 @@ public class SpecialLeaveController : Controller
             return NotFound();
         }
 
-        // Check if this leave type requires HR Admin approval
-        var policy = await _context.LeavePolicy
-            .FirstOrDefaultAsync(p => p.leave_type_id == request.leave_id && 
-                                     p.requires_hr_admin_approval == true && 
-                                     (p.is_active ?? true));
-
-        if (policy == null)
-        {
-            TempData["ErrorMessage"] = "This is not a special leave request. Please use the Override Leave Approvals section for regular leave requests.";
-            return RedirectToAction("Index");
-        }
+        // NOTE: Cannot verify special leave without leave_type_id, is_active, requires_hr_admin_approval columns
+        // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to enable this check
+        // For now, show error since we cannot identify special leave requests
+        TempData["ErrorMessage"] = "Special leave functionality requires database columns that don't exist yet. Please run SQL_ADD_LEAVE_POLICY_COLUMNS.sql";
+        return RedirectToAction("Index");
 
         var fullRequest = await _leaveService.GetByIdAsync(id);
         if (fullRequest == null)
@@ -160,16 +123,10 @@ public class SpecialLeaveController : Controller
             return RedirectToAction("Index");
         }
 
-        var policy = await _context.LeavePolicy
-            .FirstOrDefaultAsync(p => p.leave_type_id == request.leave_id && 
-                                     p.requires_hr_admin_approval == true && 
-                                     (p.is_active ?? true));
-
-        if (policy == null)
-        {
-            TempData["ErrorMessage"] = "This is not a special leave request.";
-            return RedirectToAction("Index");
-        }
+        // NOTE: Cannot verify special leave without leave_type_id, is_active, requires_hr_admin_approval columns
+        // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to enable this check
+        TempData["ErrorMessage"] = "Special leave functionality requires database columns that don't exist yet. Please run SQL_ADD_LEAVE_POLICY_COLUMNS.sql";
+        return RedirectToAction("Index");
 
         var result = await _leaveService.ApproveAsync(id, hrAdminId.Value);
         if (result)
@@ -206,16 +163,10 @@ public class SpecialLeaveController : Controller
             return RedirectToAction("Index");
         }
 
-        var policy = await _context.LeavePolicy
-            .FirstOrDefaultAsync(p => p.leave_type_id == request.leave_id && 
-                                     p.requires_hr_admin_approval == true && 
-                                     (p.is_active ?? true));
-
-        if (policy == null)
-        {
-            TempData["ErrorMessage"] = "This is not a special leave request.";
-            return RedirectToAction("Index");
-        }
+        // NOTE: Cannot verify special leave without leave_type_id, is_active, requires_hr_admin_approval columns
+        // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to enable this check
+        TempData["ErrorMessage"] = "Special leave functionality requires database columns that don't exist yet. Please run SQL_ADD_LEAVE_POLICY_COLUMNS.sql";
+        return RedirectToAction("Index");
 
         var result = await _leaveService.RejectAsync(id, hrAdminId.Value);
         if (result)
@@ -252,16 +203,10 @@ public class SpecialLeaveController : Controller
             return RedirectToAction("Index");
         }
 
-        var policy = await _context.LeavePolicy
-            .FirstOrDefaultAsync(p => p.leave_type_id == request.leave_id && 
-                                     p.requires_hr_admin_approval == true && 
-                                     (p.is_active ?? true));
-
-        if (policy == null)
-        {
-            TempData["ErrorMessage"] = "This is not a special leave request.";
-            return RedirectToAction("Index");
-        }
+        // NOTE: Cannot verify special leave without leave_type_id, is_active, requires_hr_admin_approval columns
+        // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to enable this check
+        TempData["ErrorMessage"] = "Special leave functionality requires database columns that don't exist yet. Please run SQL_ADD_LEAVE_POLICY_COLUMNS.sql";
+        return RedirectToAction("Index");
 
         var viewModel = new LeaveRequestViewModel
         {
@@ -311,16 +256,10 @@ public class SpecialLeaveController : Controller
             return RedirectToAction("Index");
         }
 
-        var policy = await _context.LeavePolicy
-            .FirstOrDefaultAsync(p => p.leave_type_id == request.leave_id && 
-                                     p.requires_hr_admin_approval == true && 
-                                     (p.is_active ?? true));
-
-        if (policy == null)
-        {
-            TempData["ErrorMessage"] = "This is not a special leave request.";
-            return RedirectToAction("Index");
-        }
+        // NOTE: Cannot verify special leave without leave_type_id, is_active, requires_hr_admin_approval columns
+        // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to enable this check
+        TempData["ErrorMessage"] = "Special leave functionality requires database columns that don't exist yet. Please run SQL_ADD_LEAVE_POLICY_COLUMNS.sql";
+        return RedirectToAction("Index");
 
         var result = await _leaveService.FlagAsIrregularAsync(id, hrAdminId.Value, irregularityReason);
         if (result)

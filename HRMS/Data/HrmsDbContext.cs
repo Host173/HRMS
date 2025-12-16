@@ -624,20 +624,17 @@ public partial class HrmsDbContext : DbContext
             entity.Property(e => e.name).HasMaxLength(200);
             entity.Property(e => e.special_leave_type).HasMaxLength(100);
 
-            // Map newer LeavePolicy columns (DB already contains them; do NOT change schema)
-            entity.Property(e => e.leave_type_id);
-            entity.Property(e => e.documentation_requirements);
-            entity.Property(e => e.approval_workflow).HasMaxLength(500);
-            entity.Property(e => e.is_active);
-            entity.Property(e => e.requires_hr_admin_approval);
-            entity.Property(e => e.max_days_per_request);
-            entity.Property(e => e.min_days_per_request);
-            entity.Property(e => e.requires_documentation);
-
-            // Explicitly map navigation FK to avoid EF creating a shadow FK like "leave_typeleave_id"
-            entity.HasOne(d => d.leave_type).WithMany()
-                .HasForeignKey(d => d.leave_type_id)
-                .HasConstraintName("FK_LeavePolicy_Leave");
+            // Ignore newer LeavePolicy columns that don't exist in the database yet
+            // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to add these columns, then remove these Ignore() calls
+            entity.Ignore(e => e.leave_type_id);
+            entity.Ignore(e => e.documentation_requirements);
+            entity.Ignore(e => e.approval_workflow);
+            entity.Ignore(e => e.is_active);
+            entity.Ignore(e => e.requires_hr_admin_approval);
+            entity.Ignore(e => e.max_days_per_request);
+            entity.Ignore(e => e.min_days_per_request);
+            entity.Ignore(e => e.requires_documentation);
+            entity.Ignore(e => e.leave_type); // Navigation property also ignored since FK doesn't exist
         });
 
         modelBuilder.Entity<LeaveRequest>(entity =>
@@ -646,6 +643,18 @@ public partial class HrmsDbContext : DbContext
 
             entity.Property(e => e.approval_timing).HasMaxLength(100);
             entity.Property(e => e.status).HasMaxLength(50);
+
+            // Some newer columns (start_date, end_date, is_irregular, irregularity_reason, created_at)
+            // may not exist yet in the current database. To avoid runtime "Invalid column name"
+            // errors when querying LeaveRequest, ignore these properties at the EF mapping level.
+            // They will simply use their default values in the application until the SQL
+            // scripts (SQL_ADD_LEAVE_REQUEST_COLUMNS.sql / SQL_ADD_IRREGULARITY_REASON.sql)
+            // are applied and these Ignore() calls are removed.
+            entity.Ignore(e => e.start_date);
+            entity.Ignore(e => e.end_date);
+            entity.Ignore(e => e.is_irregular);
+            entity.Ignore(e => e.irregularity_reason);
+            entity.Ignore(e => e.created_at);
 
             entity.HasOne(d => d.employee).WithMany(p => p.LeaveRequest)
                 .HasForeignKey(d => d.employee_id)

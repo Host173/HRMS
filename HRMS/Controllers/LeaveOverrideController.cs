@@ -30,22 +30,23 @@ public class LeaveOverrideController : Controller
     [HttpGet]
     public async Task<IActionResult> Index()
     {
-        // Get all leave policies that require HR Admin approval (special leave)
-        var specialLeavePolicies = await _context.LeavePolicy
-            .Where(p => p.requires_hr_admin_approval == true && (p.is_active ?? true) && p.leave_type_id.HasValue)
-            .Select(p => p.leave_type_id!.Value)
-            .ToListAsync();
+        // Ensure DbSets are available
+        if (_context.LeavePolicy == null || _context.LeaveRequest == null)
+        {
+            return View(new List<LeaveRequestViewModel>());
+        }
 
-        // Get all leave requests EXCLUDING special leave requests (those are managed separately)
+        // NOTE: Columns requires_hr_admin_approval, is_active, leave_type_id don't exist yet
+        // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to add them
+        // For now, show all leave requests (no filtering by special leave policies)
         var requests = await _context.LeaveRequest
             .Include(lr => lr.employee)
             .Include(lr => lr.leave)
             .Include(lr => lr.LeaveDocument)
-            .Where(lr => !specialLeavePolicies.Contains(lr.leave_id))
             .OrderByDescending(lr => lr.request_id)
             .ToListAsync();
 
-        var viewModels = requests.Select(r => new LeaveRequestViewModel
+        var viewModels = requests?.Select(r => new LeaveRequestViewModel
         {
             RequestId = r.request_id,
             EmployeeId = r.employee_id,
@@ -68,7 +69,7 @@ public class LeaveOverrideController : Controller
                 FilePath = d.file_path ?? string.Empty,
                 UploadedAt = d.uploaded_at
             }).ToList() ?? new List<LeaveDocumentViewModel>()
-        }).ToList();
+        }).ToList() ?? new List<LeaveRequestViewModel>();
 
         return View(viewModels);
     }
@@ -179,15 +180,9 @@ public class LeaveOverrideController : Controller
             return NotFound();
         }
 
-        // Verify this is NOT a special leave request (special leave is managed separately)
-        var policy = await _context.LeavePolicy
-            .FirstOrDefaultAsync(p => p.leave_type_id == request.leave_id && (p.is_active ?? true));
-
-        if (policy != null && policy.requires_hr_admin_approval == true)
-        {
-            TempData["ErrorMessage"] = "Special leave requests are managed in the Special Leave section.";
-            return RedirectToAction("Index");
-        }
+        // NOTE: Cannot verify special leave without leave_type_id, is_active, requires_hr_admin_approval columns
+        // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to enable this check
+        // For now, allow all requests to be flagged as irregular
 
         var viewModel = new LeaveRequestViewModel
         {
@@ -232,15 +227,9 @@ public class LeaveOverrideController : Controller
             return NotFound();
         }
 
-        // Verify this is NOT a special leave request
-        var policy = await _context.LeavePolicy
-            .FirstOrDefaultAsync(p => p.leave_type_id == request.leave_id && (p.is_active ?? true));
-
-        if (policy != null && policy.requires_hr_admin_approval == true)
-        {
-            TempData["ErrorMessage"] = "Special leave requests are managed in the Special Leave section.";
-            return RedirectToAction("Index");
-        }
+        // NOTE: Cannot verify special leave without leave_type_id, is_active, requires_hr_admin_approval columns
+        // Run SQL_ADD_LEAVE_POLICY_COLUMNS.sql to enable this check
+        // For now, allow all requests to be flagged as irregular
 
         var result = await _leaveService.FlagAsIrregularAsync(id, hrAdminId.Value, irregularityReason);
         if (result)

@@ -45,15 +45,59 @@ public class LeaveApprovalController : Controller
         }
 
         var allRequests = await _leaveService.GetByManagerIdAsync(managerId.Value);
+        var allRequestsList = allRequests?.ToList() ?? new List<LeaveRequest>();
+
+        // If there are no requests, short‑circuit to an empty view model list.
+        if (!allRequestsList.Any())
+        {
+            return View(new List<LeaveRequestViewModel>());
+        }
         
         // Get all policies for the leave types in these requests
-        var leaveTypeIds = allRequests.Select(r => r.leave_id).Distinct().ToList();
-        var policies = await _context.LeavePolicy
-            .Where(p => leaveTypeIds.Contains(p.leave_type_id ?? 0) && (p.is_active ?? true))
-            .ToListAsync();
+        var leaveTypeIds = allRequestsList.Select(r => r.leave_id).Distinct().ToList();
+
+        // If the DbSet is not configured (should not normally happen), avoid throwing.
+        if (_context.LeavePolicy == null || leaveTypeIds.Count == 0)
+        {
+            return View(allRequestsList.Select(r => new LeaveRequestViewModel
+            {
+                RequestId = r.request_id,
+                EmployeeId = r.employee_id,
+                EmployeeName = r.employee?.full_name ?? string.Empty,
+                EmployeeEmail = r.employee?.email ?? string.Empty,
+                LeaveType = r.leave?.leave_type ?? string.Empty,
+                StartDate = r.start_date ?? DateOnly.FromDateTime(DateTime.Today),
+                EndDate = r.end_date ?? DateOnly.FromDateTime(DateTime.Today),
+                Duration = r.duration,
+                Justification = r.justification,
+                Status = r.status,
+                ApprovedBy = r.approved_by,
+                IsIrregular = r.is_irregular,
+                IrregularityReason = r.irregularity_reason,
+                CreatedAt = r.created_at,
+                IsSpecialLeave = false,
+                ApprovedByHR = false,
+                Documents = r.LeaveDocument?.Select(d => new LeaveDocumentViewModel
+                {
+                    DocumentId = d.document_id,
+                    FileName = Path.GetFileName(d.file_path ?? string.Empty),
+                    FilePath = d.file_path ?? string.Empty,
+                    UploadedAt = d.uploaded_at
+                }).ToList() ?? new List<LeaveDocumentViewModel>()
+            }).ToList());
+        }
+
+        // Query policies in a way that is safe for EF translation and empty lists.
+        var policiesQuery = _context.LeavePolicy
+            .Where(p => (p.is_active ?? true));
+
+        policiesQuery = policiesQuery
+            .Where(p => p.leave_type_id.HasValue && leaveTypeIds.Contains(p.leave_type_id.Value));
+
+        var policies = await policiesQuery.ToListAsync();
         
         // Filter out special leave requests that require HR Admin approval (only show pending ones that line managers can approve)
-        var requests = allRequests.Where(request =>
+        var requests = allRequestsList.Where(request =>
         {
             // If already approved/rejected, show it
             if (request.status != "Pending")
