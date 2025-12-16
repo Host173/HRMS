@@ -227,6 +227,12 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Ensure button content (text, icons) stays above pseudo-elements */
+.btn-premium > * {
+    position: relative;
+    z-index: 1;
+}
+
 .btn-premium::before {
     content: '';
     position: absolute;
@@ -238,6 +244,8 @@
     background: rgba(255, 255, 255, 0.2);
     transform: translate(-50%, -50%);
     transition: width 0.6s ease, height 0.6s ease;
+    z-index: 0;
+    pointer-events: none;
 }
 
 .btn-premium:active::before {
@@ -245,9 +253,17 @@
     height: 300px;
 }
 
-.btn-premium:hover {
+.btn-premium:hover:not(.btn-primary) {
     transform: translateY(-2px);
     box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.15);
+}
+
+.btn-premium.btn-primary:hover > * {
+    color: #FFFFFF !important;
+}
+
+.btn-premium:hover > * {
+    color: inherit !important;
 }
 
 .btn-premium:active {

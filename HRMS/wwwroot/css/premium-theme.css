@@ -384,17 +384,19 @@ a:hover {
 
 .btn-primary {
     background-color: var(--color-primary);
-    color: #FFFFFF;
+    color: #FFFFFF !important;
     box-shadow: 0 4px 6px rgba(36, 99, 235, 0.25);
 }
 
 .btn-primary:hover {
     background-color: var(--color-primary-dark);
+    color: #FFFFFF !important;
     transform: translateY(-1px) scale(1.02);
     box-shadow: 0 6px 12px rgba(36, 99, 235, 0.35), 0 0 15px rgba(59, 130, 246, 0.4);
 }
 
 .btn-primary:active {
+    color: #FFFFFF !important;
     transform: translateY(0) scale(0.98);
 }
 
