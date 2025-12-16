@@ -1,48 +1,104 @@
 @{
     ViewData["Title"] = "Analytics & Reports";
+    ViewData["FullWidth"] = true;
 }
 
-<div class="premium-card" style="margin-bottom: 2rem;">
-    <h1 style="margin-bottom: 1.5rem; color: var(--color-text-primary);">Analytics & Reports</h1>
+<link rel="stylesheet" href="~/css/analytics.css" />
+
+<div class="premium-card card-full-width analytics-container" style="margin-bottom: 2rem;">
+    <div class="analytics-header">
+        <div class="analytics-header-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 3v18h18"></path>
+                <path d="M18 7c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z"></path>
+                <path d="M18 14c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z"></path>
+                <path d="M9 10c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z"></path>
+            </svg>
+        </div>
+        <h1>Analytics & Reports</h1>
+    </div>
 
     @if (TempData["ErrorMessage"] != null)
     {
-        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-error); color: #dc2626; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;" role="alert">
+        <div class="alert alert-error" role="alert" style="margin-bottom: 2rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
             @TempData["ErrorMessage"]
         </div>
     }
 
     <!-- Department Statistics -->
-    <section style="margin-bottom: 3rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h2 style="margin: 0; color: var(--color-text-primary);">Department Statistics</h2>
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
-                <input type="text" id="deptSearch" placeholder="Search departments..." 
-                       style="padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
-                              background: var(--color-bg-primary); color: var(--color-text-primary); min-width: 250px;"
-                       onkeyup="filterDepartmentTable()" />
+    <section class="analytics-section">
+        <div class="analytics-section-header">
+            <div class="analytics-section-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+            </div>
+            <h2>Department Statistics</h2>
+        </div>
+        <p class="analytics-section-description">
+            Overview of employee distribution across all departments. Search to quickly find specific departments.
+        </p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <div class="analytics-search-box">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input type="text" id="deptSearch" placeholder="Search departments..." onkeyup="filterDepartmentTable()" />
             </div>
         </div>
+
         @if (ViewBag.DepartmentStats != null && ((List<HRMS.Models.DepartmentStatisticsViewModel>)ViewBag.DepartmentStats).Any())
         {
-            <div style="overflow-x: auto;">
-                <table id="deptTable" style="width: 100%; border-collapse: collapse;">
+            var stats = (List<HRMS.Models.DepartmentStatisticsViewModel>)ViewBag.DepartmentStats;
+            var totalEmployees = stats.Sum(s => s.TotalEmployees);
+            var totalActive = stats.Sum(s => s.ActiveEmployees);
+            var totalInactive = stats.Sum(s => s.InactiveEmployees);
+            
+            <div class="stats-grid" style="margin-bottom: 2rem;">
+                <div class="stat-card">
+                    <div class="stat-card-label">Total Departments</div>
+                    <div class="stat-card-value primary">@stats.Count</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">Total Employees</div>
+                    <div class="stat-card-value">@totalEmployees</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">Active Employees</div>
+                    <div class="stat-card-value success">@totalActive</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">Inactive Employees</div>
+                    <div class="stat-card-value danger">@totalInactive</div>
+                </div>
+            </div>
+
+            <div class="analytics-table-container">
+                <table id="deptTable" class="analytics-table">
                     <thead>
-                        <tr style="background: var(--color-bg-secondary); border-bottom: 2px solid var(--color-border);">
-                            <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Department</th>
-                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--color-text-primary);">Total Employees</th>
-                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--color-text-primary);">Active</th>
-                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--color-text-primary);">Inactive</th>
+                        <tr>
+                            <th>Department</th>
+                            <th class="text-center">Total Employees</th>
+                            <th class="text-center">Active</th>
+                            <th class="text-center">Inactive</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var stat in (List<HRMS.Models.DepartmentStatisticsViewModel>)ViewBag.DepartmentStats)
+                        @foreach (var stat in stats)
                         {
-                            <tr style="border-bottom: 1px solid var(--color-border);">
-                                <td style="padding: 1rem; color: var(--color-text-primary);">@stat.DepartmentName</td>
-                                <td style="padding: 1rem; text-align: center; color: var(--color-text-primary);">@stat.TotalEmployees</td>
-                                <td style="padding: 1rem; text-align: center; color: #22c55e;">@stat.ActiveEmployees</td>
-                                <td style="padding: 1rem; text-align: center; color: #ef4444;">@stat.InactiveEmployees</td>
+                            <tr>
+                                <td style="font-weight: 600;">@stat.DepartmentName</td>
+                                <td class="text-center">@stat.TotalEmployees</td>
+                                <td class="text-center text-success">@stat.ActiveEmployees</td>
+                                <td class="text-center text-danger">@stat.InactiveEmployees</td>
                             </tr>
                         }
                     </tbody>
@@ -51,39 +107,52 @@
         }
         else
         {
-            <p style="color: var(--color-text-secondary);">No department statistics available.</p>
+            <div class="analytics-empty-state">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <p>No department statistics available.</p>
+            </div>
         }
     </section>
 
     <!-- Compliance Reports -->
-    <section style="margin-bottom: 3rem;">
-        <h2 style="margin-bottom: 1rem; color: var(--color-text-primary);">Compliance Reports</h2>
-        <p style="color: var(--color-text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">
-            Generate compliance reports to analyze contract and attendance compliance across the organization. Use search and filters to narrow down results.
+    <section class="analytics-section">
+        <div class="analytics-section-header">
+            <div class="analytics-section-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+            </div>
+            <h2>Compliance Reports</h2>
+        </div>
+        <p class="analytics-section-description">
+            Generate comprehensive compliance reports to analyze contract and attendance compliance across the organization. Use search and filters to narrow down results.
         </p>
         
         <!-- Search and Filter Form -->
-        <div class="premium-card" style="background: var(--color-bg-secondary); padding: 1.5rem; margin-bottom: 1.5rem;">
-            <h3 style="margin-bottom: 1rem; color: var(--color-text-primary); font-size: 1rem;">Search & Filter Options</h3>
-            <form id="complianceSearchForm" method="post" style="display: grid; grid-template-columns: 2fr 2fr 1fr 1fr; gap: 1rem; align-items: end;">
+        <div class="report-form-card">
+            <div class="report-form-header">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <h3>Search & Filter Options</h3>
+            </div>
+            <form id="complianceSearchForm" method="post" class="report-form-grid">
                 @Html.AntiForgeryToken()
-                <div>
-                    <label for="complianceSearchTerm" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary); font-size: 0.875rem;">
-                        Search (Name, Email)
-                    </label>
+                <div class="report-form-group">
+                    <label for="complianceSearchTerm" class="report-form-label">Search (Name, Email)</label>
                     <input type="text" id="complianceSearchTerm" name="searchTerm" 
                            value="@(ViewBag.SearchTerm ?? "")"
                            placeholder="Search by name or email..."
-                           style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
-                                  background: var(--color-bg-primary); color: var(--color-text-primary);" />
+                           class="report-form-input" />
                 </div>
-                <div>
-                    <label for="complianceDepartmentId" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary); font-size: 0.875rem;">
-                        Filter by Department
-                    </label>
-                    <select id="complianceDepartmentId" name="departmentId"
-                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
-                                   background: var(--color-bg-primary); color: var(--color-text-primary);">
+                <div class="report-form-group">
+                    <label for="complianceDepartmentId" class="report-form-label">Filter by Department</label>
+                    <select id="complianceDepartmentId" name="departmentId" class="report-form-select">
                         <option value="">All Departments</option>
                         @if (ViewBag.Departments != null)
                         {
@@ -96,15 +165,28 @@
                         }
                     </select>
                 </div>
-                <div>
+                <div class="report-form-group">
                     <button type="submit" formaction="@Url.Action("GenerateComplianceReport", "Component5", new { reportType = "contract" })" 
-                            class="btn-premium btn-primary" style="width: 100%; padding: 0.75rem 1.5rem;">
+                            class="report-form-button">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
                         Contract Report
                     </button>
                 </div>
-                <div>
+                <div class="report-form-group">
                     <button type="submit" formaction="@Url.Action("GenerateComplianceReport", "Component5", new { reportType = "attendance" })" 
-                            class="btn-premium btn-primary" style="width: 100%; padding: 0.75rem 1.5rem;">
+                            class="report-form-button">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
                         Attendance Report
                     </button>
                 </div>
@@ -114,24 +196,32 @@
         @if (ViewBag.ComplianceReport != null)
         {
             var report = (HRMS.Models.ComplianceReportViewModel)ViewBag.ComplianceReport;
-            <div class="premium-card" style="background: var(--color-bg-secondary); padding: 1.5rem;">
-                <h3 style="margin-bottom: 1rem; color: var(--color-text-primary);">@report.ReportType</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
-                    <div>
-                        <div style="font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Total Records</div>
-                        <div style="font-size: 1.5rem; font-weight: 600; color: var(--color-text-primary);">@report.TotalRecords</div>
+            <div class="report-results-card">
+                <div class="report-results-header">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                    <h3>@report.ReportType</h3>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-label">Total Records</div>
+                        <div class="stat-card-value">@report.TotalRecords</div>
                     </div>
-                    <div>
-                        <div style="font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Compliant</div>
-                        <div style="font-size: 1.5rem; font-weight: 600; color: #22c55e;">@report.CompliantRecords</div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">Compliant</div>
+                        <div class="stat-card-value success">@report.CompliantRecords</div>
                     </div>
-                    <div>
-                        <div style="font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Non-Compliant</div>
-                        <div style="font-size: 1.5rem; font-weight: 600; color: #ef4444;">@report.NonCompliantRecords</div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">Non-Compliant</div>
+                        <div class="stat-card-value danger">@report.NonCompliantRecords</div>
                     </div>
-                    <div>
-                        <div style="font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Compliance Rate</div>
-                        <div style="font-size: 1.5rem; font-weight: 600; color: var(--color-primary);">@report.CompliancePercentage.ToString("F1")%</div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">Compliance Rate</div>
+                        <div class="stat-card-value primary">@report.CompliancePercentage.ToString("F1")%</div>
                     </div>
                 </div>
             </div>
@@ -139,34 +229,43 @@
     </section>
 
     <!-- Diversity Reports -->
-    <section>
-        <h2 style="margin-bottom: 1rem; color: var(--color-text-primary);">Diversity Reports</h2>
-        <p style="color: var(--color-text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">
-            Generate diversity reports to analyze employee distribution across departments, positions, and demographics. Use search and filters to narrow down results.
+    <section class="analytics-section">
+        <div class="analytics-section-header">
+            <div class="analytics-section-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+            </div>
+            <h2>Diversity Reports</h2>
+        </div>
+        <p class="analytics-section-description">
+            Generate comprehensive diversity reports to analyze employee distribution across departments, positions, and demographics. Use search and filters to narrow down results.
         </p>
         
         <!-- Search and Filter Form -->
-        <div class="premium-card" style="background: var(--color-bg-secondary); padding: 1.5rem; margin-bottom: 1.5rem;">
-            <h3 style="margin-bottom: 1rem; color: var(--color-text-primary); font-size: 1rem;">Search & Filter Options</h3>
-            <form asp-controller="Component5" asp-action="GenerateDiversityReport" method="post" style="display: grid; grid-template-columns: 2fr 2fr 1fr; gap: 1rem; align-items: end;">
+        <div class="report-form-card">
+            <div class="report-form-header">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <h3>Search & Filter Options</h3>
+            </div>
+            <form asp-controller="Component5" asp-action="GenerateDiversityReport" method="post" class="report-form-grid">
                 @Html.AntiForgeryToken()
-                <div>
-                    <label for="diversitySearchTerm" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary); font-size: 0.875rem;">
-                        Search (Name, Email, Position)
-                    </label>
+                <div class="report-form-group">
+                    <label for="diversitySearchTerm" class="report-form-label">Search (Name, Email, Position)</label>
                     <input type="text" id="diversitySearchTerm" name="searchTerm" 
                            value="@(ViewBag.SearchTerm ?? "")"
                            placeholder="Search by name, email, or position..."
-                           style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
-                                  background: var(--color-bg-primary); color: var(--color-text-primary);" />
+                           class="report-form-input" />
                 </div>
-                <div>
-                    <label for="diversityDepartmentId" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--color-text-primary); font-size: 0.875rem;">
-                        Filter by Department
-                    </label>
-                    <select id="diversityDepartmentId" name="departmentId"
-                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); 
-                                   background: var(--color-bg-primary); color: var(--color-text-primary);">
+                <div class="report-form-group">
+                    <label for="diversityDepartmentId" class="report-form-label">Filter by Department</label>
+                    <select id="diversityDepartmentId" name="departmentId" class="report-form-select">
                         <option value="">All Departments</option>
                         @if (ViewBag.Departments != null)
                         {
@@ -179,8 +278,14 @@
                         }
                     </select>
                 </div>
-                <div>
-                    <button type="submit" class="btn-premium btn-primary" style="width: 100%; padding: 0.75rem 1.5rem;">
+                <div class="report-form-group">
+                    <button type="submit" class="report-form-button">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
                         Generate Report
                     </button>
                 </div>
@@ -190,24 +295,32 @@
         @if (ViewBag.DiversityReport != null)
         {
             var report = (HRMS.Models.DiversityReportViewModel)ViewBag.DiversityReport;
-            <div class="premium-card" style="background: var(--color-bg-secondary); padding: 1.5rem;">
-                <h3 style="margin-bottom: 1.5rem; color: var(--color-text-primary);">Diversity Statistics</h3>
+            <div class="report-results-card">
+                <div class="report-results-header">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <h3>Diversity Statistics</h3>
+                </div>
                 
-                <div style="margin-bottom: 2rem;">
-                    <div style="font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: 0.5rem;">Total Employees</div>
-                    <div style="font-size: 2rem; font-weight: 600; color: var(--color-primary);">@report.TotalEmployees</div>
+                <div class="stat-card" style="margin-bottom: 2rem; max-width: 300px;">
+                    <div class="stat-card-label">Total Employees</div>
+                    <div class="stat-card-value primary">@report.TotalEmployees</div>
                 </div>
 
                 @if (report.DepartmentDistribution.Any())
                 {
                     <div style="margin-bottom: 2rem;">
-                        <h4 style="margin-bottom: 1rem; color: var(--color-text-primary);">Department Distribution</h4>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--color-text-primary); font-size: 1.125rem; font-weight: 600;">Department Distribution</h4>
+                        <div class="distribution-grid">
                             @foreach (var dept in report.DepartmentDistribution)
                             {
-                                <div style="padding: 1rem; background: var(--color-bg-primary); border-radius: var(--radius-md); border: 1px solid var(--color-border);">
-                                    <div style="font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">@dept.Key</div>
-                                    <div style="font-size: 1.25rem; font-weight: 600; color: var(--color-text-primary);">@dept.Value</div>
+                                <div class="distribution-card">
+                                    <div class="distribution-card-label">@dept.Key</div>
+                                    <div class="distribution-card-value">@dept.Value</div>
                                 </div>
                             }
                         </div>
@@ -217,13 +330,13 @@
                 @if (report.PositionDistribution.Any())
                 {
                     <div style="margin-bottom: 2rem;">
-                        <h4 style="margin-bottom: 1rem; color: var(--color-text-primary);">Position Distribution</h4>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--color-text-primary); font-size: 1.125rem; font-weight: 600;">Position Distribution</h4>
+                        <div class="distribution-grid">
                             @foreach (var pos in report.PositionDistribution)
                             {
-                                <div style="padding: 1rem; background: var(--color-bg-primary); border-radius: var(--radius-md); border: 1px solid var(--color-border);">
-                                    <div style="font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">@pos.Key</div>
-                                    <div style="font-size: 1.25rem; font-weight: 600; color: var(--color-text-primary);">@pos.Value</div>
+                                <div class="distribution-card">
+                                    <div class="distribution-card-label">@pos.Key</div>
+                                    <div class="distribution-card-value">@pos.Value</div>
                                 </div>
                             }
                         </div>
@@ -233,25 +346,25 @@
                 @if (report.DepartmentStatistics.Any())
                 {
                     <div>
-                        <h4 style="margin-bottom: 1rem; color: var(--color-text-primary);">Department-Wise Employee Statistics</h4>
-                        <div style="overflow-x: auto;">
-                            <table style="width: 100%; border-collapse: collapse;">
+                        <h4 style="margin-bottom: 1rem; color: var(--color-text-primary); font-size: 1.125rem; font-weight: 600;">Department-Wise Employee Statistics</h4>
+                        <div class="analytics-table-container">
+                            <table class="analytics-table">
                                 <thead>
-                                    <tr style="background: var(--color-bg-primary); border-bottom: 2px solid var(--color-border);">
-                                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--color-text-primary);">Department</th>
-                                        <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--color-text-primary);">Total Employees</th>
-                                        <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--color-text-primary);">Active</th>
-                                        <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--color-text-primary);">Inactive</th>
+                                    <tr>
+                                        <th>Department</th>
+                                        <th class="text-center">Total Employees</th>
+                                        <th class="text-center">Active</th>
+                                        <th class="text-center">Inactive</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach (var deptStat in report.DepartmentStatistics)
                                     {
-                                        <tr style="border-bottom: 1px solid var(--color-border);">
-                                            <td style="padding: 1rem; color: var(--color-text-primary); font-weight: 500;">@deptStat.DepartmentName</td>
-                                            <td style="padding: 1rem; text-align: center; color: var(--color-text-primary);">@deptStat.TotalEmployees</td>
-                                            <td style="padding: 1rem; text-align: center; color: #22c55e;">@deptStat.ActiveEmployees</td>
-                                            <td style="padding: 1rem; text-align: center; color: #ef4444;">@deptStat.InactiveEmployees</td>
+                                        <tr>
+                                            <td style="font-weight: 600;">@deptStat.DepartmentName</td>
+                                            <td class="text-center">@deptStat.TotalEmployees</td>
+                                            <td class="text-center text-success">@deptStat.ActiveEmployees</td>
+                                            <td class="text-center text-danger">@deptStat.InactiveEmployees</td>
                                         </tr>
                                     }
                                 </tbody>

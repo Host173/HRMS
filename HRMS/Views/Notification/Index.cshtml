@@ -2,361 +2,288 @@
 
 @{
     ViewData["Title"] = "Notifications";
+    ViewData["FullWidth"] = true;
     var unreadCount = ViewBag.UnreadCount ?? 0;
     var currentFilter = ViewBag.CurrentFilter ?? "all";
 }
 
-<div class="container-fluid py-4">
+<link rel="stylesheet" href="~/css/notifications.css" />
+
+<div class="premium-card card-full-width notifications-page">
     <!-- Header Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center flex-wrap">
-                <div>
-                    <h2 class="mb-2">
-                        <i class="fas fa-bell me-2"></i>
-                        @ViewBag.FilterTitle
-                    </h2>
-                    @if (unreadCount > 0)
-                    {
-                        <span class="badge bg-danger animate-pulse">
-                            @unreadCount Unread
-                        </span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-success">
-                            <i class="fas fa-check-circle me-1"></i>All Caught Up!
-                        </span>
-                    }
-                </div>
-                
-                <div class="btn-group animate-fade-in" role="group">
-                    <a asp-action="Index" asp-route-filter="all" 
-                       class="btn @(currentFilter == "all" ? "btn-primary" : "btn-outline-primary")">
-                        <i class="fas fa-list me-1"></i>All
-                    </a>
-                    <a asp-action="Index" asp-route-filter="unread" 
-                       class="btn @(currentFilter == "unread" ? "btn-primary" : "btn-outline-primary")">
-                        <i class="fas fa-envelope me-1"></i>Unread @(unreadCount > 0 ? $"({unreadCount})" : "")
-                    </a>
-                    @if (unreadCount > 0)
-                    {
-                        <button type="button" class="btn btn-premium mark-all-read-btn" 
-                                style="background: linear-gradient(135deg, var(--color-success), #22c55e); color: white; border: none; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);">
-                            <i class="fas fa-check-double me-1"></i>Mark All Read
-                        </button>
-                    }
-                </div>
+    <div class="notifications-header">
+        <div class="notifications-header-left">
+            <div class="notifications-header-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
             </div>
+            <div class="notifications-header-title">
+                <h1>@ViewBag.FilterTitle</h1>
+                @if (unreadCount > 0)
+                {
+                    <div class="notifications-header-badge unread">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <span>@unreadCount Unread Notification@(unreadCount == 1 ? "" : "s")</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="notifications-header-badge all-read">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <span>All Caught Up!</span>
+                    </div>
+                }
+            </div>
+        </div>
+        
+        <div class="notifications-filters">
+            <a asp-action="Index" asp-route-filter="all" 
+               class="notification-filter-btn @(currentFilter == "all" ? "active" : "")">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="8" y1="6" x2="21" y2="6"></line>
+                    <line x1="8" y1="12" x2="21" y2="12"></line>
+                    <line x1="8" y1="18" x2="21" y2="18"></line>
+                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                </svg>
+                <span>All</span>
+            </a>
+            <a asp-action="Index" asp-route-filter="unread" 
+               class="notification-filter-btn @(currentFilter == "unread" ? "active" : "")">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+                <span>Unread @(unreadCount > 0 ? $"({unreadCount})" : "")</span>
+            </a>
+            @if (unreadCount > 0)
+            {
+                <button type="button" class="mark-all-read-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>Mark All Read</span>
+                </button>
+            }
         </div>
     </div>
 
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show animate-slide-down" role="alert">
-            <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="alert alert-success" role="alert" style="margin-bottom: 2rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            @TempData["SuccessMessage"]
         </div>
     }
 
     <!-- Notifications List -->
-    <div class="row">
-        <div class="col-12">
-            @if (!Model.Any())
+    @if (!Model.Any())
+    {
+        <!-- Empty State -->
+        <div class="notifications-empty-state">
+            <svg class="notifications-empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <h3>No Notifications</h3>
+            <p>
+                @if (currentFilter == "unread")
+                {
+                    <text>You don't have any unread notifications. Great job staying on top of things!</text>
+                }
+                else
+                {
+                    <text>You don't have any notifications yet. We'll notify you when there's something important.</text>
+                }
+            </p>
+            @if (currentFilter == "unread")
             {
-                <!-- Empty State -->
-                <div class="text-center py-5 animate-fade-in">
-                    <div class="empty-state-icon mb-4">
-                        <i class="fas fa-bell-slash fa-5x text-muted opacity-50"></i>
-                    </div>
-                    <h4 class="text-muted mb-3">No Notifications</h4>
-                    <p class="text-muted">
-                        @if (currentFilter == "unread")
-                        {
-                            <text>You don't have any unread notifications. Great job staying on top of things!</text>
-                        }
-                        else
-                        {
-                            <text>You don't have any notifications yet. We'll notify you when there's something important.</text>
-                        }
-                    </p>
-                    @if (currentFilter == "unread")
-                    {
-                        <a asp-action="Index" asp-route-filter="all" class="btn btn-outline-primary mt-3">
-                            <i class="fas fa-list me-1"></i>View All Notifications
-                        </a>
-                    }
-                </div>
-            }
-            else
-            {
-                <div class="notifications-container">
-                    @{
-                        var index = 0;
-                    }
-                    @foreach (var notification in Model)
-                    {
-                        var employeeNotification = notification.Employee_Notification?.FirstOrDefault();
-                        var isUnread = employeeNotification?.delivery_status != "Read";
-                        var urgencyClass = notification.urgency switch
-                        {
-                            "High" => "border-danger",
-                            "Medium" => "border-warning",
-                            _ => "border-primary"
-                        };
-                        var iconClass = notification.notification_type switch
-                        {
-                            "Contract" => "fa-file-contract text-primary",
-                            "Leave" => "fa-calendar-alt text-success",
-                            "Attendance" => "fa-clock text-info",
-                            "Salary" => "fa-money-bill-wave text-success",
-                            _ => "fa-info-circle text-secondary"
-                        };
-
-                        <div class="premium-card card-full-width notification-card mb-3 animate-slide-up @(isUnread ? "notification-unread" : "")" 
-                             style="animation-delay: @(index * 0.05)s; border-left: 4px solid @(notification.urgency == "High" ? "var(--color-danger)" : notification.urgency == "Medium" ? "#F59E0B" : "var(--color-primary)"); padding: 1.5rem;">
-                            <div class="d-flex align-items-start">
-                                <!-- Notification Icon -->
-                                <div class="notification-icon me-3">
-                                    <div class="rounded-circle p-3 @(isUnread ? "animate-pulse-subtle notification-icon-bg" : "notification-icon-bg-read")">
-                                        <i class="fas @iconClass fa-lg" style="color: white !important;"></i>
-                                    </div>
-                                </div>
-
-                                <!-- Notification Content -->
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between align-items-start mb-3">
-                                        <div>
-                                            <h5 class="mb-2 @(isUnread ? "fw-bold" : "fw-semibold")" style="color: var(--color-text-primary); font-size: 1.1rem;">
-                                                @if (isUnread)
-                                                {
-                                                    <span class="badge bg-primary me-2 animate-fade-in" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">New</span>
-                                                }
-                                                @notification.notification_type Notification
-                                            </h5>
-                                            <small class="text-muted" style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.875rem;">
-                                                <i class="far fa-clock"></i>
-                                                @(notification.timestamp.HasValue ? notification.timestamp.Value.ToLocalTime().ToString("MMM dd, yyyy h:mm tt") : "N/A")
-                                            </small>
-                                        </div>
-                                        
-                                        @if (notification.urgency == "High")
-                                        {
-                                            <span class="badge bg-danger animate-bounce-subtle" style="font-size: 0.75rem; padding: 0.35rem 0.65rem;">
-                                                <i class="fas fa-exclamation-circle me-1"></i>Urgent
-                                            </span>
-                                        }
-                                        else if (notification.urgency == "Medium")
-                                        {
-                                            <span class="badge" style="background-color: #F59E0B; color: white; font-size: 0.75rem; padding: 0.35rem 0.65rem;">
-                                                <i class="fas fa-exclamation-triangle me-1"></i>Medium
-                                            </span>
-                                        }
-                                    </div>
-
-                                    <p class="mb-3 notification-message @(isUnread ? "fw-semibold" : "")" style="color: var(--color-text-secondary); line-height: 1.6; font-size: 0.95rem;">
-                                        @notification.message_content
-                                    </p>
-
-                                    <!-- Action Buttons -->
-                                    <div class="d-flex gap-2 mt-3" role="group">
-                                        <a asp-action="Details" asp-route-id="@notification.notification_id" 
-                                           class="btn btn-premium btn-view-details" 
-                                           style="background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)); color: white; border: none; box-shadow: 0 4px 12px rgba(36, 99, 235, 0.3); font-size: 0.875rem; padding: 0.5rem 1rem;">
-                                            <i class="fas fa-eye me-1"></i>View Details
-                                        </a>
-                                        
-                                        @if (isUnread)
-                                        {
-                                            <button type="button" class="btn btn-premium btn-mark-read mark-read-btn" 
-                                                    data-notification-id="@notification.notification_id" 
-                                                    style="background: linear-gradient(135deg, var(--color-success), #22c55e); color: white; border: none; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); font-size: 0.875rem; padding: 0.5rem 1rem;">
-                                                <i class="fas fa-check me-1"></i>Mark as Read
-                                            </button>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        index++;
-                    }
-                </div>
+                <a asp-action="Index" asp-route-filter="all" class="notification-filter-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                        <line x1="8" y1="18" x2="21" y2="18"></line>
+                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                    </svg>
+                    <span>View All Notifications</span>
+                </a>
             }
         </div>
-    </div>
+    }
+    else
+    {
+        <div class="notifications-container">
+            @{
+                var index = 0;
+            }
+            @foreach (var notification in Model)
+            {
+                var employeeNotification = notification.Employee_Notification?.FirstOrDefault();
+                var isUnread = employeeNotification?.delivery_status != "Read";
+                var urgencyClass = notification.urgency switch
+                {
+                    "High" => "urgent",
+                    "Medium" => "medium",
+                    _ => ""
+                };
+                var iconType = notification.notification_type?.ToLower() switch
+                {
+                    "contract" => "contract",
+                    "leave" => "leave",
+                    "attendance" => "attendance",
+                    "salary" => "salary",
+                    _ => ""
+                };
+
+                <div class="notification-card @(isUnread ? "unread" : "") @urgencyClass" 
+                     style="animation-delay: @(index * 0.05)s;">
+                    <div class="notification-content">
+                        <!-- Notification Icon -->
+                        <div class="notification-icon-wrapper">
+                            <div class="notification-icon @iconType @(isUnread ? "unread-pulse" : "read")">
+                                @if (notification.notification_type == "Contract")
+                                {
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    </svg>
+                                }
+                                else if (notification.notification_type == "Leave")
+                                {
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    </svg>
+                                }
+                                else if (notification.notification_type == "Attendance")
+                                {
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                }
+                                else if (notification.notification_type == "Salary")
+                                {
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                    </svg>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Notification Body -->
+                        <div class="notification-body">
+                            <div class="notification-header-row">
+                                <div class="notification-title">
+                                    @if (isUnread)
+                                    {
+                                        <span class="new-badge">New</span>
+                                    }
+                                    <h3>@notification.notification_type Notification</h3>
+                                </div>
+                                
+                                @if (notification.urgency == "High")
+                                {
+                                    <div class="notification-urgency-badge urgent">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                        </svg>
+                                        <span>Urgent</span>
+                                    </div>
+                                }
+                                else if (notification.urgency == "Medium")
+                                {
+                                    <div class="notification-urgency-badge medium">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                        </svg>
+                                        <span>Medium</span>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="notification-meta">
+                                <div class="notification-meta-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                    <span>@(notification.timestamp.HasValue ? notification.timestamp.Value.ToLocalTime().ToString("MMM dd, yyyy h:mm tt") : "N/A")</span>
+                                </div>
+                                <div class="notification-meta-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                                        <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                                    </svg>
+                                    <span>@notification.notification_type</span>
+                                </div>
+                            </div>
+
+                            <p class="notification-message">@notification.message_content</p>
+
+                            <div class="notification-actions">
+                                <a asp-action="Details" asp-route-id="@notification.notification_id" 
+                                   class="notification-action-btn view-details">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    <span>View Details</span>
+                                </a>
+                                
+                                @if (isUnread)
+                                {
+                                    <button type="button" class="notification-action-btn mark-read mark-read-btn" 
+                                            data-notification-id="@notification.notification_id">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        <span>Mark as Read</span>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                index++;
+            }
+        </div>
+    }
 </div>
 
-@section Styles {
-    <style>
-        .notification-card {
-            transition: all var(--transition-normal);
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .notification-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(36, 99, 235, 0.05), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .notification-card:hover::before {
-            left: 100%;
-        }
-
-        .notification-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg), 0 0 20px rgba(36, 99, 235, 0.15);
-        }
-
-        .notification-unread {
-            background: linear-gradient(to right, rgba(36, 99, 235, 0.03), var(--color-surface)) !important;
-            border-left-width: 4px !important;
-        }
-
-        .notification-icon {
-            flex-shrink: 0;
-        }
-
-        .notification-icon-bg {
-            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)) !important;
-            box-shadow: 0 4px 12px rgba(36, 99, 235, 0.3);
-        }
-
-        .notification-icon-bg-read {
-            background: linear-gradient(135deg, #94A3B8, #64748B) !important;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .notification-message {
-            line-height: 1.6;
-        }
-
-        .animate-pulse-subtle {
-            animation: pulse-subtle 2s infinite;
-        }
-
-        @@keyframes pulse-subtle {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.85; transform: scale(0.98); }
-        }
-
-        .animate-bounce-subtle {
-            animation: bounce-subtle 1s infinite;
-        }
-
-        @@keyframes bounce-subtle {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-3px); }
-        }
-
-        .empty-state-icon i {
-            animation: sway 3s ease-in-out infinite;
-        }
-
-        @@keyframes sway {
-            0%, 100% { transform: rotate(-5deg); }
-            50% { transform: rotate(5deg); }
-        }
-
-        /* Dark mode adjustments */
-        [data-theme="dark"] .notification-unread {
-            background: linear-gradient(to right, rgba(59, 130, 246, 0.1), var(--color-surface)) !important;
-        }
-
-        /* Premium Button Styles */
-        .btn-premium {
-            position: relative;
-            overflow: hidden;
-            transition: all var(--transition-normal);
-            font-weight: 500;
-            border-radius: var(--radius-md);
-        }
-
-        .btn-premium:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15) !important;
-        }
-
-        .btn-premium:active {
-            transform: translateY(0);
-        }
-
-        .btn-premium::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s ease, height 0.6s ease;
-        }
-
-        .btn-premium:active::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .btn-view-details {
-            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)) !important;
-        }
-
-        .btn-view-details:hover {
-            background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary)) !important;
-            box-shadow: 0 6px 20px rgba(36, 99, 235, 0.4) !important;
-        }
-
-        .btn-mark-read, .mark-all-read-btn {
-            background: linear-gradient(135deg, var(--color-success), #22c55e) !important;
-        }
-
-        .btn-mark-read:hover, .mark-all-read-btn:hover {
-            background: linear-gradient(135deg, #16a34a, var(--color-success)) !important;
-            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4) !important;
-        }
-
-        .mark-all-read-btn {
-            padding: 0.6rem 1.25rem !important;
-            font-size: 0.9rem !important;
-        }
-
-        /* Button loading state */
-        .btn-loading {
-            position: relative;
-            color: transparent !important;
-            pointer-events: none;
-        }
-
-        .btn-loading::after {
-            content: '';
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            top: 50%;
-            left: 50%;
-            margin-left: -8px;
-            margin-top: -8px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-        }
-
-        @@keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-    </style>
-}
 
 @section Scripts {
     <!-- Hidden form for AntiForgeryToken -->
@@ -418,16 +345,16 @@
                         if (data.success) {
                             // Visual feedback with animation
                             card.style.transition = 'all 0.3s ease';
-                            card.classList.remove('notification-unread');
+                            card.classList.remove('unread');
                             
-                            const iconDiv = card.querySelector('.notification-icon > div');
+                            const iconDiv = card.querySelector('.notification-icon');
                             if (iconDiv) {
-                                iconDiv.classList.remove('animate-pulse-subtle', 'notification-icon-bg');
-                                iconDiv.classList.add('notification-icon-bg-read');
+                                iconDiv.classList.remove('unread-pulse');
+                                iconDiv.classList.add('read');
                             }
                             
                             // Remove "New" badge
-                            const newBadge = card.querySelector('.badge.bg-primary');
+                            const newBadge = card.querySelector('.new-badge');
                             if (newBadge) {
                                 newBadge.style.transition = 'opacity 0.3s ease';
                                 newBadge.style.opacity = '0';
@@ -513,7 +440,7 @@
 
             // Helper function to update unread count
             function updateUnreadCount(delta) {
-                const badge = document.querySelector('.badge.bg-danger.animate-pulse, .badge.bg-success');
+                const badge = document.querySelector('.notifications-header-badge');
                 let newCount = 0;
                 
                 if (badge) {
@@ -528,14 +455,26 @@
                     }
                     
                     if (newCount > 0) {
-                        if (badge.classList.contains('bg-success')) {
-                            badge.className = 'badge bg-danger animate-pulse';
+                        if (badge.classList.contains('all-read')) {
+                            badge.className = 'notifications-header-badge unread';
                         }
-                        badge.textContent = `${newCount} Unread`;
+                        badge.innerHTML = `
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            <span>${newCount} Unread Notification${newCount === 1 ? '' : 's'}</span>
+                        `;
                     } else {
-                        badge.className = 'badge bg-success';
-                        badge.classList.remove('animate-pulse');
-                        badge.innerHTML = '<i class="fas fa-check-circle me-1"></i>All Caught Up!';
+                        badge.className = 'notifications-header-badge all-read';
+                        badge.innerHTML = `
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                            <span>All Caught Up!</span>
+                        `;
                         
                         // Hide "Mark All Read" button
                         const markAllBtn = document.querySelector('.mark-all-read-btn');
@@ -550,10 +489,13 @@
                 // Update "Unread" filter button
                 const unreadFilterBtn = document.querySelector('a[href*="filter=unread"]');
                 if (unreadFilterBtn) {
-                    if (newCount > 0) {
-                        unreadFilterBtn.innerHTML = `<i class="fas fa-envelope me-1"></i>Unread (${newCount})`;
-                    } else {
-                        unreadFilterBtn.innerHTML = '<i class="fas fa-envelope me-1"></i>Unread';
+                    const span = unreadFilterBtn.querySelector('span');
+                    if (span) {
+                        if (newCount > 0) {
+                            span.textContent = `Unread (${newCount})`;
+                        } else {
+                            span.textContent = 'Unread';
+                        }
                     }
                 }
                 

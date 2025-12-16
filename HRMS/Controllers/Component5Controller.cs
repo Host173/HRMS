@@ -823,6 +823,8 @@ public class Component5Controller : Controller
             .Where(e => e.is_active == true)
             .Include(e => e.department)
             .Include(e => e.position)
+            .Include(e => e.Employee_Role)
+                .ThenInclude(er => er.role)
             .ToListAsync();
 
         var hierarchy = BuildHierarchy(allEmployees);
@@ -901,12 +903,18 @@ public class Component5Controller : Controller
         // Create nodes for all employees
         foreach (var emp in employees)
         {
+            var roles = emp.Employee_Role?
+                .Select(er => er.role?.role_name ?? string.Empty)
+                .Where(r => !string.IsNullOrEmpty(r))
+                .ToList() ?? new List<string>();
+
             var node = new HierarchyNodeViewModel
             {
                 EmployeeName = emp.full_name ?? $"{emp.first_name} {emp.last_name}",
                 Position = emp.position?.position_title,
                 Department = emp.department?.department_name,
                 Level = 0,
+                Roles = roles,
                 Subordinates = new List<HierarchyNodeViewModel>()
             };
             nodes[emp.employee_id] = node;
