@@ -30,58 +30,86 @@
     </div>
 }
 
-<div class="premium-card">
+<div class="premium-card animate-fade-in">
     @if (availableEmployees.Any())
     {
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+            @{
+                int cardIndex = 0;
+            }
             @foreach (var employee in availableEmployees)
             {
-                <div class="premium-card" style="padding: 1.5rem;">
+                var staggerClass = cardIndex < 6 ? $"card-stagger-{cardIndex + 1}" : "";
+                cardIndex++;
+                
+                <div class="premium-card employee-card animate-fade-in-scale @staggerClass" style="padding: 1.5rem;">
                     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
                         @if (!string.IsNullOrEmpty(employee.profile_image))
                         {
-                            <img src="@employee.profile_image" alt="@employee.full_name" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;" />
+                            <img src="@employee.profile_image" alt="@employee.full_name" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--color-border);" />
                         }
                         else
                         {
-                            <div style="width: 60px; height: 60px; background: var(--color-primary-light); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1.25rem;">
+                            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1.25rem; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
                                 @(employee.first_name?.Substring(0, 1).ToUpper() ?? "?")
                             </div>
                         }
                         <div style="flex: 1;">
-                            <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem;">@(employee.full_name ?? $"{employee.first_name} {employee.last_name}")</div>
-                            <div style="font-size: 0.85rem; color: var(--color-text-secondary);">@employee.email</div>
+                            <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem; color: var(--color-text-primary);">@(employee.full_name ?? $"{employee.first_name} {employee.last_name}")</div>
+                            <div style="font-size: 0.85rem; color: var(--color-text-secondary); display: flex; align-items: center; gap: 0.25rem;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                    <polyline points="22,6 12,13 2,6"></polyline>
+                                </svg>
+                                @employee.email
+                            </div>
                         </div>
                     </div>
 
                     <div style="margin-bottom: 1rem; padding-top: 1rem; border-top: 1px solid var(--color-border);">
                         @if (employee.department != null)
                         {
-                            <div style="margin-bottom: 0.5rem;">
+                            <div style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                </svg>
                                 <span style="font-size: 0.85rem; color: var(--color-text-secondary);">Department:</span>
-                                <span style="font-weight: 500; margin-left: 0.5rem;">@employee.department.department_name</span>
+                                <span class="badge badge-primary">@employee.department.department_name</span>
                             </div>
                         }
                         @if (employee.position != null)
                         {
-                            <div style="margin-bottom: 0.5rem;">
+                            <div style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
                                 <span style="font-size: 0.85rem; color: var(--color-text-secondary);">Position:</span>
-                                <span style="font-weight: 500; margin-left: 0.5rem;">@employee.position.position_title</span>
+                                <span style="font-weight: 500; font-size: 0.85rem;">@employee.position.position_title</span>
                             </div>
                         }
                         @if (employee.manager_id.HasValue)
                         {
-                            <div style="margin-bottom: 0.5rem;">
-                                <span style="font-size: 0.85rem; color: #d97706;">Currently assigned to another manager</span>
+                            <div style="margin-top: 0.75rem; padding: 0.5rem; background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; border-radius: 4px;">
+                                <span style="font-size: 0.85rem; color: #b45309; display: flex; align-items: center; gap: 0.5rem;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                    </svg>
+                                    Currently assigned to another manager
+                                </span>
                             </div>
                         }
                     </div>
 
                     <div style="display: flex; gap: 0.5rem;">
-                        <form asp-action="AssignToTeam" method="post" style="flex: 1;">
+                        <form asp-action="AssignToTeam" method="post" style="flex: 1;" class="assign-form" data-employee-name="@employee.full_name">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="employeeId" value="@employee.employee_id" />
-                            <button type="submit" class="btn-premium btn-primary" style="width: 100%; padding: 0.5rem;">
+                            <button type="submit" class="btn-premium btn-primary" style="width: 100%; padding: 0.5rem;" 
+                                    data-confirm="Are you sure you want to assign @employee.full_name to your team?"
+                                    data-confirm-type="info">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;">
                                     <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                                     <circle cx="8.5" cy="7" r="4"></circle>
@@ -91,8 +119,11 @@
                                 Assign to Team
                             </button>
                         </form>
-                        <a asp-action="Details" asp-route-id="@employee.employee_id" class="btn-premium btn-secondary" style="padding: 0.5rem;">
-                            View Profile
+                        <a asp-action="Details" asp-route-id="@employee.employee_id" class="btn-premium btn-secondary" style="padding: 0.5rem;" data-tooltip="View full profile">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
                         </a>
                     </div>
                 </div>
@@ -101,9 +132,25 @@
     }
     else
     {
-        <div style="text-align: center; padding: 3rem;">
-            <p style="color: var(--color-text-secondary); margin-bottom: 1rem;">No available employees to assign. All active employees are already assigned to your team or other managers.</p>
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    <line x1="2" y1="2" x2="22" y2="22" opacity="0.3"></line>
+                </svg>
+            </div>
+            <h3 class="empty-state-title">No Available Employees</h3>
+            <p class="empty-state-description">
+                All active employees are already assigned to your team or other managers. 
+                Check back later or contact HR for assistance with team assignments.
+            </p>
             <a asp-action="MyTeam" class="btn-premium btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                    <path d="M15 19l-7-7 7-7"></path>
+                </svg>
                 View My Team
             </a>
         </div>
@@ -115,5 +162,6 @@
         ← Back to My Team
     </a>
 </div>
+
 
 

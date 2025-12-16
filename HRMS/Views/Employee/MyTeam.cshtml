@@ -6,11 +6,28 @@
     var manager = ViewBag.Manager as HRMS.Models.Employee;
 }
 
-<div style="margin-bottom: 2rem;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <div>
-            <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">@teamType</h2>
-            <p class="text-muted">
+<div style="margin-bottom: 2rem;" class="animate-fade-in">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+        <div style="flex: 1; min-width: 200px;">
+            <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-primary);">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                @teamType
+                @if (Model != null && Model.Any())
+                {
+                    <span class="badge badge-primary" style="font-size: 0.875rem;">@Model.Count()</span>
+                }
+            </h2>
+            <p class="text-muted" style="display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
                 @if (isManager)
                 {
                     <text>View and manage your team members (direct reports)</text>
@@ -27,7 +44,7 @@
         </div>
         @if (isManager)
         {
-            <div style="display: flex; gap: 0.5rem;">
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                 <a asp-action="AssignToTeam" class="btn-premium btn-primary">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;">
                         <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -35,14 +52,14 @@
                         <line x1="20" y1="8" x2="20" y2="14"></line>
                         <line x1="23" y1="11" x2="17" y2="11"></line>
                     </svg>
-                    Assign Employee to Team
+                    Assign Employee
                 </a>
                 <a asp-action="ViewTeamProfiles" class="btn-premium btn-secondary">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                         <circle cx="12" cy="7" r="4"></circle>
                     </svg>
-                    View Full Profiles
+                    Full Profiles
                 </a>
             </div>
         }
@@ -51,18 +68,26 @@
 
 @if (manager != null && !isManager)
 {
-    <div class="premium-card" style="margin-bottom: 1.5rem; background: rgba(59, 130, 246, 0.1); border: 1px solid #3b82f6;">
+    <div class="premium-card animate-slide-in-left" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05)); border: 1px solid #3b82f6; border-left: 4px solid #3b82f6;">
         <div style="display: flex; align-items: center; gap: 1rem;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-            <div>
-                <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">Team Manager</div>
-                <div style="font-weight: 600; color: #3b82f6;">@manager.full_name</div>
+            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </div>
+            <div style="flex: 1;">
+                <div style="font-size: 0.75rem; color: var(--color-text-secondary); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Team Manager</div>
+                <div style="font-weight: 600; color: var(--color-primary); font-size: 1.1rem;">@manager.full_name</div>
                 @if (!string.IsNullOrEmpty(manager.email))
                 {
-                    <div style="font-size: 0.85rem; color: var(--color-text-secondary);">@manager.email</div>
+                    <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-top: 0.25rem; display: flex; align-items: center; gap: 0.35rem;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        @manager.email
+                    </div>
                 }
             </div>
         </div>
@@ -83,50 +108,69 @@
     </div>
 }
 
-<div class="premium-card">
+<div class="premium-card animate-fade-in">
     @if (Model != null && Model.Any())
     {
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+            @{
+                int cardIndex = 0;
+            }
             @foreach (var member in Model)
             {
-                <div class="premium-card" style="padding: 1.5rem;">
+                var staggerClass = cardIndex < 6 ? $"card-stagger-{cardIndex + 1}" : "";
+                cardIndex++;
+                
+                <div class="premium-card employee-card animate-fade-in-scale @staggerClass" style="padding: 1.5rem;">
                     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
                         @if (!string.IsNullOrEmpty(member.profile_image))
                         {
-                            <img src="@member.profile_image" alt="@member.full_name" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;" />
+                            <img src="@member.profile_image" alt="@member.full_name" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--color-border);" />
                         }
                         else
                         {
-                            <div style="width: 60px; height: 60px; background: var(--color-primary-light); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1.25rem;">
+                            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1.25rem; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
                                 @(member.first_name?.Substring(0, 1).ToUpper() ?? "?")
                             </div>
                         }
                         <div style="flex: 1;">
-                            <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem;">@(member.full_name ?? $"{member.first_name} {member.last_name}")</div>
-                            <div style="font-size: 0.85rem; color: var(--color-text-secondary);">@member.email</div>
+                            <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem; color: var(--color-text-primary);">@(member.full_name ?? $"{member.first_name} {member.last_name}")</div>
+                            <div style="font-size: 0.85rem; color: var(--color-text-secondary); display: flex; align-items: center; gap: 0.25rem;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                    <polyline points="22,6 12,13 2,6"></polyline>
+                                </svg>
+                                @member.email
+                            </div>
                         </div>
                     </div>
 
                     <div style="margin-bottom: 1rem; padding-top: 1rem; border-top: 1px solid var(--color-border);">
                         @if (member.department != null)
                         {
-                            <div style="margin-bottom: 0.5rem;">
-                                <span style="font-size: 0.85rem; color: var(--color-text-secondary);">Department:</span>
-                                <span style="font-weight: 500; margin-left: 0.5rem;">@member.department.department_name</span>
+                            <div style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                </svg>
+                                <span class="badge badge-primary">@member.department.department_name</span>
                             </div>
                         }
                         @if (member.position != null)
                         {
-                            <div style="margin-bottom: 0.5rem;">
-                                <span style="font-size: 0.85rem; color: var(--color-text-secondary);">Position:</span>
-                                <span style="font-weight: 500; margin-left: 0.5rem;">@member.position.position_title</span>
+                            <div style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <span style="font-weight: 500; font-size: 0.85rem;">@member.position.position_title</span>
                             </div>
                         }
                         @if (member.phone != null)
                         {
-                            <div>
-                                <span style="font-size: 0.85rem; color: var(--color-text-secondary);">Phone:</span>
-                                <span style="font-weight: 500; margin-left: 0.5rem;">@member.phone</span>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                </svg>
+                                <span style="font-weight: 500; font-size: 0.85rem;">@member.phone</span>
                             </div>
                         }
                     </div>
@@ -134,18 +178,27 @@
                     <div style="display: flex; gap: 0.5rem;">
                         <a asp-action="Details" asp-route-id="@member.employee_id" class="btn-premium btn-primary" style="flex: 1; text-align: center; padding: 0.5rem;">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
                             </svg>
-                            View Full Profile
+                            View Profile
                         </a>
-                        <form asp-action="RemoveFromTeam" method="post" style="display: inline;">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="employeeId" value="@member.employee_id" />
-                            <button type="submit" class="btn-premium btn-secondary" style="padding: 0.5rem;" onclick="return confirm('Are you sure you want to remove this employee from your team?');">
-                                Remove
-                            </button>
-                        </form>
+                        @if (isManager)
+                        {
+                            <form asp-action="RemoveFromTeam" method="post" style="display: inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="employeeId" value="@member.employee_id" />
+                                <button type="submit" class="btn-premium btn-danger" style="padding: 0.5rem;" 
+                                        data-confirm="Are you sure you want to remove @member.full_name from your team? They will no longer report to you."
+                                        data-confirm-type="danger"
+                                        data-tooltip="Remove from team">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    </svg>
+                                </button>
+                            </form>
+                        }
                     </div>
                 </div>
             }
@@ -153,24 +206,50 @@
     }
     else
     {
-        <div style="text-align: center; padding: 3rem;">
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    @if (isManager)
+                    {
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                        <line x1="23" y1="11" x2="17" y2="11"></line>
+                    }
+                    else
+                    {
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    }
+                </svg>
+            </div>
             @if (isManager)
             {
-                <p style="color: var(--color-text-secondary); margin-bottom: 1rem;">You don't have any team members assigned yet.</p>
+                <h3 class="empty-state-title">No Team Members Yet</h3>
+                <p class="empty-state-description">
+                    You haven't assigned any employees to your team yet. Start building your team by assigning employees who will report to you.
+                </p>
                 <a asp-action="AssignToTeam" class="btn-premium btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
                     Assign Employee to Team
                 </a>
             }
             else
             {
-                <p style="color: var(--color-text-secondary); margin-bottom: 1rem;">
+                <h3 class="empty-state-title">No Team Members</h3>
+                <p class="empty-state-description">
                     @if (manager != null)
                     {
-                        <text>No other team members found under @manager.full_name.</text>
+                        <text>No other team members found under @manager.full_name. You're currently the only person in this team.</text>
                     }
                     else
                     {
-                        <text>You are not assigned to a manager, so you don't have team members to view.</text>
+                        <text>You are not assigned to a manager yet, so there are no team members to view. Contact HR for team assignment.</text>
                     }
                 </p>
             }
