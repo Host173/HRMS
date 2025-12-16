@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -14,10 +13,12 @@ namespace HRMS.Controllers
     public class EmployeesController : Controller
     {
         private readonly HrmsDbContext _context;
+        private readonly ILogger<EmployeesController> _logger;
 
-        public EmployeesController(HrmsDbContext context)
+        public EmployeesController(HrmsDbContext context, ILogger<EmployeesController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: Employees
@@ -257,11 +258,30 @@ namespace HRMS.Controllers
         }
 
         // GET: Employees/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        // Only System Admins can delete employee profiles
+        [RequireRole(AuthorizationHelper.SystemAdminRole)]
+        public async Task<IActionResult> Delete(int? id, string? returnUrl = null)
         {
             if (id == null)
             {
                 return NotFound();
+            }
+
+            var currentEmployeeId = AuthorizationHelper.GetCurrentEmployeeId(User);
+            if (!currentEmployeeId.HasValue)
+            {
+                return Unauthorized();
+            }
+
+            // Prevent self-deletion
+            if (id == currentEmployeeId.Value)
+            {
+                TempData["ErrorMessage"] = "You cannot delete your own profile.";
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
+                }
+                return RedirectToAction(nameof(Index));
             }
 
             var employee = await _context.Employee
@@ -272,28 +292,113 @@ namespace HRMS.Controllers
                 .Include(e => e.position)
                 .Include(e => e.salary_type)
                 .Include(e => e.tax_form)
+                .Include(e => e.Employee_Role)
+                    .ThenInclude(er => er.role)
                 .FirstOrDefaultAsync(m => m.employee_id == id);
+            
             if (employee == null)
             {
                 return NotFound();
             }
 
+            // Get employee roles for display
+            ViewBag.EmployeeRoles = employee.Employee_Role?.Select(er => er.role?.role_name).ToList() ?? new List<string>();
+            ViewBag.ReturnUrl = returnUrl ?? Url.Action(nameof(Index));
+
+            _logger.LogInformation("System Admin {AdminId} accessing delete confirmation for employee {EmployeeId}", 
+                currentEmployeeId.Value, id);
+
             return View(employee);
         }
 
         // POST: Employees/Delete/5
+        // Only System Admins can delete employee profiles
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        [RequireRole(AuthorizationHelper.SystemAdminRole)]
+        public async Task<IActionResult> DeleteConfirmed(int id, string? returnUrl = null)
         {
-            var employee = await _context.Employee.FindAsync(id);
-            if (employee != null)
+            var currentEmployeeId = AuthorizationHelper.GetCurrentEmployeeId(User);
+            if (!currentEmployeeId.HasValue)
             {
-                _context.Employee.Remove(employee);
+                return Unauthorized();
             }
 
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            // Prevent self-deletion
+            if (id == currentEmployeeId.Value)
+            {
+                TempData["ErrorMessage"] = "You cannot delete your own profile.";
+                _logger.LogWarning("System Admin {AdminId} attempted to delete their own profile", currentEmployeeId.Value);
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
+                }
+                return RedirectToAction(nameof(Index));
+            }
+
+            try
+            {
+                var employee = await _context.Employee
+                    .Include(e => e.Employee_Role)
+                    .FirstOrDefaultAsync(e => e.employee_id == id);
+                
+                if (employee == null)
+                {
+                    return NotFound();
+                }
+
+                var employeeName = employee.full_name;
+                var employeeRoles = employee.Employee_Role?.Select(er => er.role_id).ToList() ?? new List<int>();
+
+                // Delete related records first to avoid foreign key constraint issues
+                
+                // Delete employee roles
+                var employeeRoleRecords = await _context.Employee_Role.Where(er => er.employee_id == id).ToListAsync();
+                if (employeeRoleRecords.Any())
+                {
+                    _context.Employee_Role.RemoveRange(employeeRoleRecords);
+                }
+
+                // Delete notifications
+                var notificationRecords = await _context.Employee_Notification.Where(en => en.employee_id == id).ToListAsync();
+                if (notificationRecords.Any())
+                {
+                    _context.Employee_Notification.RemoveRange(notificationRecords);
+                }
+
+                // Note: We don't delete attendance, leave requests, etc. as they are historical records
+                // Instead, we just set the employee as inactive
+                // If you want complete deletion, uncomment and add more cascade deletes here
+
+                // Delete the employee
+                _context.Employee.Remove(employee);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("System Admin {AdminId} deleted employee {EmployeeId} ({EmployeeName})", 
+                    currentEmployeeId.Value, id, employeeName);
+
+                TempData["SuccessMessage"] = $"Employee '{employeeName}' has been successfully deleted.";
+                
+                // Redirect back to the page they came from, or default to Employees/Index
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
+                }
+                
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "Error deleting employee {EmployeeId}", id);
+                TempData["ErrorMessage"] = "Cannot delete this employee because they have related records (attendance, leave requests, etc.). Consider deactivating the employee instead.";
+                return RedirectToAction(nameof(Delete), new { id, returnUrl });
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error deleting employee {EmployeeId}", id);
+                TempData["ErrorMessage"] = "An unexpected error occurred while deleting the employee. Please try again.";
+                return RedirectToAction(nameof(Delete), new { id, returnUrl });
+            }
         }
 
         private bool EmployeeExists(int id)

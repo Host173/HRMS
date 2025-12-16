@@ -369,6 +369,61 @@
     }
     
     // ========================================================================
+    // NOTIFICATION SYSTEM
+    // ========================================================================
+    
+    const NotificationSystem = {
+        badgeElement: null,
+        bellElement: null,
+        
+        init() {
+            this.badgeElement = document.getElementById('navbar-notification-badge');
+            this.bellElement = document.querySelector('.notification-bell-link');
+            
+            if (this.badgeElement) {
+                // Fetch initial count
+                this.fetchUnreadCount();
+                
+                // Auto-refresh every 30 seconds
+                setInterval(() => this.fetchUnreadCount(), 30000);
+            }
+        },
+        
+        async fetchUnreadCount() {
+            try {
+                const response = await fetch('/Notification/GetUnreadCount');
+                if (!response.ok) return;
+                
+                const data = await response.json();
+                this.updateBadge(data.count);
+            } catch (error) {
+                console.error('Error fetching notification count:', error);
+            }
+        },
+        
+        updateBadge(count) {
+            if (!this.badgeElement) return;
+            
+            const previousCount = parseInt(this.badgeElement.textContent) || 0;
+            
+            if (count > 0) {
+                this.badgeElement.textContent = count;
+                this.badgeElement.classList.remove('d-none');
+                
+                // Animate bell if count increased
+                if (count > previousCount && this.bellElement) {
+                    this.bellElement.classList.add('has-new-notification');
+                    setTimeout(() => {
+                        this.bellElement.classList.remove('has-new-notification');
+                    }, 800);
+                }
+            } else {
+                this.badgeElement.classList.add('d-none');
+            }
+        }
+    };
+    
+    // ========================================================================
     // INITIALIZE
     // ========================================================================
     
@@ -376,6 +431,7 @@
         enhanceForms();
         animateCards();
         setupConfirmations();
+        NotificationSystem.init();
         
         // Add a small delay before converting TempData to avoid conflicts
         setTimeout(convertTempDataToToasts, 100);
@@ -393,6 +449,7 @@
     window.HRMS.Toast = Toast;
     window.HRMS.Modal = Modal;
     window.HRMS.Loading = Loading;
+    window.HRMS.Notifications = NotificationSystem;
     
 })();
 

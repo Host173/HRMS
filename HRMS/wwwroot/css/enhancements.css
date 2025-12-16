@@ -756,3 +756,65 @@
     animation: checkmark 0.3s 0.3s cubic-bezier(0.65, 0, 0.45, 1) forwards;
 }
 
+/* --------------------------------------------------------------------------
+   NOTIFICATION BELL & BADGE
+   -------------------------------------------------------------------------- */
+
+.notification-bell-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+
+.notification-bell-link:hover {
+    transform: scale(1.1) rotate(15deg);
+}
+
+.notification-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: bold;
+    animation: notification-pop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes notification-pop {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.notification-badge.d-none {
+    display: none !important;
+}
+
+/* Notification bell animation when new notification arrives */
+@keyframes notification-ring {
+    0%, 100% { transform: rotate(0deg); }
+    10%, 30%, 50%, 70%, 90% { transform: rotate(-15deg); }
+    20%, 40%, 60%, 80% { transform: rotate(15deg); }
+}
+
+.notification-bell-link.has-new-notification {
+    animation: notification-ring 0.8s ease-in-out;
+}
+

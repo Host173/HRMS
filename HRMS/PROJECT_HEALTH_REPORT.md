@@ -389,3 +389,5 @@ Run the `RUN_ALL_MIGRATIONS.sql` script now, restart your app, and you'll have a
 **For migration details**: See `DATABASE_FIX_INSTRUCTIONS.md`  
 **For general setup**: See `DATABASE_SETUP_INSTRUCTIONS.md`
 
+
+

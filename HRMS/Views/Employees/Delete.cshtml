@@ -1,15 +1,42 @@
 ﻿@model HRMS.Models.Employee
 
 @{
-    ViewData["Title"] = "Delete";
+    ViewData["Title"] = "Delete Employee";
+    var employeeRoles = ViewBag.EmployeeRoles as List<string> ?? new List<string>();
 }
 
-<h1>Delete</h1>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Warning Header -->
+            <div class="alert alert-danger border-danger animate-fade-in" role="alert">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                    <div>
+                        <h4 class="alert-heading mb-0">⚠️ Permanent Deletion Warning</h4>
+                    </div>
+                </div>
+                <hr>
+                <p class="mb-2"><strong>Are you sure you want to permanently delete this employee profile?</strong></p>
+                <ul class="mb-0">
+                    <li>This action <strong>CANNOT be undone</strong></li>
+                    <li>All employee roles and notification links will be removed</li>
+                    <li>Historical records (attendance, leave) may remain but will be orphaned</li>
+                    <li>Consider <strong>deactivating</strong> the employee instead if you want to preserve history</li>
+                </ul>
+            </div>
 
-<h3>Are you sure you want to delete this?</h3>
-<div>
-    <h4>Employee</h4>
-    <hr />
+            <!-- Employee Details Card -->
+            <div class="card shadow-sm border-0 animate-scale-in mt-4">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-times me-2"></i>
+                        Delete Employee Profile
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="mb-3">Employee Information</h5>
+                    <hr />
     <dl class="row">
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.first_name)
@@ -179,11 +206,82 @@
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.tax_form.tax_form_id)
         </dd>
+        @if (employeeRoles.Any())
+        {
+            <dt class="col-sm-2">
+                <strong>Employee Roles</strong>
+            </dt>
+            <dd class="col-sm-10">
+                @foreach (var role in employeeRoles)
+                {
+                    <span class="badge bg-primary me-1">@role</span>
+                }
+            </dd>
+        }
     </dl>
     
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="employee_id" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
-    </form>
+    <!-- Confirmation Form -->
+    <div class="border-top pt-4 mt-4">
+        <form asp-action="Delete" method="post" onsubmit="return confirm('⚠️ FINAL CONFIRMATION:\n\nYou are about to PERMANENTLY DELETE the employee profile for:\n@Model.full_name\n\nThis action CANNOT be undone!\n\nAre you absolutely sure you want to proceed?');">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="employee_id" />
+            @if (ViewBag.ReturnUrl != null)
+            {
+                <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+            }
+            
+            <div class="d-flex gap-3 justify-content-between align-items-center">
+                @if (ViewBag.ReturnUrl != null)
+                {
+                    <a href="@ViewBag.ReturnUrl" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Cancel - Back to List
+                    </a>
+                }
+                else
+                {
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Cancel - Back to List
+                    </a>
+                }
+                
+                <div>
+                    <button type="submit" class="btn btn-danger btn-lg">
+                        <i class="fas fa-trash-alt me-2"></i>
+                        <strong>Permanently Delete Employee</strong>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="alert alert-info mt-3 mb-0">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Alternative:</strong> Instead of deleting, you can <strong>deactivate</strong> the employee by editing their profile and setting "Is Active" to No. This preserves all historical data.
+            </div>
+        </form>
+    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+@section Styles {
+    <style>
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .animate-scale-in {
+            animation: scaleIn 0.5s ease;
+        }
+        
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @@keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+}

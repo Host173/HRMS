@@ -286,16 +286,35 @@ public class ContractController : Controller
                     employeeId, employee.contract_id, createdContract.contract_id);
             }
 
-            // Create notification for contract creation
+            // Create detailed notification for contract creation
             try
             {
+                var contractDetails = new List<string>
+                {
+                    $"Contract Type: {MapContractTypeToDisplay(contract.type ?? "")}",
+                    $"Start Date: {contract.start_date?.ToString("MMM dd, yyyy") ?? "N/A"}",
+                    $"Status: {contract.current_state ?? "Active"}"
+                };
+                
+                if (contract.end_date.HasValue)
+                {
+                    contractDetails.Add($"End Date: {contract.end_date.Value:MMM dd, yyyy}");
+                }
+                
+                var notificationMessage = "A new employment contract has been created for you by HR Admin. Details: " + 
+                                         string.Join("; ", contractDetails) + 
+                                         ". Please review your contract details in the system.";
+                
                 await _notificationService.CreateNotificationAsync(
                     employeeId,
-                    "Contract Created",
-                    $"A new {contract.type} contract has been created for you. Start Date: {contract.start_date}",
+                    "New Contract Created",
+                    notificationMessage,
                     "Contract",
                     "Normal"
                 );
+                
+                _logger.LogInformation("Contract creation notification sent to employee {EmployeeId} for contract {ContractId}", 
+                    employeeId, createdContract.contract_id);
             }
             catch (System.Exception notifEx)
             {
@@ -436,6 +455,13 @@ public class ContractController : Controller
         // Track changes for notification
         var stateChanged = existingContract.current_state != contract.current_state;
         var endDateChanged = existingContract.end_date != contract.end_date;
+        var startDateChanged = existingContract.start_date != contract.start_date;
+        var typeChanged = existingContract.type != contract.type;
+        
+        var oldState = existingContract.current_state;
+        var oldEndDate = existingContract.end_date;
+        var oldStartDate = existingContract.start_date;
+        var oldType = existingContract.type;
 
         // Update contract
         existingContract.type = contract.type;
@@ -447,31 +473,69 @@ public class ContractController : Controller
         {
             await _contractService.UpdateAsync(existingContract);
 
-            // Send notifications to employees if contract was updated
-            foreach (var employee in existingContract.Employee)
+            // Send detailed notifications to employees if contract was updated
+            if (stateChanged || endDateChanged || startDateChanged || typeChanged)
             {
-                var notificationMessage = "Your contract has been updated.";
+                // Build list of changes
+                var changes = new List<string>();
                 
                 if (stateChanged)
                 {
-                    notificationMessage += $" Status changed to: {contract.current_state}";
+                    changes.Add($"Status changed from '{oldState}' to '{contract.current_state}'");
                 }
                 
-                if (endDateChanged && contract.end_date.HasValue)
+                if (typeChanged)
                 {
-                    notificationMessage += $" New end date: {contract.end_date.Value}";
+                    changes.Add($"Contract type changed from '{MapContractTypeToDisplay(oldType ?? "")}' to '{MapContractTypeToDisplay(contract.type ?? "")}'");
+                }
+                
+                if (startDateChanged)
+                {
+                    changes.Add($"Start date changed from {oldStartDate?.ToString("MMM dd, yyyy") ?? "N/A"} to {contract.start_date?.ToString("MMM dd, yyyy") ?? "N/A"}");
+                }
+                
+                if (endDateChanged)
+                {
+                    if (contract.end_date.HasValue)
+                    {
+                        changes.Add($"End date changed to {contract.end_date.Value:MMM dd, yyyy}");
+                    }
+                    else
+                    {
+                        changes.Add("End date removed (indefinite contract)");
+                    }
                 }
 
-                await _notificationService.CreateNotificationAsync(
-                    employee.employee_id,
-                    "Contract Updated",
-                    notificationMessage,
-                    "Contract"
-                );
-            }
+                var notificationMessage = changes.Count > 0 
+                    ? "Your employment contract has been updated by HR Admin. Changes: " + string.Join("; ", changes) + "."
+                    : "Your employment contract has been updated by HR Admin.";
+                
+                var urgency = stateChanged && contract.current_state == "Terminated" ? "High" : "Normal";
 
-            _logger.LogInformation("Contract {ContractId} updated by HR Admin", id);
-            TempData["SuccessMessage"] = "Contract updated successfully and employees have been notified.";
+                // Send notification to all employees associated with this contract
+                foreach (var employee in existingContract.Employee)
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        employee.employee_id,
+                        "Contract Updated",
+                        notificationMessage,
+                        "Contract",
+                        urgency
+                    );
+                    
+                    _logger.LogInformation("Contract update notification sent to employee {EmployeeId} for contract {ContractId}", 
+                        employee.employee_id, id);
+                }
+
+                _logger.LogInformation("Contract {ContractId} updated by HR Admin with {ChangeCount} changes", id, changes.Count);
+                TempData["SuccessMessage"] = $"Contract updated successfully and {existingContract.Employee.Count} employee(s) have been notified.";
+            }
+            else
+            {
+                _logger.LogInformation("Contract {ContractId} updated by HR Admin (no significant changes)", id);
+                TempData["SuccessMessage"] = "Contract updated successfully.";
+            }
+            
             return RedirectToAction(nameof(Details), new { id });
         }
         catch (System.Exception ex)

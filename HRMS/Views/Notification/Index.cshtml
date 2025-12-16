@@ -1,0 +1,310 @@
+@model IEnumerable<HRMS.Models.Notification>
+
+@{
+    ViewData["Title"] = "Notifications";
+    var unreadCount = ViewBag.UnreadCount ?? 0;
+    var currentFilter = ViewBag.CurrentFilter ?? "all";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div>
+                    <h2 class="mb-2">
+                        <i class="fas fa-bell me-2"></i>
+                        @ViewBag.FilterTitle
+                    </h2>
+                    @if (unreadCount > 0)
+                    {
+                        <span class="badge bg-danger animate-pulse">
+                            @unreadCount Unread
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">
+                            <i class="fas fa-check-circle me-1"></i>All Caught Up!
+                        </span>
+                    }
+                </div>
+                
+                <div class="btn-group animate-fade-in" role="group">
+                    <a asp-action="Index" asp-route-filter="all" 
+                       class="btn @(currentFilter == "all" ? "btn-primary" : "btn-outline-primary")">
+                        <i class="fas fa-list me-1"></i>All
+                    </a>
+                    <a asp-action="Index" asp-route-filter="unread" 
+                       class="btn @(currentFilter == "unread" ? "btn-primary" : "btn-outline-primary")">
+                        <i class="fas fa-envelope me-1"></i>Unread @(unreadCount > 0 ? $"({unreadCount})" : "")
+                    </a>
+                    @if (unreadCount > 0)
+                    {
+                        <form asp-action="MarkAllAsRead" method="post" class="d-inline" 
+                              onsubmit="return confirm('Mark all notifications as read?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-success">
+                                <i class="fas fa-check-double me-1"></i>Mark All Read
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show animate-slide-down" role="alert">
+            <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Notifications List -->
+    <div class="row">
+        <div class="col-12">
+            @if (!Model.Any())
+            {
+                <!-- Empty State -->
+                <div class="text-center py-5 animate-fade-in">
+                    <div class="empty-state-icon mb-4">
+                        <i class="fas fa-bell-slash fa-5x text-muted opacity-50"></i>
+                    </div>
+                    <h4 class="text-muted mb-3">No Notifications</h4>
+                    <p class="text-muted">
+                        @if (currentFilter == "unread")
+                        {
+                            <text>You don't have any unread notifications. Great job staying on top of things!</text>
+                        }
+                        else
+                        {
+                            <text>You don't have any notifications yet. We'll notify you when there's something important.</text>
+                        }
+                    </p>
+                    @if (currentFilter == "unread")
+                    {
+                        <a asp-action="Index" asp-route-filter="all" class="btn btn-outline-primary mt-3">
+                            <i class="fas fa-list me-1"></i>View All Notifications
+                        </a>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="notifications-container">
+                    @{
+                        var index = 0;
+                    }
+                    @foreach (var notification in Model)
+                    {
+                        var employeeNotification = notification.Employee_Notification?.FirstOrDefault();
+                        var isUnread = employeeNotification?.delivery_status != "Read";
+                        var urgencyClass = notification.urgency switch
+                        {
+                            "High" => "border-danger",
+                            "Medium" => "border-warning",
+                            _ => "border-primary"
+                        };
+                        var iconClass = notification.notification_type switch
+                        {
+                            "Contract" => "fa-file-contract text-primary",
+                            "Leave" => "fa-calendar-alt text-success",
+                            "Attendance" => "fa-clock text-info",
+                            "Salary" => "fa-money-bill-wave text-success",
+                            _ => "fa-info-circle text-secondary"
+                        };
+
+                        <div class="card notification-card mb-3 border-start border-3 @urgencyClass @(isUnread ? "bg-light-blue" : "") animate-slide-up" 
+                             style="animation-delay: @(index * 0.05)s;">
+                            <div class="card-body">
+                                <div class="d-flex align-items-start">
+                                    <!-- Notification Icon -->
+                                    <div class="notification-icon me-3">
+                                        <div class="rounded-circle bg-light p-3 @(isUnread ? "animate-pulse-subtle" : "")">
+                                            <i class="fas @iconClass fa-lg"></i>
+                                        </div>
+                                    </div>
+
+                                    <!-- Notification Content -->
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <h5 class="mb-1 @(isUnread ? "fw-bold" : "")">
+                                                    @if (isUnread)
+                                                    {
+                                                        <span class="badge bg-primary me-2 animate-fade-in">New</span>
+                                                    }
+                                                    @notification.notification_type Notification
+                                                </h5>
+                                                <small class="text-muted">
+                                                    <i class="far fa-clock me-1"></i>
+                                                    @(notification.timestamp.HasValue ? notification.timestamp.Value.ToLocalTime().ToString("MMM dd, yyyy h:mm tt") : "N/A")
+                                                </small>
+                                            </div>
+                                            
+                                            @if (notification.urgency == "High")
+                                            {
+                                                <span class="badge bg-danger animate-bounce-subtle">
+                                                    <i class="fas fa-exclamation-circle me-1"></i>Urgent
+                                                </span>
+                                            }
+                                        </div>
+
+                                        <p class="mb-2 notification-message @(isUnread ? "fw-semibold" : "text-muted")">
+                                            @notification.message_content
+                                        </p>
+
+                                        <!-- Action Buttons -->
+                                        <div class="btn-group btn-group-sm mt-2" role="group">
+                                            <a asp-action="Details" asp-route-id="@notification.notification_id" 
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-eye me-1"></i>View Details
+                                            </a>
+                                            
+                                            @if (isUnread)
+                                            {
+                                                <button type="button" class="btn btn-outline-success btn-sm mark-read-btn" 
+                                                        data-notification-id="@notification.notification_id">
+                                                    <i class="fas fa-check me-1"></i>Mark as Read
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        index++;
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .notification-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .notification-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .bg-light-blue {
+            background-color: #f8f9ff !important;
+        }
+
+        .notification-icon {
+            flex-shrink: 0;
+        }
+
+        .notification-message {
+            line-height: 1.6;
+        }
+
+        .animate-pulse-subtle {
+            animation: pulse-subtle 2s infinite;
+        }
+
+        @@keyframes pulse-subtle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .animate-bounce-subtle {
+            animation: bounce-subtle 1s infinite;
+        }
+
+        @@keyframes bounce-subtle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        .empty-state-icon i {
+            animation: sway 3s ease-in-out infinite;
+        }
+
+        @@keyframes sway {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        // Mark notification as read via AJAX
+        document.querySelectorAll('.mark-read-btn').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const notificationId = this.dataset.notificationId;
+                const card = this.closest('.notification-card');
+                
+                try {
+                    const response = await fetch('@Url.Action("MarkAsRead", "Notification")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'RequestVerificationToken': '@Html.AntiForgeryToken()'
+                        },
+                        body: `id=${notificationId}&__RequestVerificationToken=${document.querySelector('input[name="__RequestVerificationToken"]').value}`
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Visual feedback
+                        card.classList.remove('bg-light-blue');
+                        card.style.opacity = '0.6';
+                        this.remove();
+                        
+                        // Update unread count
+                        const badge = document.querySelector('.badge.bg-danger.animate-pulse');
+                        if (badge) {
+                            const currentCount = parseInt(badge.textContent);
+                            if (currentCount > 1) {
+                                badge.textContent = `${currentCount - 1} Unread`;
+                            } else {
+                                badge.className = 'badge bg-success';
+                                badge.innerHTML = '<i class="fas fa-check-circle me-1"></i>All Caught Up!';
+                            }
+                        }
+                        
+                        HRMS.Toast.success('Notification marked as read');
+                    }
+                } catch (error) {
+                    console.error('Error marking notification as read:', error);
+                    HRMS.Toast.error('Failed to mark notification as read');
+                }
+            });
+        });
+
+        // Auto-refresh unread count every 30 seconds
+        setInterval(async () => {
+            try {
+                const response = await fetch('@Url.Action("GetUnreadCount", "Notification")');
+                const data = await response.json();
+                
+                // Update navbar badge if it exists
+                const navBadge = document.querySelector('.notification-badge');
+                if (navBadge) {
+                    if (data.count > 0) {
+                        navBadge.textContent = data.count;
+                        navBadge.classList.remove('d-none');
+                    } else {
+                        navBadge.classList.add('d-none');
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching unread count:', error);
+            }
+        }, 30000);
+    </script>
+}
+

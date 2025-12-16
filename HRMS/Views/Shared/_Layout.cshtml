@@ -11,6 +11,9 @@
     
     <!-- Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Page-specific styles -->
+    @RenderSection("Styles", required: false)
 </head>
 <body>
 @using HRMS.Helpers
@@ -98,6 +101,16 @@
                 {
                     <a asp-controller="Home" asp-action="Index" class="nav-link">Dashboard</a>
                     <a asp-controller="Attendance" asp-action="Index" class="nav-link">Attendance</a>
+                    
+                    <!-- Notification Bell -->
+                    <a asp-controller="Notification" asp-action="Index" class="nav-link notification-bell-link" title="Notifications" style="position: relative;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <span class="notification-badge d-none" id="navbar-notification-badge">0</span>
+                    </a>
+                    
                     <div style="width: 1px; height: 24px; background: var(--color-border); margin: 0 0.5rem;"></div>
                     <span style="display: flex; align-items: center; gap: 0.5rem; margin-right: 1rem;">
                         <div style="width: 32px; height: 32px; background: var(--color-primary-light); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem;">

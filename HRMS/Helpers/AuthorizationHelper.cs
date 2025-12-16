@@ -5,34 +5,68 @@ using HRMS.Models;
 
 namespace HRMS.Helpers;
 
+/// <summary>
+/// Helper class for authorization and role management
+/// </summary>
 public static class AuthorizationHelper
 {
+    // Role name constants
     public const string SystemAdminRole = "System Administrator";
     public const string HRAdminRole = "HR Administrator";
     public const string LineManagerRole = "Line Manager";
     public const string EmployeeRole = "Employee";
 
     /// <summary>
-    /// Gets the current user's employee ID from claims
+    /// Gets the current employee ID from the user's claims
     /// </summary>
-    public static int? GetCurrentEmployeeId(ClaimsPrincipal user)
+    public static int? GetCurrentEmployeeId(ClaimsPrincipal? user)
     {
-        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim != null && int.TryParse(userIdClaim.Value, out var employeeId))
+        if (user == null || !user.Identity?.IsAuthenticated == true)
         {
-            return employeeId;
+            return null;
         }
-        return null;
+
+        var nameIdentifier = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(nameIdentifier) || !int.TryParse(nameIdentifier, out var employeeId))
+        {
+            return null;
+        }
+
+        return employeeId;
     }
 
     /// <summary>
-    /// Checks if the current user has a specific role
+    /// Checks if an employee has a specific role
     /// </summary>
     public static async Task<bool> HasRoleAsync(HrmsDbContext context, int employeeId, string roleName)
     {
         return await context.Employee_Role
             .Include(er => er.role)
             .AnyAsync(er => er.employee_id == employeeId && er.role.role_name == roleName);
+    }
+
+    /// <summary>
+    /// Checks if an employee is a System Administrator
+    /// </summary>
+    public static async Task<bool> IsSystemAdminAsync(HrmsDbContext context, int employeeId)
+    {
+        return await HasRoleAsync(context, employeeId, SystemAdminRole);
+    }
+
+    /// <summary>
+    /// Checks if an employee is an HR Administrator
+    /// </summary>
+    public static async Task<bool> IsHRAdminAsync(HrmsDbContext context, int employeeId)
+    {
+        return await HasRoleAsync(context, employeeId, HRAdminRole);
+    }
+
+    /// <summary>
+    /// Checks if an employee is a Line Manager
+    /// </summary>
+    public static async Task<bool> IsLineManagerAsync(HrmsDbContext context, int employeeId)
+    {
+        return await HasRoleAsync(context, employeeId, LineManagerRole);
     }
 
     /// <summary>
@@ -48,130 +82,36 @@ public static class AuthorizationHelper
     }
 
     /// <summary>
-    /// Checks if user is System Admin
-    /// </summary>
-    public static async Task<bool> IsSystemAdminAsync(HrmsDbContext context, int employeeId)
-    {
-        return await HasRoleAsync(context, employeeId, SystemAdminRole);
-    }
-
-    /// <summary>
-    /// Checks if user is HR Admin
-    /// </summary>
-    public static async Task<bool> IsHRAdminAsync(HrmsDbContext context, int employeeId)
-    {
-        return await HasRoleAsync(context, employeeId, HRAdminRole);
-    }
-
-    /// <summary>
-    /// Checks if user is Line Manager
-    /// </summary>
-    public static async Task<bool> IsLineManagerAsync(HrmsDbContext context, int employeeId)
-    {
-        return await HasRoleAsync(context, employeeId, LineManagerRole);
-    }
-
-    /// <summary>
-    /// Checks if user is System Admin or HR Admin
-    /// </summary>
-    public static async Task<bool> IsAdminAsync(HrmsDbContext context, int employeeId)
-    {
-        return await IsSystemAdminAsync(context, employeeId) || 
-               await IsHRAdminAsync(context, employeeId);
-    }
-
-    /// <summary>
-    /// Checks if an employee has Manager, HR Admin, or System Admin role
-    /// (Used to restrict managers from assigning these roles to their team)
-    /// </summary>
-    public static async Task<bool> IsManagerOrHRAdminAsync(HrmsDbContext context, int employeeId)
-    {
-        return await IsLineManagerAsync(context, employeeId) || 
-               await IsHRAdminAsync(context, employeeId) ||
-               await IsSystemAdminAsync(context, employeeId);
-    }
-
-    /// <summary>
-    /// Checks if an employee can be managed by a Line Manager
-    /// (Only employees without Manager, HR Admin, or System Admin roles can be managed by Line Managers)
-    /// </summary>
-    public static async Task<bool> CanBeManagedByLineManagerAsync(HrmsDbContext context, int employeeId)
-    {
-        // Employee can be managed by a Line Manager if they don't have Manager, HR Admin, or System Admin role
-        return !await IsManagerOrHRAdminAsync(context, employeeId);
-    }
-
-    /// <summary>
-    /// Gets all employees who can be assigned to a Line Manager's team
-    /// (Excludes employees with Manager, HR Admin, or System Admin roles)
-    /// </summary>
-    public static async Task<List<Employee>> GetAssignableEmployeesAsync(HrmsDbContext context, int? excludeEmployeeId = null)
-    {
-        // Get all active employees
-        var employees = await context.Employee
-            .Include(e => e.department)
-            .Include(e => e.position)
-            .Include(e => e.Employee_Role)
-                .ThenInclude(er => er.role)
-            .Where(e => e.is_active == true)
-            .ToListAsync();
-
-        // Filter out employees who have Manager, HR Admin, or System Admin roles
-        var assignableEmployees = new List<Employee>();
-        foreach (var employee in employees)
-        {
-            // Exclude the specified employee (usually the current manager)
-            if (excludeEmployeeId.HasValue && employee.employee_id == excludeEmployeeId.Value)
-                continue;
-
-            // Check if employee has Manager, HR Admin, or System Admin role
-            bool hasRestrictedRole = await IsManagerOrHRAdminAsync(context, employee.employee_id);
-            if (!hasRestrictedRole)
-            {
-                assignableEmployees.Add(employee);
-            }
-        }
-
-        return assignableEmployees;
-    }
-
-    /// <summary>
     /// Assigns a role to an employee
     /// </summary>
     public static async Task AssignRoleAsync(HrmsDbContext context, int employeeId, string roleName)
     {
-        // Check if role exists, create it if it doesn't
+        // Check if role already assigned
+        var hasRole = await HasRoleAsync(context, employeeId, roleName);
+        if (hasRole)
+        {
+            return; // Already has the role
+        }
+
+        // Find the role by name
         var role = await context.Role
             .FirstOrDefaultAsync(r => r.role_name == roleName);
 
         if (role == null)
         {
-            // Create the role if it doesn't exist
-            role = new Role
-            {
-                role_name = roleName,
-                purpose = $"System role: {roleName}"
-            };
-            context.Role.Add(role);
-            await context.SaveChangesAsync();
+            throw new InvalidOperationException($"Role '{roleName}' not found in database.");
         }
 
-        // Check if employee already has this role
-        var existingRole = await context.Employee_Role
-            .FirstOrDefaultAsync(er => er.employee_id == employeeId && er.role_id == role.role_id);
-
-        if (existingRole == null)
+        // Create new employee role assignment
+        var employeeRole = new Employee_Role
         {
-            var employeeRole = new Employee_Role
-            {
-                employee_id = employeeId,
-                role_id = role.role_id,
-                assigned_date = DateOnly.FromDateTime(DateTime.UtcNow)
-            };
+            employee_id = employeeId,
+            role_id = role.role_id,
+            assigned_date = DateOnly.FromDateTime(DateTime.Now)
+        };
 
-            context.Employee_Role.Add(employeeRole);
-            await context.SaveChangesAsync();
-        }
+        context.Employee_Role.Add(employeeRole);
+        await context.SaveChangesAsync();
     }
 
     /// <summary>
@@ -179,20 +119,58 @@ public static class AuthorizationHelper
     /// </summary>
     public static async Task RemoveRoleAsync(HrmsDbContext context, int employeeId, string roleName)
     {
-        var role = await context.Role
-            .FirstOrDefaultAsync(r => r.role_name == roleName);
+        var employeeRole = await context.Employee_Role
+            .Include(er => er.role)
+            .FirstOrDefaultAsync(er => er.employee_id == employeeId && er.role.role_name == roleName);
 
-        if (role != null)
+        if (employeeRole != null)
         {
-            var employeeRole = await context.Employee_Role
-                .FirstOrDefaultAsync(er => er.employee_id == employeeId && er.role_id == role.role_id);
-
-            if (employeeRole != null)
-            {
-                context.Employee_Role.Remove(employeeRole);
-                await context.SaveChangesAsync();
-            }
+            context.Employee_Role.Remove(employeeRole);
+            await context.SaveChangesAsync();
         }
     }
-}
 
+    /// <summary>
+    /// Gets list of employees that can be assigned as managers (excluding System Admins, HR Admins, and Line Managers)
+    /// </summary>
+    public static async Task<List<Employee>> GetAssignableEmployeesAsync(HrmsDbContext context, int? excludeEmployeeId = null)
+    {
+        // Get IDs of employees who have System Admin, HR Admin, or Line Manager roles
+        var restrictedEmployeeIds = await context.Employee_Role
+            .Include(er => er.role)
+            .Where(er => er.role.role_name == SystemAdminRole ||
+                        er.role.role_name == HRAdminRole ||
+                        er.role.role_name == LineManagerRole)
+            .Select(er => er.employee_id)
+            .Distinct()
+            .ToListAsync();
+
+        var query = context.Employee
+            .Where(e => e.is_active == true && !restrictedEmployeeIds.Contains(e.employee_id));
+
+        if (excludeEmployeeId.HasValue)
+        {
+            query = query.Where(e => e.employee_id != excludeEmployeeId.Value);
+        }
+
+        return await query
+            .OrderBy(e => e.full_name)
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Checks if an employee can be managed by a Line Manager
+    /// (i.e., they don't have System Admin, HR Admin, or Line Manager roles)
+    /// </summary>
+    public static async Task<bool> CanBeManagedByLineManagerAsync(HrmsDbContext context, int employeeId)
+    {
+        var hasRestrictedRole = await context.Employee_Role
+            .Include(er => er.role)
+            .AnyAsync(er => er.employee_id == employeeId &&
+                          (er.role.role_name == SystemAdminRole ||
+                           er.role.role_name == HRAdminRole ||
+                           er.role.role_name == LineManagerRole));
+
+        return !hasRestrictedRole;
+    }
+}

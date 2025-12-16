@@ -268,3 +268,5 @@ Your HRMS application is **98.5% complete** and ready to use!
 
 **Built with** ❤️ **using ASP.NET Core, Entity Framework, and modern UI/UX best practices**
 
+
+
