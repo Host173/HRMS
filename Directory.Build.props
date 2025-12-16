@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <!-- Prevent MSBuild from using SSMS SDK resolvers -->
+    <DisableMSBuildSDKResolver>false</DisableMSBuildSDKResolver>
+    <!-- Use .NET SDK's MSBuild instead of any other MSBuild installations -->
+    <MSBuildSDKsPath Condition="'$(MSBuildSDKsPath)' == ''">$(MSBuildExtensionsPath)\Sdks</MSBuildSDKsPath>
+  </PropertyGroup>
+</Project>
