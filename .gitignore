@@ -19,6 +19,7 @@ global.json
 *.cache
 *.vsp
 
+
 # Logs
 *.log
 logs/
